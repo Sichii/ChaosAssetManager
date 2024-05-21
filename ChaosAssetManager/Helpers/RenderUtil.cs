@@ -1,6 +1,7 @@
 ﻿using System.Collections.Frozen;
 using System.IO;
 using System.Text;
+using Chaos.Extensions.Common;
 using DALib.Data;
 using DALib.Definitions;
 using DALib.Drawing;
@@ -14,6 +15,7 @@ public static class RenderUtil
 {
     private static IDictionary<int, Palette>? MpfPaletteLookup;
     private static PaletteLookup? HpfPaletteLookup;
+    private static IDictionary<int, Palette>? BackstoryPaletteLookup;
 
     public static AnimatedPreview? RenderBmp(DataArchiveEntry entry)
     {
@@ -43,13 +45,6 @@ public static class RenderUtil
         }
     }
 
-    public static AnimatedPreview? RenderEpf(
-        DataArchive archive,
-        DataArchiveEntry entry,
-        string archiveName,
-        string archiveRoot)
-        => null;
-
     public static AnimatedPreview? RenderHpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
@@ -57,7 +52,7 @@ public static class RenderUtil
             var hpfFile = HpfFile.FromEntry(entry);
             var paletteLookup = HpfPaletteLookup ??= PaletteLookup.FromArchive("stc", archive);
 
-            if (!entry.TryGetNumericIdentifier(out var identifier, 5))
+            if (!entry.TryGetNumericIdentifier(out var identifier))
                 return null;
 
             var palette = paletteLookup.GetPaletteForId(identifier);
@@ -121,4 +116,50 @@ public static class RenderUtil
 
         return builder.ToString();
     }
+
+    #region Epf Rendering
+    public static AnimatedPreview? RenderEpf(
+        DataArchive archive,
+        DataArchiveEntry entry,
+        string archiveName,
+        string archiveRoot)
+    {
+        switch (archiveName.ToLower())
+        {
+            case "legend.dat":
+            {
+                if (entry.EntryName.StartsWithI("bkstory"))
+                    return RenderBackstoryEpf(archive, entry);
+
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    public static AnimatedPreview? RenderBackstoryEpf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            if (!entry.TryGetNumericIdentifier(out var identifier))
+                return null;
+
+            var paletteLookup = BackstoryPaletteLookup ??= Palette.FromArchive("backpal", archive)
+                                                                  .ToFrozenDictionary();
+
+            if (!paletteLookup.TryGetValue(identifier, out var palette))
+                return null;
+
+            var epfFile = EpfFile.FromEntry(entry);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var frames = new SKImageCollection(transformer);
+
+            return new AnimatedPreview(frames);
+        } catch
+        {
+            return null;
+        }
+    }
+    #endregion
 }
