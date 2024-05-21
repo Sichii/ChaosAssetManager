@@ -7,10 +7,12 @@ public sealed class Animation : IDisposable
     public int FrameIntervalMs { get; init; }
     public SKImageCollection Frames { get; init; }
 
-    public Animation(SKImageCollection frames, int frameIntervalMs = 100)
+    public Animation(SKImageCollection frames, int? frameIntervalMs = 100)
     {
+        frameIntervalMs ??= 100;
+
         Frames = frames;
-        FrameIntervalMs = frameIntervalMs;
+        FrameIntervalMs = frameIntervalMs.Value;
     }
 
     /// <inheritdoc />

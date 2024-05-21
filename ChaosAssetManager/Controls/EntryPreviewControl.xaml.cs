@@ -68,6 +68,7 @@ public sealed partial class EntryPreviewControl : IDisposable
         {
             case ".tbl":
             case ".txt":
+            case ".log":
             {
                 Content = RenderUtil.RenderText(Entry);
 

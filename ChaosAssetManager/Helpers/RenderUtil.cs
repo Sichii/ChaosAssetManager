@@ -20,8 +20,36 @@ namespace ChaosAssetManager.Helpers;
 public static class RenderUtil
 {
     private static IDictionary<int, Palette>? MpfPaletteLookup;
-    private static PaletteLookup? HpfPaletteLookup;
+    private static PaletteLookup? StcPaletteLookup;
+    private static PaletteLookup? StsPaletteLookup;
     private static IDictionary<int, Palette>? BackstoryPaletteLookup;
+    private static IDictionary<int, Palette>? FieldPaletteLookup;
+    private static Palette? LegendPalette;
+    private static Palette? Legend01Palette;
+    private static Palette? StaffPalette;
+    private static PaletteLookup? ItemPaletteLookup;
+    private static TileAnimationTable? TileAnimationTable;
+
+    private static SKImage CreateGrid(ICollection<SKImage> images, int paddingX = 2, int paddingY = 2)
+    {
+        var width = images.Max(image => image.Width);
+        var height = images.Max(image => image.Height);
+        var rows = 14;
+        var columns = 19;
+
+        using var grid = new SKBitmap(width * columns + (columns - 1) * paddingX, height * rows + (rows - 1) * paddingY);
+        using var canvas = new SKCanvas(grid);
+
+        foreach ((var image, var index) in images.Select((image, i) => (image, i)))
+        {
+            var x = index % columns * (width + paddingX);
+            var y = index / columns * (height + paddingY);
+
+            canvas.DrawImage(image, x, y);
+        }
+
+        return SKImage.FromBitmap(grid);
+    }
 
     public static Animation? RenderBmp(DataArchiveEntry entry)
     {
@@ -55,17 +83,51 @@ public static class RenderUtil
     {
         try
         {
-            var hpfFile = HpfFile.FromEntry(entry);
-            var paletteLookup = HpfPaletteLookup ??= PaletteLookup.FromArchive("stc", archive);
+            StcPaletteLookup ??= PaletteLookup.FromArchive("stc", archive)
+                                              .Freeze();
 
+            StsPaletteLookup ??= PaletteLookup.FromArchive("sts", archive)
+                                              .Freeze();
+            TileAnimationTable ??= TileAnimationTable.FromArchive("stcani", archive);
+
+            var hpfFile = HpfFile.FromEntry(entry);
+            List<HpfFile> hpfFiles = [hpfFile];
+            PaletteLookup paletteLookup;
+            TileAnimationEntry? tileAnimationEntry = null;
+
+            //if we fail to get an identifier, return null
             if (!entry.TryGetNumericIdentifier(out var identifier))
                 return null;
 
-            var palette = paletteLookup.GetPaletteForId(identifier);
-            var image = Graphics.RenderImage(hpfFile, palette);
-            var frames = new SKImageCollection([image]);
+            if (entry.EntryName.StartsWithI("stc"))
+            {
+                //use stc palettes
+                paletteLookup = StcPaletteLookup;
 
-            return new Animation(frames);
+                //if there's an animation entry for this tile, get the tile sequence
+                //load those hpf files from the archive and use those as the frames to render
+                if (TileAnimationTable.TryGetEntry(identifier, out var aniEntry))
+                    hpfFiles = aniEntry.Select(tileId => HpfFile.FromEntry(archive[$"stc{tileId:D5}.hpf"]))
+                                       .ToList();
+            } else
+                paletteLookup = StsPaletteLookup;
+
+            var palette = paletteLookup.GetPaletteForId(identifier + 1);
+            var maxHeight = hpfFiles.Max(hpf => hpf.PixelHeight);
+
+            var transformer = hpfFiles.Select(
+                frame =>
+                {
+                    //since hpf files are rendered from the bottom up
+                    //we need to offset the tops of short images so that all the bottoms align
+                    var yOffset = maxHeight - frame.PixelHeight;
+
+                    return Graphics.RenderImage(frame, palette, yOffset);
+                });
+            var frames = new SKImageCollection(transformer);
+
+            //if there's an animation entry, use the interval from that
+            return new Animation(frames, tileAnimationEntry?.AnimationIntervalMs);
         } catch
         {
             return null;
@@ -145,16 +207,28 @@ public static class RenderUtil
             case "legend.dat":
             {
                 if (entry.EntryName.StartsWithI("bkstory"))
-                    return RenderBackstoryEpf(archive, entry);
+                    return RenderLegendBackstoryEpf(archive, entry);
 
-                break;
+                if (entry.EntryName.StartsWithI("item"))
+                    return RenderLegendItemEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("field"))
+                    return RenderLegendFieldEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("skill") || entry.EntryName.StartsWithI("spell"))
+                    return RenderLegend01Epf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("staff"))
+                    return RenderLegendStaffEpf(archive, entry);
+
+                return RenderLegendEpf(archive, entry);
             }
         }
 
         return null;
     }
 
-    public static Animation? RenderBackstoryEpf(DataArchive archive, DataArchiveEntry entry)
+    public static Animation? RenderLegendBackstoryEpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
         {
@@ -168,6 +242,110 @@ public static class RenderUtil
                 return null;
 
             var epfFile = EpfFile.FromEntry(entry);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var frames = new SKImageCollection(transformer);
+
+            return new Animation(frames);
+        } catch
+        {
+            return null;
+        }
+    }
+
+    public static Animation? RenderLegendItemEpf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+
+            if (!entry.TryGetNumericIdentifier(out var identifier))
+                return null;
+
+            var paletteLookup = ItemPaletteLookup ??= PaletteLookup.FromArchive("itempal", "item", archive)
+                                                                   .Freeze();
+
+            var transformer = epfFile.Select(
+                frame =>
+                {
+                    var itemId = identifier * 266;
+                    var palette = paletteLookup.GetPaletteForId(itemId);
+
+                    return Graphics.RenderImage(frame, palette);
+                });
+            using var images = new SKImageCollection(transformer);
+            var grid = CreateGrid(images);
+
+            return new Animation(new SKImageCollection([grid]));
+        } catch
+        {
+            return null;
+        }
+    }
+
+    public static Animation? RenderLegendFieldEpf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+
+            if (!entry.TryGetNumericIdentifier(out var identifier))
+                return null;
+
+            var paletteLookup = FieldPaletteLookup ??= Palette.FromArchive("field", archive)
+                                                              .ToFrozenDictionary();
+
+            if (!paletteLookup.TryGetValue(identifier, out var palette))
+                return null;
+
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var frames = new SKImageCollection(transformer);
+
+            return new Animation(frames);
+        } catch
+        {
+            return null;
+        }
+    }
+
+    private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+            var palette = Legend01Palette ??= Palette.FromEntry(archive["legend01.pal"]);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            using var images = new SKImageCollection(transformer);
+            var grid = CreateGrid(images);
+
+            return new Animation(new SKImageCollection([grid]));
+        } catch
+        {
+            return null;
+        }
+    }
+
+    private static Animation? RenderLegendStaffEpf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+            var palette = StaffPalette ??= Palette.FromEntry(archive["legend.pal"]);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var frames = new SKImageCollection(transformer);
+
+            return new Animation(frames);
+        } catch
+        {
+            return null;
+        }
+    }
+
+    public static Animation? RenderLegendEpf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+            var palette = LegendPalette ??= Palette.FromEntry(archive["staff.pal"]);
             var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
             var frames = new SKImageCollection(transformer);
 
