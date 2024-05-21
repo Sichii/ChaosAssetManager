@@ -5,7 +5,6 @@ using Chaos.Extensions.Common;
 using ChaosAssetManager.Helpers;
 using DALib.Data;
 using DALib.Drawing;
-using SkiaSharp;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using DataFormats = System.Windows.DataFormats;
@@ -89,8 +88,8 @@ public sealed partial class ArchivesControl
     private void ArchivesView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         (Preview.Content as IDisposable)?.Dispose();
-        Preview.Content = null;
         AnimatedPreview?.Dispose();
+        Preview.Content = null;
 
         var numSelectedItems = ArchivesView.SelectedItems.Count;
 
@@ -99,62 +98,7 @@ public sealed partial class ArchivesControl
         if (numSelectedItems == 1)
         {
             var selectedEntry = (DataArchiveEntry)ArchivesView.SelectedItem!;
-
-            var type = Path.GetExtension(selectedEntry.EntryName)
-                           .ToLower();
-
-            switch (type)
-            {
-                case ".tbl":
-                {
-                    var text = RenderUtil.RenderTable(selectedEntry);
-
-                    var textBox = new TextBlock
-                    {
-                        Text = text,
-                        TextWrapping = TextWrapping.Wrap,
-                        Style = Application.Current.Resources["MaterialDesignTextBlock"] as Style,
-                        Foreground = Brushes.White,
-                        Padding = new Thickness(10),
-                        HorizontalAlignment = HorizontalAlignment.Stretch,
-                        VerticalAlignment = VerticalAlignment.Stretch,
-                        Margin = new Thickness(0)
-                    };
-
-                    Preview.Content = textBox;
-
-                    break;
-                }
-                case ".epf":
-                {
-                    var epfFile = EpfFile.FromEntry(selectedEntry);
-
-                    //var transformer = epfFile.Select(frame => Graphics.RenderImage(frame))
-
-                    break;
-                }
-                case ".efa":
-                {
-                    var info = RenderUtil.RenderEfa(selectedEntry);
-
-                    AnimatedPreview = new AnimatedPreview(info.Frames, info.FrameIntervalMs);
-                    Preview.Content = AnimatedPreview.Element;
-
-                    break;
-                }
-                case ".hpf":
-                {
-                    break;
-                }
-                case ".mpf":
-                {
-                    break;
-                }
-                case ".spf":
-                {
-                    break;
-                }
-            }
+            GeneratePreview(selectedEntry);
         }
     }
 
@@ -327,20 +271,63 @@ public sealed partial class ArchivesControl
         Archive!.Patch(entryName, entry);
     }
 
-    private SKImage RenderEpf(EpfFile epfFile)
+    private void GeneratePreview(DataArchiveEntry selectedEntry)
     {
-        switch (ArchiveName.ToLower())
+        var type = Path.GetExtension(selectedEntry.EntryName)
+                       .ToLower();
+
+        switch (type)
         {
-            case "roh.dat":
+            case ".tbl":
+            {
+                var text = RenderUtil.RenderTable(selectedEntry);
+
+                var textBox = new TextBlock
+                {
+                    Text = text,
+                    TextWrapping = TextWrapping.Wrap,
+                    Style = Application.Current.Resources["MaterialDesignTextBlock"] as Style,
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(10),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    Margin = new Thickness(0)
+                };
+
+                Preview.Content = textBox;
+
+                break;
+            }
+            case ".epf":
+            {
+                var epfFile = EpfFile.FromEntry(selectedEntry);
+
+                //var transformer = epfFile.Select(frame => Graphics.RenderImage(frame))
+
+                break;
+            }
+            case ".efa":
+            {
+                var info = RenderUtil.RenderEfa(selectedEntry);
+
+                AnimatedPreview = new AnimatedPreview(info.Frames, info.FrameIntervalMs);
+                Preview.Content = AnimatedPreview.Element;
+
+                break;
+            }
+            case ".hpf":
+            {
+                break;
+            }
+            case ".mpf":
+            {
+                break;
+            }
+            case ".spf":
             {
                 break;
             }
         }
-
-        /*var transformer = epfFile.Select(frame => Graphics.RenderImage(frame));
-        var image = transformer.Aggregate((acc, frame) => acc + frame);*/
-
-        return null;
     }
     #endregion
 }

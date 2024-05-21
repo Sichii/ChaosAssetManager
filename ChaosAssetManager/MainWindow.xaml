@@ -31,16 +31,6 @@
                      Name="ConvertTab"
                      IsSelected="true"
                      Style="{StaticResource MaterialDesignTabItem}" />
-
-            <TabItem Header="Skill Icons"
-                     Name="SkillIconsTab"
-                     IsSelected="true"
-                     Style="{StaticResource MaterialDesignTabItem}" />
-
-            <TabItem Header="Spell Icons"
-                     Name="SpellIconsTab"
-                     IsSelected="true"
-                     Style="{StaticResource MaterialDesignTabItem}" />
         </TabControl>
     </Grid>
 </Window>
