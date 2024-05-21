@@ -56,7 +56,6 @@ public sealed partial class EntryPreviewControl : IDisposable
         Disposed = true;
 
         Animation?.Dispose();
-        AnimationTask?.Dispose();
         AnimationTimer?.Dispose();
     }
 
@@ -203,12 +202,17 @@ public sealed partial class EntryPreviewControl : IDisposable
         ArgumentNullException.ThrowIfNull(Animation);
         ArgumentNullException.ThrowIfNull(Matrix);
 
-        var translateX = (float)(Element.ActualWidth - Animation.Frames.Max(frame => frame.Width)) / 2f;
-        var translateY = (float)(Element.ActualHeight - Animation.Frames.Max(frame => frame.Height)) / 2f;
-        var dpiHelper = (float)DpiHelper.GetDpiScaleFactor();
+        var elementWidth = Element.ActualWidth;
+        var elementHeight = Element.ActualHeight;
 
-        translateX *= dpiHelper;
-        translateY *= dpiHelper;
+        var maxWidth = Animation.Frames.Max(frame => frame.Width);
+        var maxHeight = Animation.Frames.Max(frame => frame.Height);
+
+        var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
+
+        // Correctly center the image taking into account the DPI scaling
+        var translateX = (float)(elementWidth * dpiScale - maxWidth) / 2f;
+        var translateY = (float)(elementHeight * dpiScale - maxHeight) / 2f;
 
         Matrix = SKMatrix.CreateTranslation(translateX, translateY);
 

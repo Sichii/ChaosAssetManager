@@ -221,7 +221,8 @@ public sealed partial class ArchivesControl
 
             foreach (var fileName in openFileDialog.FileNames)
             {
-                var entry = Archive![fileName];
+                var entryName = Path.GetFileName(fileName);
+                var entry = Archive![entryName];
                 ArchivesView.SelectedItems.Add(entry);
             }
 

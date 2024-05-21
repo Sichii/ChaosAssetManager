@@ -7,7 +7,6 @@ public static class DpiHelper
 {
     public static double GetDpiScaleFactor()
     {
-        // Get the presentation source of the window
         var presentationSource = PresentationSource.FromVisual(Application.Current.MainWindow!)!;
 
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
