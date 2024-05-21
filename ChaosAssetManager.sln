@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChaosAssetManager", "ChaosAssetManager\ChaosAssetManager.csproj", "{F26D7C5B-8FA1-458A-9F05-603FA5DDCD6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DALib", "..\dalib\DALib\DALib.csproj", "{816BF27A-86BD-46C2-99C8-3212CE555E51}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F26D7C5B-8FA1-458A-9F05-603FA5DDCD6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F26D7C5B-8FA1-458A-9F05-603FA5DDCD6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F26D7C5B-8FA1-458A-9F05-603FA5DDCD6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F26D7C5B-8FA1-458A-9F05-603FA5DDCD6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <UseWindowsForms>true</UseWindowsForms>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Chaos.Extensions.Common" Version="1.2.9"/>
+        <PackageReference Include="MaterialDesignExtensions" Version="3.3.0"/>
+        <PackageReference Include="MaterialDesignThemes" Version="5.0.1-ci633"/>
+        <PackageReference Include="SkiaSharp" Version="2.88.8"/>
+        <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.8"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\dalib\DALib\DALib.csproj"/>
+    </ItemGroup>
+
+</Project>

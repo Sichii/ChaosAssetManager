@@ -1,0 +1,100 @@
+﻿<UserControl x:Class="ChaosAssetManager.Controls.ArchivesControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="700"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             AllowDrop="True"
+             DragEnter="ArchivesControl_OnDragEnter"
+             Drop="ArchivesControl_OnDrop">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0"
+              materialDesign:MenuAssist.TopLevelMenuItemHeight="30"
+              Style="{StaticResource MaterialDesignMenu}">
+            <MenuItem x:Name="LoadBtn"
+                      Header="Load"
+                      Padding="10 0 10 0"
+                      Click="Load_OnClick" />
+            <MenuItem x:Name="PatchBtn"
+                      Header="Patch"
+                      IsEnabled="false"
+                      Padding="10 0 10 0"
+                      Click="PatchBtn_OnClick" />
+            <MenuItem x:Name="CompileToBtn"
+                      Header="CompileTo"
+                      IsEnabled="false"
+                      Padding="10 0 10 0"
+                      Click="CompileToBtn_OnClick" />
+            <MenuItem x:Name="ExtractToBtn"
+                      Header="ExtractTo"
+                      IsEnabled="false"
+                      Padding="10 0 10 0"
+                      Click="ExtractToBtn_OnClick" />
+            <MenuItem x:Name="ExtractSelectionBtn"
+                      Header="ExtractSelection"
+                      IsEnabled="false"
+                      Padding="10 0 10 0"
+                      Click="ExtractSelectionBtn_OnClick" />
+            <MenuItem x:Name="CompileBtn"
+                      Header="Compile"
+                      Padding="10 0 10 0"
+                      Click="CompileBtn_OnClick" />
+            <MenuItem x:Name="ExtractBtn"
+                      Header="Extract"
+                      Padding="10 0 10 0"
+                      Click="ExtractBtn_OnClick" />
+        </Menu>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListView Grid.Column="0"
+                      x:Name="ArchivesView"
+                      DisplayMemberPath="EntryName"
+                      HorizontalAlignment="Stretch"
+                      SelectionChanged="ArchivesView_OnSelectionChanged" />
+
+            <GridSplitter Grid.Column="1"
+                          Width="2"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch"
+                          Background="White"
+                          ResizeBehavior="PreviousAndNext"
+                          ShowsPreview="True" />
+
+            <ScrollViewer Grid.Column="2"
+                          x:Name="Preview"
+                          Background="#FF2B2B2B"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          VerticalAlignment="Stretch"
+                          HorizontalAlignment="Stretch" />
+        </Grid>
+
+        <materialDesign:Snackbar Name="Snackbar"
+                                 Grid.ColumnSpan="99"
+                                 Grid.RowSpan="99"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="0"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+
+    </Grid>
+
+</UserControl>
