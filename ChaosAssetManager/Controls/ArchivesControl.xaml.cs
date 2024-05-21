@@ -2,23 +2,18 @@
 using System.Windows;
 using System.Windows.Controls;
 using Chaos.Extensions.Common;
-using ChaosAssetManager.Helpers;
 using DALib.Data;
-using Application = System.Windows.Application;
-using Brushes = System.Windows.Media.Brushes;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
-using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
 public sealed partial class ArchivesControl
 {
-    private AnimatedPreview? AnimatedPreview;
     private string ArchiveName = string.Empty;
     private string ArchiveRoot = string.Empty;
     public DataArchive? Archive { get; set; }
@@ -87,8 +82,9 @@ public sealed partial class ArchivesControl
     private void ArchivesView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         (Preview.Content as IDisposable)?.Dispose();
-        AnimatedPreview?.Dispose();
         Preview.Content = null;
+
+        ArgumentNullException.ThrowIfNull(Archive);
 
         var numSelectedItems = ArchivesView.SelectedItems.Count;
 
@@ -97,7 +93,12 @@ public sealed partial class ArchivesControl
         if (numSelectedItems == 1)
         {
             var selectedEntry = (DataArchiveEntry)ArchivesView.SelectedItem!;
-            GeneratePreview(selectedEntry);
+
+            Preview.Content = new EntryPreviewControl(
+                Archive,
+                selectedEntry,
+                ArchiveName,
+                ArchiveRoot);
         }
     }
 
@@ -277,118 +278,6 @@ public sealed partial class ArchivesControl
         if (Archive is not null)
             ArchivesView.ItemsSource = Archive.OrderBy(entry => Path.GetExtension(entry.EntryName))
                                               .ThenBy(entry => entry.EntryName);
-    }
-
-    private void GeneratePreview(DataArchiveEntry selectedEntry)
-    {
-        if (Archive is null)
-            return;
-
-        var type = Path.GetExtension(selectedEntry.EntryName)
-                       .ToLower();
-
-        switch (type)
-        {
-            case ".tbl":
-            case ".txt":
-            {
-                var text = RenderUtil.RenderText(selectedEntry);
-
-                var textBox = new TextBlock
-                {
-                    Text = text,
-                    TextWrapping = TextWrapping.Wrap,
-                    Style = Application.Current.Resources["MaterialDesignTextBlock"] as Style,
-                    Foreground = Brushes.White,
-                    Padding = new Thickness(10),
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    VerticalAlignment = VerticalAlignment.Stretch,
-                    Margin = new Thickness(0)
-                };
-
-                Preview.Content = textBox;
-
-                break;
-            }
-            case ".efa":
-            {
-                var preview = RenderUtil.RenderEfa(selectedEntry);
-
-                if (preview is null)
-                    break;
-
-                AnimatedPreview = preview;
-                Preview.Content = preview.Element;
-
-                break;
-            }
-
-            case ".spf":
-            {
-                var preview = RenderUtil.RenderSpf(selectedEntry);
-
-                if (preview is null)
-                    break;
-
-                AnimatedPreview = preview;
-                Preview.Content = preview.Element;
-
-                break;
-            }
-            case ".bmp":
-            {
-                var preview = RenderUtil.RenderBmp(selectedEntry);
-
-                if (preview is null)
-                    break;
-
-                AnimatedPreview = preview;
-                Preview.Content = preview.Element;
-
-                break;
-            }
-            case ".mpf":
-            {
-                var preview = RenderUtil.RenderMpf(Archive, selectedEntry);
-
-                if (preview is null)
-                    break;
-
-                AnimatedPreview = preview;
-                Preview.Content = preview.Element;
-
-                break;
-            }
-            case ".epf":
-            {
-                var preview = RenderUtil.RenderEpf(
-                    Archive,
-                    selectedEntry,
-                    ArchiveName,
-                    ArchiveRoot);
-
-                if (preview is null)
-                    break;
-
-                AnimatedPreview = preview;
-                Preview.Content = preview.Element;
-
-                break;
-            }
-
-            case ".hpf":
-            {
-                var preview = RenderUtil.RenderHpf(Archive, selectedEntry);
-
-                if (preview is null)
-                    break;
-
-                AnimatedPreview = preview;
-                Preview.Content = preview.Element;
-
-                break;
-            }
-        }
     }
     #endregion
 }

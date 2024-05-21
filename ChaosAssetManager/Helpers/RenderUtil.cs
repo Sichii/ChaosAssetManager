@@ -1,13 +1,19 @@
 ﻿using System.Collections.Frozen;
 using System.IO;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Model;
 using DALib.Data;
 using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Utility;
 using SkiaSharp;
+using Application = System.Windows.Application;
+using Brushes = System.Windows.Media.Brushes;
 using Graphics = DALib.Drawing.Graphics;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
 
 namespace ChaosAssetManager.Helpers;
 
@@ -17,7 +23,7 @@ public static class RenderUtil
     private static PaletteLookup? HpfPaletteLookup;
     private static IDictionary<int, Palette>? BackstoryPaletteLookup;
 
-    public static AnimatedPreview? RenderBmp(DataArchiveEntry entry)
+    public static Animation? RenderBmp(DataArchiveEntry entry)
     {
         using var data = entry.ToStreamSegment();
         var image = SKImage.FromEncodedData(data);
@@ -27,25 +33,25 @@ public static class RenderUtil
 
         var frames = new SKImageCollection([image]);
 
-        return new AnimatedPreview(frames);
+        return new Animation(frames);
     }
 
-    public static AnimatedPreview? RenderEfa(DataArchiveEntry entry)
+    public static Animation? RenderEfa(DataArchiveEntry entry)
     {
         try
         {
             var efaFile = EfaFile.FromEntry(entry);
-            var transformer = efaFile.Select(frame => Graphics.RenderImage(frame));
+            var transformer = efaFile.Select(frame => Graphics.RenderImage(frame, efaFile.BlendingType));
             var frames = new SKImageCollection(transformer);
 
-            return new AnimatedPreview(frames, efaFile.FrameIntervalMs);
+            return new Animation(frames, efaFile.FrameIntervalMs);
         } catch
         {
             return null;
         }
     }
 
-    public static AnimatedPreview? RenderHpf(DataArchive archive, DataArchiveEntry entry)
+    public static Animation? RenderHpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
         {
@@ -59,14 +65,14 @@ public static class RenderUtil
             var image = Graphics.RenderImage(hpfFile, palette);
             var frames = new SKImageCollection([image]);
 
-            return new AnimatedPreview(frames);
+            return new Animation(frames);
         } catch
         {
             return null;
         }
     }
 
-    public static AnimatedPreview? RenderMpf(DataArchive archive, DataArchiveEntry entry)
+    public static Animation? RenderMpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
         {
@@ -81,14 +87,14 @@ public static class RenderUtil
             var transformer = mpfFile.Select(frame => Graphics.RenderImage(frame, palette));
             var frames = new SKImageCollection(transformer);
 
-            return new AnimatedPreview(frames);
+            return new Animation(frames);
         } catch
         {
             return null;
         }
     }
 
-    public static AnimatedPreview? RenderSpf(DataArchiveEntry entry)
+    public static Animation? RenderSpf(DataArchiveEntry entry)
     {
         try
         {
@@ -100,25 +106,35 @@ public static class RenderUtil
                     : Graphics.RenderImage(frame, spfFile.PrimaryColors!));
             var frames = new SKImageCollection(transformer);
 
-            return new AnimatedPreview(frames);
+            return new Animation(frames);
         } catch
         {
             return null;
         }
     }
 
-    public static string RenderText(DataArchiveEntry entry)
+    public static TextBlock RenderText(DataArchiveEntry entry)
     {
         var builder = new StringBuilder();
         using var reader = new StreamReader(entry.ToStreamSegment());
 
         builder.Append(reader.ReadToEnd());
 
-        return builder.ToString();
+        return new TextBlock
+        {
+            Text = builder.ToString(),
+            TextWrapping = TextWrapping.Wrap,
+            Style = Application.Current.Resources["MaterialDesignTextBlock"] as Style,
+            Foreground = Brushes.White,
+            Padding = new Thickness(10),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(0)
+        };
     }
 
     #region Epf Rendering
-    public static AnimatedPreview? RenderEpf(
+    public static Animation? RenderEpf(
         DataArchive archive,
         DataArchiveEntry entry,
         string archiveName,
@@ -138,7 +154,7 @@ public static class RenderUtil
         return null;
     }
 
-    public static AnimatedPreview? RenderBackstoryEpf(DataArchive archive, DataArchiveEntry entry)
+    public static Animation? RenderBackstoryEpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
         {
@@ -155,7 +171,7 @@ public static class RenderUtil
             var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
             var frames = new SKImageCollection(transformer);
 
-            return new AnimatedPreview(frames);
+            return new Animation(frames);
         } catch
         {
             return null;

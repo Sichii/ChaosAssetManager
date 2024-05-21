@@ -30,6 +30,11 @@
                      Name="ConvertTab"
                      IsSelected="true"
                      Style="{StaticResource MaterialDesignTabItem}" />
+
+            <TabItem Header="Meta Editor"
+                     Name="MetaEditorTab"
+                     IsSelected="true"
+                     Style="{StaticResource MaterialDesignTabItem}" />
         </TabControl>
     </Grid>
 </Window>
