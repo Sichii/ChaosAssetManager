@@ -8,22 +8,24 @@ namespace ChaosAssetManager.Helpers;
 
 public class AnimatedPreview : IDisposable
 {
-    private readonly PeriodicTimer AnimationTimer;
-    public readonly SKElement Element;
-    private readonly SKImageCollection Frames;
-    private readonly AutoReleasingMonitor Sync;
-    private Task AnimationTask;
-    private int CurrentFrameIndex;
-    private bool Disposed;
+    protected int CurrentFrameIndex { get; set; }
+    protected bool Disposed { get; set; }
+    protected Task? AnimationTask { get; }
+    protected PeriodicTimer AnimationTimer { get; }
+    public SKElement Element { get; }
+    protected SKImageCollection Frames { get; }
+    protected AutoReleasingMonitor Sync { get; }
 
-    public AnimatedPreview(SKImageCollection frames, int frameIntervalMs)
+    public AnimatedPreview(SKImageCollection frames, int frameIntervalMs = 100)
     {
         Frames = frames;
         AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(frameIntervalMs));
         Element = new SKElement();
         Element.PaintSurface += ElementOnPaintSurface;
-        AnimationTask = AnimateElement();
         Sync = new AutoReleasingMonitor();
+
+        if (Frames.Count > 1)
+            AnimationTask = AnimateElement();
     }
 
     /// <inheritdoc />
@@ -35,7 +37,7 @@ public class AnimatedPreview : IDisposable
         Frames.Dispose();
     }
 
-    private async Task AnimateElement()
+    protected async Task AnimateElement()
     {
         while (!Disposed)
             try
@@ -51,7 +53,7 @@ public class AnimatedPreview : IDisposable
             }
     }
 
-    private void ElementOnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    protected virtual void ElementOnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
         using var @lock = Sync.Enter();
 
@@ -59,12 +61,19 @@ public class AnimatedPreview : IDisposable
             return;
 
         var canvas = e.Surface.Canvas;
+        var imageWidth = Frames.Max(frame => frame.Width);
+        var imageHeight = Frames.Max(frame => frame.Height);
         var frame = Frames[CurrentFrameIndex];
+
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (frame is null)
+            return;
+
         canvas.Clear(SKColors.Black);
 
         //center the image in the canvas
-        var x = (e.Info.Width - frame.Width) / 2;
-        var y = (e.Info.Height - frame.Height) / 2;
+        var x = (e.Info.Width - imageWidth) / 2;
+        var y = (e.Info.Height - imageHeight) / 2;
 
         canvas.DrawImage(frame, x, y);
     }

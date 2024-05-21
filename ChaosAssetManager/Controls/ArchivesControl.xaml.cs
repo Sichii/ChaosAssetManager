@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Helpers;
 using DALib.Data;
-using DALib.Drawing;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using DataFormats = System.Windows.DataFormats;
@@ -70,7 +69,7 @@ public sealed partial class ArchivesControl
                 patched = true;
             }
 
-            ArchivesView.ItemsSource = Archive;
+            SetViewSource();
             ArchivesView.SelectedItems.Clear();
 
             foreach (var fileName in files)
@@ -216,8 +215,7 @@ public sealed partial class ArchivesControl
             foreach (var file in openFileDialog.FileNames)
                 PatchArchive(file);
 
-            ArchivesView.ItemsSource = Archive;
-
+            SetViewSource();
             ArchivesView.SelectedItems.Clear();
 
             foreach (var fileName in openFileDialog.FileNames)
@@ -256,10 +254,13 @@ public sealed partial class ArchivesControl
 
         ArchiveName = Path.GetFileName(path);
         ArchiveRoot = Path.GetDirectoryName(path) ?? string.Empty;
-        ArchivesView.ItemsSource = Archive;
+
+        SetViewSource();
+
         CompileToBtn.IsEnabled = true;
         ExtractToBtn.IsEnabled = true;
         PatchBtn.IsEnabled = true;
+        ExtractSelectionBtn.IsEnabled = false;
     }
 
     private void PatchArchive(string path)
@@ -271,8 +272,18 @@ public sealed partial class ArchivesControl
         Archive!.Patch(entryName, entry);
     }
 
+    private void SetViewSource()
+    {
+        if (Archive is not null)
+            ArchivesView.ItemsSource = Archive.OrderBy(entry => Path.GetExtension(entry.EntryName))
+                                              .ThenBy(entry => entry.EntryName);
+    }
+
     private void GeneratePreview(DataArchiveEntry selectedEntry)
     {
+        if (Archive is null)
+            return;
+
         var type = Path.GetExtension(selectedEntry.EntryName)
                        .ToLower();
 
@@ -299,37 +310,81 @@ public sealed partial class ArchivesControl
 
                 break;
             }
-            case ".epf":
-            {
-                var epfFile = EpfFile.FromEntry(selectedEntry);
-
-                //var transformer = epfFile.Select(frame => Graphics.RenderImage(frame))
-
-                break;
-            }
             case ".efa":
             {
-                var info = RenderUtil.RenderEfa(selectedEntry);
+                var preview = RenderUtil.RenderEfa(selectedEntry);
 
-                AnimatedPreview = new AnimatedPreview(info.Frames, info.FrameIntervalMs);
-                Preview.Content = AnimatedPreview.Element;
+                if (preview is null)
+                    break;
+
+                AnimatedPreview = preview;
+                Preview.Content = preview.Element;
 
                 break;
             }
-            case ".hpf":
+
+            case ".spf":
             {
+                var preview = RenderUtil.RenderSpf(selectedEntry);
+
+                if (preview is null)
+                    break;
+
+                AnimatedPreview = preview;
+                Preview.Content = preview.Element;
+
+                break;
+            }
+            case ".bmp":
+            {
+                var preview = RenderUtil.RenderBmp(selectedEntry);
+
+                if (preview is null)
+                    break;
+
+                AnimatedPreview = preview;
+                Preview.Content = preview.Element;
+
                 break;
             }
             case ".mpf":
             {
+                var preview = RenderUtil.RenderMpf(Archive, selectedEntry);
+
+                if (preview is null)
+                    break;
+
+                AnimatedPreview = preview;
+                Preview.Content = preview.Element;
+
                 break;
             }
-            case ".spf":
+            case ".epf":
             {
-                var frames = RenderUtil.RenderSpf(selectedEntry);
+                var preview = RenderUtil.RenderEpf(
+                    Archive,
+                    selectedEntry,
+                    ArchiveName,
+                    ArchiveRoot);
 
-                AnimatedPreview = new AnimatedPreview(frames, 100);
-                Preview.Content = AnimatedPreview.Element;
+                if (preview is null)
+                    break;
+
+                AnimatedPreview = preview;
+                Preview.Content = preview.Element;
+
+                break;
+            }
+
+            case ".hpf":
+            {
+                var preview = RenderUtil.RenderHpf(Archive, selectedEntry);
+
+                if (preview is null)
+                    break;
+
+                AnimatedPreview = preview;
+                Preview.Content = preview.Element;
 
                 break;
             }
