@@ -279,8 +279,9 @@ public sealed partial class ArchivesControl
         switch (type)
         {
             case ".tbl":
+            case ".txt":
             {
-                var text = RenderUtil.RenderTable(selectedEntry);
+                var text = RenderUtil.RenderText(selectedEntry);
 
                 var textBox = new TextBlock
                 {
@@ -325,6 +326,11 @@ public sealed partial class ArchivesControl
             }
             case ".spf":
             {
+                var frames = RenderUtil.RenderSpf(selectedEntry);
+
+                AnimatedPreview = new AnimatedPreview(frames, 100);
+                Preview.Content = AnimatedPreview.Element;
+
                 break;
             }
         }
