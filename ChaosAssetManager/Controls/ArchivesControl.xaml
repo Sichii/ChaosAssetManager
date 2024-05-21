@@ -67,7 +67,7 @@
             <ListView Grid.Column="0"
                       x:Name="ArchivesView"
                       DisplayMemberPath="EntryName"
-                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
                       SelectionChanged="ArchivesView_OnSelectionChanged" />
 
             <GridSplitter Grid.Column="1"
@@ -81,10 +81,11 @@
             <ScrollViewer Grid.Column="2"
                           x:Name="Preview"
                           Background="#FF2B2B2B"
+                          Margin="0"
+                          MaxWidth="1920"
+                          CanContentScroll="True"
                           HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto"
-                          VerticalAlignment="Stretch"
-                          HorizontalAlignment="Stretch" />
+                          VerticalScrollBarVisibility="Auto" />
         </Grid>
 
         <materialDesign:Snackbar Name="Snackbar"

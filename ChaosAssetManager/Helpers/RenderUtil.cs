@@ -19,6 +19,10 @@ public static class RenderUtil
     {
         using var data = entry.ToStreamSegment();
         var image = SKImage.FromEncodedData(data);
+
+        if (image is null)
+            return null;
+
         var frames = new SKImageCollection([image]);
 
         return new AnimatedPreview(frames);
@@ -44,11 +48,7 @@ public static class RenderUtil
         DataArchiveEntry entry,
         string archiveName,
         string archiveRoot)
-    {
-
-
-        return null;
-    }
+        => null;
 
     public static AnimatedPreview? RenderHpf(DataArchive archive, DataArchiveEntry entry)
     {

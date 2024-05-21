@@ -15,8 +15,7 @@
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
         DataContext="{Binding RelativeSource={RelativeSource Self}}">
-    <Grid HorizontalAlignment="Left"
-          VerticalAlignment="Stretch">
+    <Grid>
         <TabControl HorizontalContentAlignment="Left"
                     TabStripPlacement="Left"
                     Style="{StaticResource MaterialDesignTabControl}">
