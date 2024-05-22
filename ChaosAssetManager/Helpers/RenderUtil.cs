@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -17,7 +18,7 @@ using HorizontalAlignment = System.Windows.HorizontalAlignment;
 
 namespace ChaosAssetManager.Helpers;
 
-public static class RenderUtil
+public static partial class RenderUtil
 {
     private static IDictionary<int, Palette>? MpfPaletteLookup;
     private static PaletteLookup? StcPaletteLookup;
@@ -53,6 +54,12 @@ public static class RenderUtil
 
     public static Animation? RenderBmp(DataArchiveEntry entry)
     {
+        var entryName = entry.EntryName;
+
+        //not real bmps
+        if (entryName.EqualsI("tilea.bmp") || entryName.EqualsI("tileas.bmp"))
+            return null;
+
         using var data = entry.ToStreamSegment();
         var image = SKImage.FromEncodedData(data);
 
@@ -77,6 +84,52 @@ public static class RenderUtil
         {
             return null;
         }
+    }
+
+    public static Animation? RenderEpf(
+        DataArchive archive,
+        DataArchiveEntry entry,
+        string archiveName,
+        string archiveRoot)
+    {
+        switch (archiveName.ToLower())
+        {
+            case "legend.dat":
+            {
+                if (entry.EntryName.StartsWithI("bkstory"))
+                    return RenderLegendBackstoryEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("item"))
+                    return RenderLegendItemEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("field"))
+                    return RenderLegendFieldEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("skill") || entry.EntryName.StartsWithI("spell"))
+                    return RenderLegend01Epf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("staff"))
+                    return RenderLegendStaffEpf(archive, entry);
+
+                return RenderLegendEpf(archive, entry);
+            }
+            case "national.dat":
+            {
+                return RenderNationalEpf(archive, entry, archiveRoot);
+            }
+            case "roh.dat":
+            {
+                if (entry.EntryName.StartsWithI("efct"))
+                    return RenderRohEfctEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("mefc"))
+                    return RenderRohMefcEpf(archive, entry);
+
+                return null;
+            }
+        }
+
+        return null;
     }
 
     public static Animation? RenderHpf(DataArchive archive, DataArchiveEntry entry)
@@ -162,10 +215,13 @@ public static class RenderUtil
         {
             var spfFile = SpfFile.FromEntry(entry);
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             var transformer = spfFile.Select(
-                frame => spfFile.Format == SpfFormatType.Colorized
-                    ? Graphics.RenderImage(frame)
-                    : Graphics.RenderImage(frame, spfFile.PrimaryColors!));
+                                         frame => spfFile.Format == SpfFormatType.Colorized
+                                             ? Graphics.RenderImage(frame)
+                                             : Graphics.RenderImage(frame, spfFile.PrimaryColors!))
+                                     .Where(frame => frame is not null);
+
             var frames = new SKImageCollection(transformer);
 
             return new Animation(frames);
@@ -195,165 +251,22 @@ public static class RenderUtil
         };
     }
 
-    #region Epf Rendering
-    public static Animation? RenderEpf(
-        DataArchive archive,
-        DataArchiveEntry entry,
-        string archiveName,
-        string archiveRoot)
+    private static bool TryLoadLegendPalFromRoot(string archiveRoot, [NotNullWhen(true)] out Palette? legendPal)
     {
-        switch (archiveName.ToLower())
-        {
-            case "legend.dat":
-            {
-                if (entry.EntryName.StartsWithI("bkstory"))
-                    return RenderLegendBackstoryEpf(archive, entry);
+        legendPal = LegendPalette;
 
-                if (entry.EntryName.StartsWithI("item"))
-                    return RenderLegendItemEpf(archive, entry);
+        if (legendPal is not null)
+            return true;
 
-                if (entry.EntryName.StartsWithI("field"))
-                    return RenderLegendFieldEpf(archive, entry);
+        var legendPath = Path.Combine(archiveRoot, "legend.dat");
 
-                if (entry.EntryName.StartsWithI("skill") || entry.EntryName.StartsWithI("spell"))
-                    return RenderLegend01Epf(archive, entry);
+        if (!File.Exists(legendPath))
+            return false;
 
-                if (entry.EntryName.StartsWithI("staff"))
-                    return RenderLegendStaffEpf(archive, entry);
+        using var archive = DataArchive.FromFile(legendPath);
+        LegendPalette = Palette.FromEntry(archive["legend.pal"]);
+        legendPal = LegendPalette;
 
-                return RenderLegendEpf(archive, entry);
-            }
-        }
-
-        return null;
+        return true;
     }
-
-    public static Animation? RenderLegendBackstoryEpf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            if (!entry.TryGetNumericIdentifier(out var identifier))
-                return null;
-
-            var paletteLookup = BackstoryPaletteLookup ??= Palette.FromArchive("backpal", archive)
-                                                                  .ToFrozenDictionary();
-
-            if (!paletteLookup.TryGetValue(identifier, out var palette))
-                return null;
-
-            var epfFile = EpfFile.FromEntry(entry);
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
-            var frames = new SKImageCollection(transformer);
-
-            return new Animation(frames);
-        } catch
-        {
-            return null;
-        }
-    }
-
-    public static Animation? RenderLegendItemEpf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            var epfFile = EpfFile.FromEntry(entry);
-
-            if (!entry.TryGetNumericIdentifier(out var identifier))
-                return null;
-
-            var paletteLookup = ItemPaletteLookup ??= PaletteLookup.FromArchive("itempal", "item", archive)
-                                                                   .Freeze();
-
-            var transformer = epfFile.Select(
-                frame =>
-                {
-                    var itemId = identifier * 266;
-                    var palette = paletteLookup.GetPaletteForId(itemId);
-
-                    return Graphics.RenderImage(frame, palette);
-                });
-            using var images = new SKImageCollection(transformer);
-            var grid = CreateGrid(images);
-
-            return new Animation(new SKImageCollection([grid]));
-        } catch
-        {
-            return null;
-        }
-    }
-
-    public static Animation? RenderLegendFieldEpf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            var epfFile = EpfFile.FromEntry(entry);
-
-            if (!entry.TryGetNumericIdentifier(out var identifier))
-                return null;
-
-            var paletteLookup = FieldPaletteLookup ??= Palette.FromArchive("field", archive)
-                                                              .ToFrozenDictionary();
-
-            if (!paletteLookup.TryGetValue(identifier, out var palette))
-                return null;
-
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
-            var frames = new SKImageCollection(transformer);
-
-            return new Animation(frames);
-        } catch
-        {
-            return null;
-        }
-    }
-
-    private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            var epfFile = EpfFile.FromEntry(entry);
-            var palette = Legend01Palette ??= Palette.FromEntry(archive["legend01.pal"]);
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
-            using var images = new SKImageCollection(transformer);
-            var grid = CreateGrid(images);
-
-            return new Animation(new SKImageCollection([grid]));
-        } catch
-        {
-            return null;
-        }
-    }
-
-    private static Animation? RenderLegendStaffEpf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            var epfFile = EpfFile.FromEntry(entry);
-            var palette = StaffPalette ??= Palette.FromEntry(archive["legend.pal"]);
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
-            var frames = new SKImageCollection(transformer);
-
-            return new Animation(frames);
-        } catch
-        {
-            return null;
-        }
-    }
-
-    public static Animation? RenderLegendEpf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            var epfFile = EpfFile.FromEntry(entry);
-            var palette = LegendPalette ??= Palette.FromEntry(archive["staff.pal"]);
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
-            var frames = new SKImageCollection(transformer);
-
-            return new Animation(frames);
-        } catch
-        {
-            return null;
-        }
-    }
-    #endregion
 }

@@ -4,6 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:model="clr-namespace:ChaosAssetManager.Model"
+             xmlns:data="clr-namespace:DALib.Data;assembly=DALib"
              mc:Ignorable="d"
              d:DesignHeight="450"
              d:DesignWidth="700"
@@ -59,16 +61,27 @@
         </Menu>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="225" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ListView Grid.Column="0"
-                      x:Name="ArchivesView"
-                      DisplayMemberPath="EntryName"
-                      VerticalAlignment="Stretch"
-                      SelectionChanged="ArchivesView_OnSelectionChanged" />
+            <materialDesign:TreeListView Grid.Column="0"
+                                         x:Name="ArchivesView"
+                                         materialDesign:TreeViewAssist.ShowSelection="True"
+                                         SelectionMode="Extended"
+                                         SelectionChanged="ArchivesView_OnSelectionChanged">
+                <materialDesign:TreeListView.Resources>
+                    <HierarchicalDataTemplate DataType="{x:Type model:EntryGrouping}"
+                                              ItemsSource="{Binding Entries, Mode=OneTime}">
+                        <TextBlock Text="{Binding Extension, Mode=OneTime}" />
+                    </HierarchicalDataTemplate>
+
+                    <DataTemplate DataType="{x:Type data:DataArchiveEntry}">
+                        <TextBlock Text="{Binding EntryName, Mode=OneTime}" />
+                    </DataTemplate>
+                </materialDesign:TreeListView.Resources>
+            </materialDesign:TreeListView>
 
             <GridSplitter Grid.Column="1"
                           Width="2"

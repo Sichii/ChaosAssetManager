@@ -99,6 +99,9 @@ public sealed partial class EntryPreviewControl : IDisposable
             }
             case ".bmp":
             {
+                if (ArchiveName == "seo.dat")
+                    return;
+
                 var animation = RenderUtil.RenderBmp(Entry);
 
                 if (animation is null)
@@ -159,8 +162,9 @@ public sealed partial class EntryPreviewControl : IDisposable
         ArgumentNullException.ThrowIfNull(AnimationTimer);
         ArgumentNullException.ThrowIfNull(Element);
 
-        while (true)
-            try
+        try
+        {
+            while (true)
             {
                 await AnimationTimer.WaitForNextTickAsync();
 
@@ -171,30 +175,37 @@ public sealed partial class EntryPreviewControl : IDisposable
 
                 CurrentFrameIndex = (CurrentFrameIndex + 1) % Animation.Frames.Count;
                 Element.InvalidateVisual();
-            } catch
-            {
-                //ignored
             }
+        } catch
+        {
+            //ignored
+        }
     }
 
     private void GenerateElement()
     {
         ArgumentNullException.ThrowIfNull(Animation);
 
-        Matrix = SKMatrix.CreateIdentity();
-        AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs));
-        Element = new SKElement();
-        Element.PaintSurface += ElementOnPaintSurface;
-        Element.MouseWheel += SkElement_MouseWheel;
-        Element.MouseDown += SkElement_MouseDown;
-        Element.MouseMove += SkElement_MouseMove;
-        Element.MouseUp += SkElement_MouseUp;
-        Element.Loaded += ElementOnLoaded;
+        try
+        {
+            Matrix = SKMatrix.CreateIdentity();
+            AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs));
+            Element = new SKElement();
+            Element.PaintSurface += ElementOnPaintSurface;
+            Element.MouseWheel += SkElement_MouseWheel;
+            Element.MouseDown += SkElement_MouseDown;
+            Element.MouseMove += SkElement_MouseMove;
+            Element.MouseUp += SkElement_MouseUp;
+            Element.Loaded += ElementOnLoaded;
 
-        if (Animation.Frames.Count > 1)
-            AnimationTask = AnimateElement();
+            if (Animation.Frames.Count > 1)
+                AnimationTask = AnimateElement();
 
-        Content = Element;
+            Content = Element;
+        } catch
+        {
+            //ignored
+        }
     }
 
     private void ElementOnLoaded(object sender, RoutedEventArgs e)
@@ -203,21 +214,44 @@ public sealed partial class EntryPreviewControl : IDisposable
         ArgumentNullException.ThrowIfNull(Animation);
         ArgumentNullException.ThrowIfNull(Matrix);
 
-        var elementWidth = Element.ActualWidth;
-        var elementHeight = Element.ActualHeight;
+        try
+        {
+            var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
+            var elementWidth = Element.ActualWidth * dpiScale;
+            var elementHeight = Element.ActualHeight * dpiScale;
+            var centerPoint = new SKPoint((float)elementWidth / 2f, (float)elementHeight / 2f);
+            var maxWidth = Animation.Frames.Max(frame => frame.Width);
+            var maxHeight = Animation.Frames.Max(frame => frame.Height);
 
-        var maxWidth = Animation.Frames.Max(frame => frame.Width);
-        var maxHeight = Animation.Frames.Max(frame => frame.Height);
+            //calculate the translation to center the image
+            var translateX = (float)(elementWidth - maxWidth) / 2f;
+            var translateY = (float)(elementHeight - maxHeight) / 2f;
 
-        var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
+            //center the image
+            Matrix = SKMatrix.CreateTranslation(translateX, translateY);
 
-        // Correctly center the image taking into account the DPI scaling
-        var translateX = (float)(elementWidth * dpiScale - maxWidth) / 2f;
-        var translateY = (float)(elementHeight * dpiScale - maxHeight) / 2f;
+            //invert the matrix
+            if (!Matrix.Value.TryInvert(out var inverseMatrix))
+                return;
 
-        Matrix = SKMatrix.CreateTranslation(translateX, translateY);
+            //get the center point of the image
+            var transformedPoint = inverseMatrix.MapPoint(centerPoint);
 
-        Element.InvalidateVisual();
+            //scale up the image so that it fits better in the element
+            var scale = 2.0f;
+
+            Matrix = Matrix.Value.PreConcat(
+                SKMatrix.CreateScale(
+                    scale,
+                    scale,
+                    transformedPoint.X,
+                    transformedPoint.Y));
+
+            Element.InvalidateVisual();
+        } catch
+        {
+            //ignored
+        }
     }
 
     private void ElementOnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -225,23 +259,29 @@ public sealed partial class EntryPreviewControl : IDisposable
         ArgumentNullException.ThrowIfNull(Animation);
         ArgumentNullException.ThrowIfNull(Matrix);
 
-        using var @lock = Sync.Enter();
+        try
+        {
+            using var @lock = Sync.Enter();
 
-        if (Disposed)
-            return;
+            if (Disposed)
+                return;
 
-        var canvas = e.Surface.Canvas;
-        var frame = Animation.Frames[CurrentFrameIndex];
+            var canvas = e.Surface.Canvas;
+            var frame = Animation.Frames[CurrentFrameIndex];
 
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        //sometimes frames can be null
-        if (frame is null)
-            return;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            //sometimes frames can be null
+            if (frame is null)
+                return;
 
-        //clear the canvas and draw the image
-        canvas.Clear(SKColors.Black);
-        canvas.SetMatrix(Matrix.Value);
-        canvas.DrawImage(frame, 0, 0);
+            //clear the canvas and draw the image
+            canvas.Clear(SKColors.Black);
+            canvas.SetMatrix(Matrix.Value);
+            canvas.DrawImage(frame, 0, 0);
+        } catch
+        {
+            //ignored
+        }
     }
     #endregion
 
@@ -251,28 +291,34 @@ public sealed partial class EntryPreviewControl : IDisposable
         ArgumentNullException.ThrowIfNull(Element);
         ArgumentNullException.ThrowIfNull(Matrix);
 
-        using var @lock = Sync.Enter();
+        try
+        {
+            using var @lock = Sync.Enter();
 
-        var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
-        var position = e.GetPosition(Element);
-        var mousePoint = new SKPoint((float)position.X * dpiScale, (float)position.Y * dpiScale);
-        var scale = e.Delta > 0 ? 1.1f : 1 / 1.1f;
+            var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
+            var position = e.GetPosition(Element);
+            var mousePoint = new SKPoint((float)position.X * dpiScale, (float)position.Y * dpiScale);
+            var scale = e.Delta > 0 ? 1.1f : 1 / 1.1f;
 
-        if (!Matrix.Value.TryInvert(out var inverseMatrix))
-            return;
+            if (!Matrix.Value.TryInvert(out var inverseMatrix))
+                return;
 
-        var transformedPoint = inverseMatrix.MapPoint(mousePoint);
+            var transformedPoint = inverseMatrix.MapPoint(mousePoint);
 
-        // Apply scaling transformation around the transformed point
-        var scaling = SKMatrix.CreateScale(
-            scale,
-            scale,
-            transformedPoint.X,
-            transformedPoint.Y);
+            // Apply scaling transformation around the transformed point
+            var scaling = SKMatrix.CreateScale(
+                scale,
+                scale,
+                transformedPoint.X,
+                transformedPoint.Y);
 
-        Matrix = Matrix.Value.PreConcat(scaling);
+            Matrix = Matrix.Value.PreConcat(scaling);
 
-        Element.InvalidateVisual();
+            Element.InvalidateVisual();
+        } catch
+        {
+            //ignored
+        }
     }
 
     private void SkElement_MouseDown(object sender, MouseButtonEventArgs e)
@@ -282,12 +328,18 @@ public sealed partial class EntryPreviewControl : IDisposable
 
         ArgumentNullException.ThrowIfNull(Element);
 
-        using var @lock = Sync.Enter();
+        try
+        {
+            using var @lock = Sync.Enter();
 
-        IsPanning = true;
-        var position = e.GetPosition(Element);
-        LastPanPoint = new SKPoint((float)position.X, (float)position.Y);
-        Element.CaptureMouse();
+            IsPanning = true;
+            var position = e.GetPosition(Element);
+            LastPanPoint = new SKPoint((float)position.X, (float)position.Y);
+            Element.CaptureMouse();
+        } catch
+        {
+            //ignored
+        }
     }
 
     private void SkElement_MouseMove(object sender, MouseEventArgs e)
@@ -298,28 +350,40 @@ public sealed partial class EntryPreviewControl : IDisposable
         ArgumentNullException.ThrowIfNull(Element);
         ArgumentNullException.ThrowIfNull(Matrix);
 
-        using var @lock = Sync.Enter();
+        try
+        {
+            using var @lock = Sync.Enter();
 
-        var position = e.GetPosition(Element);
-        var dpiScale = DpiHelper.GetDpiScaleFactor();
-        var deltaX = (position.X - LastPanPoint.X) * dpiScale;
-        var deltaY = (position.Y - LastPanPoint.Y) * dpiScale;
+            var position = e.GetPosition(Element);
+            var dpiScale = DpiHelper.GetDpiScaleFactor();
+            var deltaX = (position.X - LastPanPoint.X) * dpiScale;
+            var deltaY = (position.Y - LastPanPoint.Y) * dpiScale;
 
-        Matrix = SKMatrix.CreateTranslation((float)deltaX, (float)deltaY)
-                         .PreConcat(Matrix.Value);
-        LastPanPoint = new SKPoint((float)position.X, (float)position.Y);
+            Matrix = SKMatrix.CreateTranslation((float)deltaX, (float)deltaY)
+                             .PreConcat(Matrix.Value);
+            LastPanPoint = new SKPoint((float)position.X, (float)position.Y);
 
-        Element.InvalidateVisual();
+            Element.InvalidateVisual();
+        } catch
+        {
+            //ignored
+        }
     }
 
     private void SkElement_MouseUp(object sender, MouseButtonEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Element);
 
-        using var @lock = Sync.Enter();
+        try
+        {
+            using var @lock = Sync.Enter();
 
-        IsPanning = false;
-        Element.ReleaseMouseCapture();
+            IsPanning = false;
+            Element.ReleaseMouseCapture();
+        } catch
+        {
+            //ignored
+        }
     }
     #endregion
 }

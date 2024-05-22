@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Model;
 using DALib.Data;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
@@ -92,7 +93,8 @@ public sealed partial class ArchivesControl
 
         if (numSelectedItems == 1)
         {
-            var selectedEntry = (DataArchiveEntry)ArchivesView.SelectedItem!;
+            if (ArchivesView.SelectedItem is not DataArchiveEntry selectedEntry)
+                return;
 
             Preview.Content = new EntryPreviewControl(
                 Archive,
@@ -277,8 +279,9 @@ public sealed partial class ArchivesControl
     private void SetViewSource()
     {
         if (Archive is not null)
-            ArchivesView.ItemsSource = Archive.OrderBy(entry => Path.GetExtension(entry.EntryName))
-                                              .ThenBy(entry => entry.EntryName);
+            ArchivesView.ItemsSource = Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
+                                              .Select(group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName)))
+                                              .ToList();
     }
     #endregion
 }
