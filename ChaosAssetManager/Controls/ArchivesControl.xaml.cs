@@ -96,11 +96,14 @@ public sealed partial class ArchivesControl
             if (ArchivesView.SelectedItem is not DataArchiveEntry selectedEntry)
                 return;
 
-            Preview.Content = new EntryPreviewControl(
-                Archive,
-                selectedEntry,
-                ArchiveName,
-                ArchiveRoot);
+            if (selectedEntry.EntryName.EqualsI("tilea.bmp") || selectedEntry.EntryName.EqualsI("tileas.bmp"))
+                Preview.Content = new TileViewerControl(Archive, selectedEntry);
+            else
+                Preview.Content = new EntryPreviewControl(
+                    Archive,
+                    selectedEntry,
+                    ArchiveName,
+                    ArchiveRoot);
         }
     }
 

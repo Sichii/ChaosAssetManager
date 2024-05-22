@@ -13,6 +13,7 @@ using DALib.Utility;
 using SkiaSharp;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
+using Control = System.Windows.Controls.Control;
 using Graphics = DALib.Drawing.Graphics;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 
@@ -231,14 +232,14 @@ public static partial class RenderUtil
         }
     }
 
-    public static TextBlock RenderText(DataArchiveEntry entry)
+    public static Control RenderText(DataArchiveEntry entry)
     {
         var builder = new StringBuilder();
         using var reader = new StreamReader(entry.ToStreamSegment());
 
         builder.Append(reader.ReadToEnd());
 
-        return new TextBlock
+        var text = new TextBlock
         {
             Text = builder.ToString(),
             TextWrapping = TextWrapping.Wrap,
@@ -249,6 +250,16 @@ public static partial class RenderUtil
             VerticalAlignment = VerticalAlignment.Stretch,
             Margin = new Thickness(0)
         };
+
+        var scrollViewer = new ScrollViewer
+        {
+            CanContentScroll = true,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Content = text
+        };
+
+        return scrollViewer;
     }
 
     private static bool TryLoadLegendPalFromRoot(string archiveRoot, [NotNullWhen(true)] out Palette? legendPal)

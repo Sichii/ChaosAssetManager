@@ -91,14 +91,10 @@
                           ResizeBehavior="PreviousAndNext"
                           ShowsPreview="True" />
 
-            <ScrollViewer Grid.Column="2"
-                          x:Name="Preview"
-                          Background="#FF2B2B2B"
-                          Margin="0"
-                          MaxWidth="1920"
-                          CanContentScroll="True"
-                          HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto" />
+            <ContentControl Grid.Column="2"
+                            x:Name="Preview"
+                            Background="#FF2B2B2B"
+                            Margin="0" />
         </Grid>
 
         <materialDesign:Snackbar Name="Snackbar"

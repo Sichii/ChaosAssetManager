@@ -14,11 +14,11 @@ namespace ChaosAssetManager.Controls;
 
 public sealed partial class EntryPreviewControl : IDisposable
 {
-    private readonly DataArchive Archive;
-    private readonly string ArchiveName;
-    private readonly string ArchiveRoot;
-    private readonly DataArchiveEntry Entry;
-    private readonly AutoReleasingMonitor Sync;
+    private readonly DataArchive Archive = null!;
+    private readonly string ArchiveName = null!;
+    private readonly string ArchiveRoot = null!;
+    private readonly DataArchiveEntry Entry = null!;
+    private readonly AutoReleasingMonitor Sync = null!;
     private Animation? Animation;
     private Task? AnimationTask;
     private PeriodicTimer? AnimationTimer;
@@ -43,6 +43,15 @@ public sealed partial class EntryPreviewControl : IDisposable
 
         InitializeComponent();
         Initialize();
+    }
+
+    public EntryPreviewControl(Animation animation)
+    {
+        Animation = animation;
+        Sync = new AutoReleasingMonitor();
+
+        InitializeComponent();
+        GenerateElement();
     }
 
     /// <inheritdoc />
