@@ -249,8 +249,10 @@ public sealed partial class EntryPreviewControl : IDisposable
             var transformedPoint = inverseMatrix.MapPoint(centerPoint);
 
             //scale up the image so that it fits better in the element, but not so big that it's bigger than the element
-            var scale = (float)Math.Min(2.0, Math.Min((float)elementWidth / maxWidth, (float)elementHeight / maxHeight));
+            //also, don't scale tiny images too much
+            var scale = Math.Clamp(Math.Min((float)elementWidth / maxWidth / 1.2f, (float)elementHeight / maxHeight / 1.2f), 1.0f, 2.0f);
 
+            //scale the image up around the center of the image so that it stays centered
             Matrix = Matrix.Value.PreConcat(
                 SKMatrix.CreateScale(
                     scale,

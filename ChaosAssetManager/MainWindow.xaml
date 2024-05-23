@@ -29,7 +29,9 @@
             <TabItem Header="Convert"
                      Name="ConvertTab"
                      IsSelected="true"
-                     Style="{StaticResource MaterialDesignTabItem}" />
+                     Style="{StaticResource MaterialDesignTabItem}">
+                <controls:ConvertControl x:Name="ConvertView" />
+            </TabItem>
 
             <TabItem Header="Meta Editor"
                      Name="MetaEditorTab"

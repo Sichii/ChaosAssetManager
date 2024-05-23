@@ -12,7 +12,6 @@ using DALib.Drawing;
 using DALib.Utility;
 using SkiaSharp;
 using Application = System.Windows.Application;
-using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Graphics = DALib.Drawing.Graphics;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
@@ -132,35 +131,37 @@ public static partial class RenderUtil
             {
                 if (entry.EntryName.StartsWithI("field"))
                     return RenderSetoaFieldEpf(archive, entry);
-                
+
                 //exceptions to rules
                 if (entry.EntryName.StartsWithI("dlgcre01"))
                     return RenderSetoaGuiEpf(archive, entry, 8);
 
                 if (entry.EntryName.StartsWithI("gbicon02") || entry.EntryName.StartsWithI("mernum"))
                     return RenderSetoaGuiGridEpf(archive, entry, 0);
-                
+
                 if (entry.EntryName.StartsWithI("emot00") || entry.EntryName.StartsWithI("emotdlg"))
                     return RenderSetoaGuiEpf(archive, entry, 0);
-                
+
                 if (entry.EntryName.StartsWithI("lsbackm"))
                     return RenderSetoaGuiEpf(archive, entry, 0);
-                
-                if (entry.EntryName.StartsWithI("setup12") || entry.EntryName.StartsWithI("setup13") || entry.EntryName.StartsWithI("setup14"))
+
+                if (entry.EntryName.StartsWithI("setup12")
+                    || entry.EntryName.StartsWithI("setup13")
+                    || entry.EntryName.StartsWithI("setup14"))
                     return RenderSetoaGuiEpf(archive, entry, 0);
-                
+
                 //1
-                if(entry.EntryName.StartsWithI("gbicon12") || entry.EntryName.StartsWithI("orb"))
+                if (entry.EntryName.StartsWithI("gbicon12") || entry.EntryName.StartsWithI("orb"))
                     return RenderSetoaGuiEpf(archive, entry, 1);
-                
+
                 //2
-                if(entry.EntryName.StartsWithI("gbicon01") || entry.EntryName.StartsWithI("gbicon03"))
+                if (entry.EntryName.StartsWithI("gbicon01") || entry.EntryName.StartsWithI("gbicon03"))
                     return RenderSetoaGuiGridEpf(archive, entry, 2);
-                
+
                 //3
                 if (entry.EntryName.StartsWithI("emot") || entry.EntryName.StartsWithI("equip02") || entry.EntryName.StartsWithI("mouse"))
                     return RenderSetoaGuiEpf(archive, entry, 3);
-                
+
                 if (entry.EntryName.StartsWithI("legends"))
                     return RenderSetoaGuiGridEpf(archive, entry, 3);
 
@@ -171,60 +172,60 @@ public static partial class RenderUtil
                     || entry.EntryName.StartsWithI("lod0")
                     || entry.EntryName.StartsWithI("setup"))
                     return RenderSetoaGuiEpf(archive, entry, 4);
-                
+
                 //5
                 if (entry.EntryName.StartsWithI("nation"))
                     return RenderSetoaGuiGridEpf(archive, entry, 5);
-                
+
                 //6
                 if (entry.EntryName.StartsWithI("skill0") || entry.EntryName.StartsWithI("spell0"))
                     return RenderSetoaGuiGridEpf(archive, entry, 6);
-                
+
                 //7
                 if (entry.EntryName.StartsWithI("lodbk"))
                     return RenderSetoaGuiEpf(archive, entry, 7);
-                
+
                 //8 dlgcre (at top)
-                
+
                 //9
                 if (entry.EntryName.StartsWithI("staff"))
                     return RenderSetoaGuiEpf(archive, entry, 9);
-                
+
                 //10
                 if (entry.EntryName.StartsWithI("lsback") || entry.EntryName.StartsWithI("lss"))
                     return RenderSetoaGuiEpf(archive, entry, 10);
-                
+
                 if (entry.EntryName.StartsWithI("leicon"))
                     return RenderSetoaGuiGridEpf(archive, entry, 10);
-                
+
                 //1
                 if (entry.EntryName.StartsWithI("ldi"))
                     return RenderSetoaGuiEpf(archive, entry, 11);
-                
+
                 //12
                 if (entry.EntryName.StartsWithI("lwmap") || entry.EntryName.StartsWithI("tmapv"))
                     return RenderSetoaGuiEpf(archive, entry, 12);
-                
+
                 //13
                 if (entry.EntryName.StartsWithI("bw_back") || entry.EntryName.StartsWithI("bw_check"))
                     return RenderSetoaGuiEpf(archive, entry, 13);
-                
+
                 //14
-                if(entry.EntryName.StartsWithI("kdesc") || entry.EntryName.StartsWithI("key") || entry.EntryName.StartsWithI("khotkey"))
+                if (entry.EntryName.StartsWithI("kdesc") || entry.EntryName.StartsWithI("key") || entry.EntryName.StartsWithI("khotkey"))
                     return RenderSetoaGuiEpf(archive, entry, 14);
-                
+
                 //15
                 if (entry.EntryName.StartsWithI("lg_"))
                     return RenderSetoaGuiEpf(archive, entry, 15);
-                
+
                 //16
-                if(entry.EntryName.StartsWithI("bw_flag"))
+                if (entry.EntryName.StartsWithI("bw_flag"))
                     return RenderSetoaGuiEpf(archive, entry, 16);
 
                 //17
                 if (entry.EntryName.StartsWithI("album_b") || entry.EntryName.EqualsI("album.epf"))
                     return RenderSetoaGuiEpf(archive, entry, 17);
-                
+
                 //default to 0
                 return RenderSetoaGuiEpf(archive, entry, 0);
             }
@@ -344,7 +345,6 @@ public static partial class RenderUtil
             Text = builder.ToString(),
             TextWrapping = TextWrapping.Wrap,
             Style = Application.Current.Resources["MaterialDesignTextBlock"] as Style,
-            Foreground = Brushes.White,
             Padding = new Thickness(10),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,

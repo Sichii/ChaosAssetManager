@@ -27,57 +27,57 @@ public sealed partial class ArchivesControl
 
     private void ArchivesControl_OnDrop(object sender, DragEventArgs e)
     {
-        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            return;
+
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+
+        if (files.Count(file => file.EndsWithI(".dat")) > 1)
         {
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+            ShowMessage("Please only drop one archive at a time!");
 
-            if (files.Count(file => file.EndsWithI(".dat")) > 1)
-            {
-                ShowMessage("Please only drop one archive at a time!");
-
-                return;
-            }
-
-            var archivePath = files.FirstOrDefault(file => file.EndsWithI(".dat"));
-
-            if (archivePath is not null)
-            {
-                LoadArchive(archivePath);
-                ShowMessage("Archive loaded successfully!");
-
-                return;
-            }
-
-            if (Archive is null)
-            {
-                ShowMessage("Please load an archive first!");
-
-                return;
-            }
-
-            var patched = false;
-
-            ArchivesView.ItemsSource = null;
-
-            foreach (var file in files)
-            {
-                PatchArchive(file);
-                patched = true;
-            }
-
-            SetViewSource();
-            ArchivesView.SelectedItems.Clear();
-
-            foreach (var fileName in files)
-            {
-                var entryName = Path.GetFileName(fileName);
-                var entry = Archive![entryName];
-                ArchivesView.SelectedItems.Add(entry);
-            }
-
-            if (patched)
-                ShowMessage("Archive patched successfully!");
+            return;
         }
+
+        var archivePath = files.FirstOrDefault(file => file.EndsWithI(".dat"));
+
+        if (archivePath is not null)
+        {
+            LoadArchive(archivePath);
+            ShowMessage("Archive loaded successfully!");
+
+            return;
+        }
+
+        if (Archive is null)
+        {
+            ShowMessage("Please load an archive first!");
+
+            return;
+        }
+
+        var patched = false;
+
+        ArchivesView.ItemsSource = null;
+
+        foreach (var file in files)
+        {
+            PatchArchive(file);
+            patched = true;
+        }
+
+        SetViewSource();
+        ArchivesView.SelectedItems.Clear();
+
+        foreach (var fileName in files)
+        {
+            var entryName = Path.GetFileName(fileName);
+            var entry = Archive![entryName];
+            ArchivesView.SelectedItems.Add(entry);
+        }
+
+        if (patched)
+            ShowMessage("Archive patched successfully!");
     }
 
     private void ArchivesView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)

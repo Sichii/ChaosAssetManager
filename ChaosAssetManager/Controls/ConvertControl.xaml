@@ -6,11 +6,64 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              d:DesignHeight="450"
-             d:DesignWidth="600"
+             d:DesignWidth="700"
              Background="{DynamicResource MaterialDesignPaper}"
              TextElement.FontWeight="Medium"
              TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
-             DataContext="{Binding RelativeSource={RelativeSource Self}}">
-    <Grid />
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             AllowDrop="True"
+             DragEnter="ConvertControl_OnDragEnter"
+             Drop="ConvertControl_OnDrop">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Button x:Name="SelectFilesBtn"
+                Grid.Column="0"
+                HorizontalAlignment="Center"
+                Content="Select or drop files"
+                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                Click="SelectFilesBtn_OnClick" />
+
+        <StackPanel x:Name="ConversionPanel"
+                    Grid.Column="1"
+                    Visibility="Hidden"
+                    VerticalAlignment="Center">
+            <ComboBox x:Name="ConversionOptionsCmbx"
+                      HorizontalAlignment="Center"
+                      Margin="5"
+                      Style="{StaticResource MaterialDesignComboBox}">
+                <ComboBoxItem Content=".png"
+                              IsSelected="True" />
+                <ComboBoxItem Content=".bmp" />
+                <ComboBoxItem Content=".jpg" />
+                <ComboBoxItem Content=".jpeg" />
+                <ComboBoxItem Content=".epf" />
+                <ComboBoxItem Content=".efa" />
+                <ComboBoxItem Content=".hpf" />
+                <ComboBoxItem Content=".mpf" />
+                <ComboBoxItem Content=".spf (colorized)" />
+                <ComboBoxItem Content=".spf (palettized)" />
+            </ComboBox>
+
+            <Button x:Name="ConvertBtn"
+                    Content="Convert"
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    Click="ConvertBtn_OnClick"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+        </StackPanel>
+
+        <materialDesign:Snackbar Name="Snackbar"
+                                 Grid.ColumnSpan="99"
+                                 Grid.RowSpan="99"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="0"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
 </UserControl>
