@@ -18,8 +18,10 @@ public sealed partial class EntryPreviewControl : IDisposable
     private readonly string ArchiveName = null!;
     private readonly string ArchiveRoot = null!;
     private readonly DataArchiveEntry Entry = null!;
-    private readonly AutoReleasingMonitor Sync = null!;
+    private readonly AutoReleasingMonitor Sync;
     private Animation? Animation;
+
+    // ReSharper disable once NotAccessedField.Local
     private Task? AnimationTask;
     private PeriodicTimer? AnimationTimer;
     private int CurrentFrameIndex;
@@ -246,8 +248,8 @@ public sealed partial class EntryPreviewControl : IDisposable
             //get the center point of the image
             var transformedPoint = inverseMatrix.MapPoint(centerPoint);
 
-            //scale up the image so that it fits better in the element
-            var scale = 2.0f;
+            //scale up the image so that it fits better in the element, but not so big that it's bigger than the element
+            var scale = (float)Math.Min(2.0, Math.Min((float)elementWidth / maxWidth, (float)elementHeight / maxHeight));
 
             Matrix = Matrix.Value.PreConcat(
                 SKMatrix.CreateScale(

@@ -75,8 +75,8 @@ public static partial class RenderUtil
             if (!entry.TryGetNumericIdentifier(out var identifier))
                 return null;
 
-            var paletteLookup = FieldPaletteLookup ??= Palette.FromArchive("field", archive)
-                                                              .ToFrozenDictionary();
+            var paletteLookup = LegendFieldPaletteLookup ??= Palette.FromArchive("field", archive)
+                                                                    .ToFrozenDictionary();
 
             if (!paletteLookup.TryGetValue(identifier, out var palette))
                 return null;
