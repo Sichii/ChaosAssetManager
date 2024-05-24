@@ -24,9 +24,6 @@ public static partial class RenderUtil
     private static PaletteLookup? StcPaletteLookup;
     private static PaletteLookup? StsPaletteLookup;
     private static IDictionary<int, Palette>? BackstoryPaletteLookup;
-    private static IDictionary<int, Palette>? LegendFieldPaletteLookup;
-    private static Palette? LegendPalette;
-    private static Palette? Legend01Palette;
     private static Palette? StaffPalette;
     private static PaletteLookup? ItemPaletteLookup;
     private static TileAnimationTable? TileAnimationTable;
@@ -360,6 +357,28 @@ public static partial class RenderUtil
         };
 
         return scrollViewer;
+    }
+
+    public static void Reset()
+    {
+        MpfPaletteLookup = null;
+        StcPaletteLookup = null;
+        StsPaletteLookup = null;
+        BackstoryPaletteLookup = null;
+        LegendFieldPaletteLookup = null;
+        LegendPalette = null;
+        Legend01Palette = null;
+        StaffPalette = null;
+        ItemPaletteLookup = null;
+        TileAnimationTable = null;
+        RohEfctPaletteLookup = null;
+        RohMefcPaletteLookup = null;
+        RohMptPaletteLookup = null;
+        RohMpsPaletteLookup = null;
+        EffectTable = null;
+        SetoaFieldPaletteLookup = null;
+        SetoaGuiPaletteLookup = null;
+        SetoaNslPaletteLookup = null;
     }
 
     private static bool TryLoadLegendPalFromRoot(string archiveRoot, [NotNullWhen(true)] out Palette? legendPal)

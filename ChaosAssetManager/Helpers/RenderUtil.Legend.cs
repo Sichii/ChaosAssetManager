@@ -9,6 +9,10 @@ namespace ChaosAssetManager.Helpers;
 
 public static partial class RenderUtil
 {
+    private static IDictionary<int, Palette>? LegendFieldPaletteLookup;
+    private static Palette? LegendPalette;
+    private static Palette? Legend01Palette;
+
     private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
     {
         try

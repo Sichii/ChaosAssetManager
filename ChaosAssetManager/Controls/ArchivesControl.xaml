@@ -25,8 +25,7 @@
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0"
-              materialDesign:MenuAssist.TopLevelMenuItemHeight="30"
-              Style="{StaticResource MaterialDesignMenu}">
+              materialDesign:MenuAssist.TopLevelMenuItemHeight="30">
             <MenuItem x:Name="LoadBtn"
                       Header="Load"
                       Padding="10 0 10 0"

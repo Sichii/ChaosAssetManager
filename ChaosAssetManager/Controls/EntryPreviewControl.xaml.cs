@@ -24,6 +24,7 @@ public sealed partial class EntryPreviewControl : IDisposable
     // ReSharper disable once NotAccessedField.Local
     private Task? AnimationTask;
     private PeriodicTimer? AnimationTimer;
+    private readonly SKImage? PreviewBg;
     private int CurrentFrameIndex;
     private bool Disposed;
     private SKElement? Element;
@@ -35,21 +36,24 @@ public sealed partial class EntryPreviewControl : IDisposable
         DataArchive archive,
         DataArchiveEntry entry,
         string archiveName,
-        string archiveRoot)
+        string archiveRoot,
+        SKImage? previewBg = null)
     {
         Archive = archive;
         Entry = entry;
         ArchiveName = archiveName;
         ArchiveRoot = archiveRoot;
+        PreviewBg = previewBg;
         Sync = new AutoReleasingMonitor();
 
         InitializeComponent();
         Initialize();
     }
 
-    public EntryPreviewControl(Animation animation)
+    public EntryPreviewControl(Animation animation, SKImage? previewBg = null)
     {
         Animation = animation;
+        PreviewBg = previewBg;
         Sync = new AutoReleasingMonitor();
 
         InitializeComponent();
@@ -68,6 +72,7 @@ public sealed partial class EntryPreviewControl : IDisposable
 
         Animation?.Dispose();
         AnimationTimer?.Dispose();
+        PreviewBg?.Dispose();
     }
 
     private void Initialize()
@@ -290,7 +295,19 @@ public sealed partial class EntryPreviewControl : IDisposable
             //clear the canvas and draw the image
             canvas.Clear(SKColors.Black);
             canvas.SetMatrix(Matrix.Value);
-            canvas.DrawImage(frame, 0, 0);
+
+            var targetX = 0;
+            var targetY = 0;
+
+            if (PreviewBg is not null)
+            {
+                canvas.DrawImage(PreviewBg, 0, 0);
+
+                targetX = PreviewBg.Width / 2 - frame.Width / 2;
+                targetY = PreviewBg.Height / 2 - frame.Height / 2;
+            }
+
+            canvas.DrawImage(frame, targetX, targetY);
         } catch
         {
             //ignored

@@ -11,6 +11,7 @@
 
     <ItemGroup>
         <PackageReference Include="Chaos.Extensions.Common" Version="1.2.9"/>
+        <PackageReference Include="DALib" Version="0.4.0" />
         <PackageReference Include="MaterialDesignExtensions" Version="3.3.0"/>
         <PackageReference Include="MaterialDesignThemes" Version="5.0.1-ci633"/>
         <PackageReference Include="SkiaSharp" Version="2.88.8"/>
@@ -18,7 +19,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\dalib\DALib\DALib.csproj"/>
+        <EmbeddedResource Update="Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+        <None Remove="assetbg.png"/>
+        <EmbeddedResource Include="previewbg.png"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>

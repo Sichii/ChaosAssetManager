@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
 using DataFormats = System.Windows.DataFormats;
@@ -250,6 +251,7 @@ public sealed partial class ArchivesControl
     private void LoadArchive(string path)
     {
         Archive?.Dispose();
+        RenderUtil.Reset();
 
         try
         {
@@ -272,6 +274,8 @@ public sealed partial class ArchivesControl
 
     private void PatchArchive(string path)
     {
+        RenderUtil.Reset();
+
         var entryName = Path.GetFileName(path);
 
         using var entry = new PatchEntry(File.OpenRead(path));
