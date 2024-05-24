@@ -18,13 +18,13 @@ public sealed partial class EntryPreviewControl : IDisposable
     private readonly string ArchiveName = null!;
     private readonly string ArchiveRoot = null!;
     private readonly DataArchiveEntry Entry = null!;
+    private readonly SKImage? PreviewBg;
     private readonly AutoReleasingMonitor Sync;
     private Animation? Animation;
 
     // ReSharper disable once NotAccessedField.Local
     private Task? AnimationTask;
     private PeriodicTimer? AnimationTimer;
-    private readonly SKImage? PreviewBg;
     private int CurrentFrameIndex;
     private bool Disposed;
     private SKElement? Element;
@@ -162,6 +162,15 @@ public sealed partial class EntryPreviewControl : IDisposable
                     break;
 
                 Animation = animation;
+
+                break;
+            }
+            case ".mp3":
+            {
+                var audioStream = Entry.ToStreamSegment();
+                var player = new AudioPlayer(audioStream);
+
+                Content = player;
 
                 break;
             }

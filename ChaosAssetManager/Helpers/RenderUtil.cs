@@ -27,6 +27,7 @@ public static partial class RenderUtil
     private static Palette? StaffPalette;
     private static PaletteLookup? ItemPaletteLookup;
     private static TileAnimationTable? TileAnimationTable;
+    private static IDictionary<int, Palette>? DyePalettes;
 
     private static SKImage CreateGrid(ICollection<SKImage> images, int paddingX = 2, int paddingY = 2)
     {
@@ -89,7 +90,9 @@ public static partial class RenderUtil
         string archiveName,
         string archiveRoot)
     {
-        switch (archiveName.ToLower())
+        archiveName = archiveName.ToLower();
+
+        switch (archiveName)
         {
             case "legend.dat":
             {
@@ -225,6 +228,17 @@ public static partial class RenderUtil
 
                 //default to 0
                 return RenderSetoaGuiEpf(archive, entry, 0);
+            }
+            case "misc.dat":
+            {
+                return RenderMiscEpf(archive, entry, archiveRoot);
+            }
+            default:
+            {
+                if (archiveName.ContainsI("khan"))
+                    return RenderKhanEpf(entry, archiveRoot);
+
+                break;
             }
         }
 
@@ -379,6 +393,47 @@ public static partial class RenderUtil
         SetoaFieldPaletteLookup = null;
         SetoaGuiPaletteLookup = null;
         SetoaNslPaletteLookup = null;
+        DyePalettes = null;
+        KhanBPaletteLookup = null;
+        KhanCPaletteLookup = null;
+        KhanEPaletteLookup = null;
+        KhanFPaletteLookup = null;
+        KhanHPaletteLookup = null;
+        KhanIPaletteLookup = null;
+        KhanLPaletteLookup = null;
+        KhanPPaletteLookup = null;
+        KhanUPaletteLookup = null;
+        KhanWPaletteLookup = null;
+        KhanMPaletteLookup = null;
+    }
+
+    private static bool TryLoadDyePalettes(string archiveRoot, [NotNullWhen(true)] out IDictionary<int, Palette>? lookup)
+    {
+        lookup = DyePalettes;
+
+        if (lookup is not null)
+            return true;
+
+        var legendPath = Path.Combine(archiveRoot, "legend.dat");
+
+        if (!File.Exists(legendPath))
+            return false;
+
+        using var legend = DataArchive.FromFile(legendPath);
+
+        //color0.tbl contains all 72 dye colors
+        if (!legend.TryGetValue("color0.tbl", out var entry))
+            return false;
+
+        var colorTable = ColorTable.FromEntry(entry);
+        var blankPalette = new Palette();
+
+        //for each entry in color0.tbl, we create a blank palette and dye it with colors from the entry
+        lookup = DyePalettes ??= colorTable.ToFrozenDictionary(
+            colorEntry => (int)colorEntry.ColorIndex,
+            colorEntry => blankPalette.Dye(colorEntry));
+
+        return true;
     }
 
     private static bool TryLoadLegendPalFromRoot(string archiveRoot, [NotNullWhen(true)] out Palette? legendPal)

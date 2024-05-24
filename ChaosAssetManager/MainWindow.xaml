@@ -35,6 +35,14 @@
             <TabItem Header="Editor"
                      Name="EditorTab"
                      Style="{StaticResource MaterialDesignTabItem}" />
+
+            <TabItem Header="Mpf Creator"
+                     Name="MpfCreatorTab"
+                     Style="{StaticResource MaterialDesignTabItem}" />
+
+            <TabItem Header="Ability Icons"
+                     Name="AbilityIconCreatorTab"
+                     Style="{StaticResource MaterialDesignTabItem}" />
         </TabControl>
     </Grid>
 </Window>

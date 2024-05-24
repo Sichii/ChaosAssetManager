@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using Chaos.Common.Comparers;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
@@ -286,9 +288,9 @@ public sealed partial class ArchivesControl
     private void SetViewSource()
     {
         if (Archive is not null)
-            ArchivesView.ItemsSource = Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
-                                              .Select(group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName)))
-                                              .ToList();
+            ArchivesView.ItemsSource = new CollectionView(
+                Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
+                       .Select(group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, new NaturalStringComparer()))));
     }
     #endregion
 }

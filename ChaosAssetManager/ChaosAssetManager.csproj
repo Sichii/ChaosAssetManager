@@ -10,10 +10,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Chaos.Extensions.Common" Version="1.2.9"/>
-        <PackageReference Include="DALib" Version="0.4.0" />
+        <PackageReference Include="Chaos.Extensions.Common" Version="1.3.62-preview-g627b819ca4" />
+        <PackageReference Include="DALib" Version="0.4.0"/>
         <PackageReference Include="MaterialDesignExtensions" Version="3.3.0"/>
         <PackageReference Include="MaterialDesignThemes" Version="5.0.1-ci633"/>
+        <PackageReference Include="NAudio" Version="2.2.1"/>
         <PackageReference Include="SkiaSharp" Version="2.88.8"/>
         <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.8"/>
     </ItemGroup>
