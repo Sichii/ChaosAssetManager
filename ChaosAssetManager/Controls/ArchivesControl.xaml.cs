@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using Chaos.Common.Comparers;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Controls.PreviewControls;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
@@ -290,7 +291,8 @@ public sealed partial class ArchivesControl
         if (Archive is not null)
             ArchivesView.ItemsSource = new CollectionView(
                 Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
-                       .Select(group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, new NaturalStringComparer()))));
+                       .Select(
+                           group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, new NaturalStringComparer()))));
     }
     #endregion
 }

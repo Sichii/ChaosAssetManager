@@ -34,7 +34,9 @@
 
             <TabItem Header="Editor"
                      Name="EditorTab"
-                     Style="{StaticResource MaterialDesignTabItem}" />
+                     Style="{StaticResource MaterialDesignTabItem}">
+                <controls:EditorControl x:Name="EditorView" />
+            </TabItem>
 
             <TabItem Header="Mpf Creator"
                      Name="MpfCreatorTab"

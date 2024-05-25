@@ -1,12 +1,13 @@
-﻿<UserControl x:Class="ChaosAssetManager.Controls.TileViewerControl"
+﻿<UserControl x:Class="ChaosAssetManager.Controls.PreviewControls.SKElementPlus"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:wpf="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             d:DesignHeight="500"
-             d:DesignWidth="850"
+             d:DesignHeight="300"
+             d:DesignWidth="300"
              Background="{DynamicResource MaterialDesignPaper}"
              TextElement.FontWeight="Medium"
              TextElement.FontSize="14"
@@ -14,17 +15,12 @@
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="100" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <ListView x:Name="TileListView"
-                  Grid.Column="0"
-                  SelectionMode="Single"
-                  SelectionChanged="TileListView_OnSelectionChanged" />
-
-        <ContentControl x:Name="TilePreview"
-                        Grid.Column="1" />
+        <wpf:SKElement x:Name="Element"
+                       MouseWheel="SkElement_MouseWheel"
+                       MouseDown="SkElement_MouseDown"
+                       MouseMove="SkElement_MouseMove"
+                       MouseUp="SkElement_MouseUp"
+                       PaintSurface="ElementOnPaintSurface"
+                       Loaded="Element_OnLoaded" />
     </Grid>
 </UserControl>

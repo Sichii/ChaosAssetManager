@@ -7,7 +7,7 @@ using DALib.Drawing;
 using DALib.Utility;
 using Graphics = DALib.Drawing.Graphics;
 
-namespace ChaosAssetManager.Controls;
+namespace ChaosAssetManager.Controls.PreviewControls;
 
 public sealed partial class TileViewerControl
 {
@@ -64,7 +64,7 @@ public sealed partial class TileViewerControl
 
         if (frames.IsNullOrEmpty())
             return;
-        
+
         var animation = new Animation(frames, animationEntry?.AnimationIntervalMs);
         var content = new EntryPreviewControl(animation);
 

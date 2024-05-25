@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:previewControls="clr-namespace:ChaosAssetManager.Controls.PreviewControls"
              mc:Ignorable="d"
              d:DesignHeight="400"
              d:DesignWidth="700"
@@ -14,61 +15,212 @@
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid>
-        <TabControl HorizontalContentAlignment="Left"
-                    TabStripPlacement="Left"
+        <TabControl Grid.Row="0"
+                    HorizontalContentAlignment="Left"
                     Style="{StaticResource MaterialDesignTabControl}">
             <TabItem Header="File"
                      Name="FileTab"
-                     IsSelected="true"
                      Style="{StaticResource MaterialDesignTabItem}">
-                <Grid VerticalAlignment="Center"
-                      HorizontalAlignment="Center">
+                <Grid VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto"
+                                          MinWidth="125" />
+                        <ColumnDefinition Width="50" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
 
-                    <Label Grid.Column="0"
-                           Grid.Row="0"
-                           HorizontalAlignment="Right"
-                           Margin="5"
-                           Content="Blending Type:" />
-                    <Label Grid.Column="0"
-                           Grid.Row="1"
-                           HorizontalAlignment="Right"
-                           Margin="5"
-                           Content="Frame Interval (ms):" />
-                    <ComboBox Grid.Column="1"
-                              Grid.Row="0"
-                              x:Name="BlendingTypeCmbx"
-                              Margin="5"
-                              Foreground="{DynamicResource MaterialDesignBody}">
-                        <ComboBoxItem Content="Luminance"
-                                      IsSelected="True" />
-                        <ComboBoxItem Content="LessLuminance" />
-                    </ComboBox>
-                    <TextBox Grid.Column="1"
-                             Grid.Row="1"
-                             x:Name="FrameInvervalMsTbox"
-                             Margin="5"
-                             Text="100"
-                             Foreground="{DynamicResource MaterialDesignBody}"
-                             PreviewTextInput="FrameInvervalMsTbox_OnPreviewTextInput" />
+                    <StackPanel Grid.Column="0"
+                                VerticalAlignment="Center">
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom"
+                               Margin="5"
+                               Content="Blending Type:" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Frame Interval (ms):" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center">
+                        <ComboBox x:Name="BlendingTypeCmbx"
+                                  VerticalAlignment="Bottom"
+                                  Margin="5"
+                                  SelectionChanged="BlendingTypeCmbx_OnSelectionChanged"
+                                  Foreground="{DynamicResource MaterialDesignBody}">
+                            <ComboBoxItem Content="Luminance" />
+                            <ComboBoxItem Content="LessLuminance" />
+                        </ComboBox>
+                        <TextBox x:Name="FrameInvervalMsTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="FrameInvervalMsTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                    </StackPanel>
 
-                    <ContentControl Grid.Column="2"
-                                    Grid.RowSpan="99"
-                                    x:Name="PreviewPanel" />
+                    <Button Grid.Column="1"
+                            x:Name="ImageApplyBtn"
+                            Content="Apply"
+                            VerticalAlignment="Bottom"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                            Click="ImageApplyBtn_OnClick" />
+
+                    <previewControls:SKElementPlus Grid.Column="3"
+                                                   x:Name="ImageRenderElement"
+                                                   Margin="10"
+                                                   MinWidth="250"
+                                                   MinHeight="250"
+                                                   Paint="ImageRenderElement_OnPaint"
+                                                   ElementLoaded="ImageRenderElement_OnElementLoaded" />
 
                 </Grid>
             </TabItem>
             <TabItem Header="Frames"
                      Name="FramesTab"
-                     Style="{StaticResource MaterialDesignTabItem}" />
+                     Style="{StaticResource MaterialDesignTabItem}">
+
+                <Grid VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto"
+                                          MinWidth="125" />
+                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ListView Grid.Column="0"
+                              x:Name="FramesListView"
+                              HorizontalAlignment="Left"
+                              MinWidth="50"
+                              ScrollViewer.VerticalScrollBarVisibility="Visible"
+                              SelectionChanged="FramesListView_OnSelectionChanged" />
+
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center">
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom"
+                               Margin="5"
+                               Content="Left:"
+                               Foreground="Yellow" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Top:"
+                               Foreground="Yellow" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="CenterX:"
+                               Foreground="Fuchsia" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="CenterY:"
+                               Foreground="Fuchsia" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="FramePixelWidth:"
+                               Foreground="Red" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="FramePixelHeight:"
+                               Foreground="Red" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="ImagePixelWidth:"
+                               Foreground="Blue" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="ImagePixelHeight:"
+                               Foreground="Blue" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                VerticalAlignment="Center">
+                        <TextBox x:Name="LeftTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="LeftTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="TopTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="TopTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="CenterXTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="CenterXTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="CenterYTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="CenterYTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="FramePixelWidthTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="FramePixelWidthTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="FramePixelHeightTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="FramePixelHeightTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="ImagePixelWidthTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="ImagePixelWidthTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="ImagePixelHeightTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="ImagePixelHeightTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2"
+                            x:Name="FrameApplyBtn"
+                            Content="Apply"
+                            VerticalAlignment="Bottom"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                            Click="FrameApplyBtn_OnClick" />
+
+                    <previewControls:SKElementPlus Grid.Column="4"
+                                                   x:Name="FrameRenderElement"
+                                                   Margin="10"
+                                                   MinWidth="250"
+                                                   MinHeight="250"
+                                                   Paint="FrameRenderElement_OnPaint"
+                                                   ElementLoaded="FrameRenderElement_OnElementLoaded" />
+                </Grid>
+            </TabItem>
         </TabControl>
+
+        <materialDesign:Snackbar Name="Snackbar"
+                                 Grid.ColumnSpan="99"
+                                 Grid.RowSpan="99"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="0"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
     </Grid>
 </UserControl>

@@ -33,8 +33,17 @@ public static partial class RenderUtil
             var palette = paletteLookup.GetPaletteForId(identifier);
 
             // select frames as they are specified in the effect table
-            var transformer = effectEntry.Select(frameIndex => Graphics.RenderImage(epfFile[frameIndex], palette));
-            var frames = new SKImageCollection(transformer);
+            var transformer = effectEntry.Select(
+                                             frameIndex =>
+                                             {
+                                                 if (frameIndex >= epfFile.Count)
+                                                     return null;
+
+                                                 return Graphics.RenderImage(epfFile[frameIndex], palette);
+                                             })
+                                         .Where(frame => frame is not null);
+
+            var frames = new SKImageCollection(transformer!);
 
             return new Animation(frames);
         } catch

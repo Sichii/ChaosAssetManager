@@ -6,7 +6,7 @@ using Chaos.Common.Synchronization;
 using NAudio.Wave;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
-namespace ChaosAssetManager.Controls;
+namespace ChaosAssetManager.Controls.PreviewControls;
 
 public partial class AudioPlayer : IDisposable
 {

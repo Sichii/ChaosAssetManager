@@ -23,11 +23,13 @@
               materialDesign:MenuAssist.TopLevelMenuItemHeight="30">
             <MenuItem x:Name="Load"
                       Header="Load"
-                      Padding="10 0 10 0" />
+                      Padding="10 0 10 0"
+                      Click="Load_OnClick" />
 
             <MenuItem x:Name="Save"
                       Header="Save"
-                      Padding="10 0 10 0" />
+                      Padding="10 0 10 0"
+                      Click="Save_OnClick" />
         </Menu>
 
         <ContentControl x:Name="ContentPanel"
