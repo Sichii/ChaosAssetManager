@@ -14,7 +14,7 @@ using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EfaEditor : IDisposable
+public sealed partial class EpfEditor : IDisposable
 {
     private readonly SKImage BgImage;
     private readonly EfaFile EfaImage;
@@ -28,7 +28,7 @@ public sealed partial class EfaEditor : IDisposable
     private PeriodicTimer? ImageAnimationTimer;
     private int SelectedFrameIndex;
 
-    public EfaEditor(EfaFile efaImage)
+    public EpfEditor(EfaFile efaImage)
     {
         Sync = new AutoReleasingMonitor();
         EfaImage = efaImage;
@@ -91,13 +91,6 @@ public sealed partial class EfaEditor : IDisposable
             return;
 
         var frame = EfaImage[SelectedFrameIndex];
-
-        if ((frame.CenterX > frame.ImagePixelWidth) || (frame.CenterY > frame.ImagePixelHeight))
-        {
-            Snackbar.MessageQueue!.Enqueue("Center point must lie within the image bounds");
-
-            return;
-        }
 
         if (frame.FramePixelWidth > frame.ImagePixelWidth)
         {
@@ -335,8 +328,8 @@ public sealed partial class EfaEditor : IDisposable
             framePaint.StrokeWidth = 1;
 
             canvas.DrawRect(
-                left,
-                top,
+                left + efaFrame.Left,
+                top + efaFrame.Top,
                 efaFrame.FramePixelWidth,
                 efaFrame.FramePixelHeight,
                 framePaint);
@@ -362,19 +355,6 @@ public sealed partial class EfaEditor : IDisposable
                 top + efaFrame.Top,
                 2,
                 topLeftPaint);
-
-            // Draw image bytes rect
-            using var imageBytesPaint = new SKPaint();
-            imageBytesPaint.Color = SKColors.Yellow;
-            imageBytesPaint.Style = SKPaintStyle.Stroke;
-            imageBytesPaint.StrokeWidth = 1;
-
-            canvas.DrawRect(
-                left + efaFrame.Left,
-                top + efaFrame.Top,
-                efaFrame.ByteWidth / 2f + efaFrame.Left,
-                (float)efaFrame.ByteCount / efaFrame.ByteWidth + efaFrame.Top,
-                imageBytesPaint);
         } catch
         {
             //ignored
