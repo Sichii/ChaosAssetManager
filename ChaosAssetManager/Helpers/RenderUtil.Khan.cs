@@ -3,6 +3,7 @@ using System.IO;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Model;
 using DALib.Data;
+using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Utility;
 using Graphics = DALib.Drawing.Graphics;
@@ -29,6 +30,8 @@ public static partial class RenderUtil
                           .ToString()
                           .ToLower();
 
+        var male = entry.EntryName.StartsWithI("m");
+
         letter = letter switch
         {
             "a" => "b",
@@ -51,7 +54,8 @@ public static partial class RenderUtil
         if (!entry.TryGetNumericIdentifier(out var identifier, 3))
             return null;
 
-        var palette = lookup.GetPaletteForId(identifier);
+        var overrideType = male ? KhanPalOverrideType.Male : KhanPalOverrideType.Female;
+        var palette = lookup.GetPaletteForId(identifier, overrideType);
         var epfFile = EpfFile.FromEntry(entry);
         var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
         var images = new SKImageCollection(transformer);

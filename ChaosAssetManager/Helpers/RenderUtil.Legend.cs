@@ -13,7 +13,7 @@ public static partial class RenderUtil
     private static Palette? LegendPalette;
     private static Palette? Legend01Palette;
 
-    private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
+    private static Animation? RenderLegend01GridEpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
         {
@@ -24,6 +24,22 @@ public static partial class RenderUtil
             var grid = CreateGrid(images);
 
             return new Animation(new SKImageCollection([grid]));
+        } catch
+        {
+            return null;
+        }
+    }
+    
+    private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+            var palette = Legend01Palette ??= Palette.FromEntry(archive["legend01.pal"]);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var images = new SKImageCollection(transformer);
+
+            return new Animation(new SKImageCollection(images));
         } catch
         {
             return null;
@@ -130,7 +146,7 @@ public static partial class RenderUtil
         try
         {
             var epfFile = EpfFile.FromEntry(entry);
-            var palette = StaffPalette ??= Palette.FromEntry(archive["legend.pal"]);
+            var palette = StaffPalette ??= Palette.FromEntry(archive["staff.pal"]);
             var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
             var frames = new SKImageCollection(transformer);
 

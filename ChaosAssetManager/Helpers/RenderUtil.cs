@@ -106,6 +106,21 @@ public static partial class RenderUtil
                     return RenderLegendFieldEpf(archive, entry);
 
                 if (entry.EntryName.StartsWithI("skill") || entry.EntryName.StartsWithI("spell"))
+                    return RenderLegend01GridEpf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("line"))
+                    return RenderLegend01Epf(archive, entry);
+
+                if (entry.EntryName.StartsWithI("clock01")
+                    || entry.EntryName.StartsWithI("emo")
+                    || entry.EntryName.StartsWithI("f0")
+                    || entry.EntryName.StartsWithI("line")
+                    || entry.EntryName.StartsWithI("mask")
+                    || entry.EntryName.StartsWithI("ms")
+                    || entry.EntryName.StartsWithI("question")
+                    || entry.EntryName.StartsWithI("rain")
+                    || entry.EntryName.StartsWithI("snow")
+                    || entry.EntryName.StartsWithI("woodbk"))
                     return RenderLegend01Epf(archive, entry);
 
                 if (entry.EntryName.StartsWithI("staff"))
