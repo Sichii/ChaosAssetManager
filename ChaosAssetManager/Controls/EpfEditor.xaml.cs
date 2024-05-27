@@ -139,7 +139,7 @@ public sealed partial class EpfEditor : IDisposable
             return;
 
         var frame = EpfImage[SelectedFrameIndex];
-        var expectedLength = frame.PixelWidth * frame.PixelHeight * 2;
+        var expectedLength = frame.PixelWidth * frame.PixelHeight;
 
         if (expectedLength > frame.Data.Length)
         {
