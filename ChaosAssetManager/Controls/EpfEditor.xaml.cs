@@ -5,19 +5,22 @@ using System.Windows.Input;
 using Chaos.Common.Synchronization;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
-using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Utility;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using Graphics = DALib.Drawing.Graphics;
 
+// ReSharper disable SpecifyACultureInStringConversionExplicitly
+
 namespace ChaosAssetManager.Controls;
 
 public sealed partial class EpfEditor : IDisposable
 {
     private readonly SKImage BgImage;
-    private readonly EfaFile EfaImage;
+    private readonly List<SKPoint> CenterPoints;
+    private readonly EpfFile EpfImage;
+    private readonly Palette Palette;
     private readonly AutoReleasingMonitor Sync;
     private Animation? Animation;
     private int CurrentFrameIndex;
@@ -28,18 +31,33 @@ public sealed partial class EpfEditor : IDisposable
     private PeriodicTimer? ImageAnimationTimer;
     private int SelectedFrameIndex;
 
-    public EpfEditor(EfaFile efaImage)
+    public EpfEditor(EpfFile epfImage, Palette palette, List<SKPoint>? centerPoints = null)
     {
         Sync = new AutoReleasingMonitor();
-        EfaImage = efaImage;
+        EpfImage = epfImage;
+        Palette = palette;
+
+        CenterPoints = centerPoints
+                       ?? Enumerable.Range(0, EpfImage.Count)
+                                    .Select(_ => new SKPoint(EpfImage.PixelWidth / 2f, EpfImage.PixelHeight / 2f))
+                                    .ToList();
         BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
         SelectedFrameIndex = -1;
 
+        if (CenterPoints.Count < EpfImage.Count)
+        {
+            var lastPoint = CenterPoints.Last();
+            var insertCount = EpfImage.Count - CenterPoints.Count;
+
+            for (var i = 0; i < insertCount; i++)
+                CenterPoints.Add(lastPoint);
+        }
+
         InitializeComponent();
 
-        BlendingTypeCmbx.Text = EfaImage.BlendingType.ToString();
-        FrameInvervalMsTbox.Text = EfaImage.FrameIntervalMs.ToString();
-        FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, EfaImage.Count));
+        PixelWidthTbox.Text = EpfImage.PixelWidth.ToString();
+        PixelHeightTbox.Text = EpfImage.PixelHeight.ToString();
+        FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, EpfImage.Count));
 
         RenderImagePreview();
         RenderFramePreview();
@@ -83,6 +101,36 @@ public sealed partial class EpfEditor : IDisposable
     #endregion
 
     #region FrameTab Events
+    private void CenterXTbox_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        using var @lock = Sync.Enter();
+
+        if (SelectedFrameIndex < 0)
+            return;
+
+        if (!short.TryParse(CenterXTbox.Text, out var newCenterX))
+            return;
+
+        var currentCenter = CenterPoints[SelectedFrameIndex];
+        currentCenter.X = newCenterX;
+        CenterPoints[SelectedFrameIndex] = currentCenter;
+    }
+
+    private void CenterYTbox_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        using var @lock = Sync.Enter();
+
+        if (SelectedFrameIndex < 0)
+            return;
+
+        if (!short.TryParse(CenterYTbox.Text, out var newCenterX))
+            return;
+
+        var currentCenter = CenterPoints[SelectedFrameIndex];
+        currentCenter.Y = newCenterX;
+        CenterPoints[SelectedFrameIndex] = currentCenter;
+    }
+
     private void FrameApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var @lock = Sync.Enter();
@@ -90,28 +138,23 @@ public sealed partial class EpfEditor : IDisposable
         if (SelectedFrameIndex < 0)
             return;
 
-        var frame = EfaImage[SelectedFrameIndex];
+        var frame = EpfImage[SelectedFrameIndex];
+        var expectedLength = frame.PixelWidth * frame.PixelHeight * 2;
 
-        if (frame.FramePixelWidth > frame.ImagePixelWidth)
+        if (expectedLength > frame.Data.Length)
         {
-            Snackbar.MessageQueue!.Enqueue("Frame width cannot be greater than image width");
-
-            return;
-        }
-
-        if (frame.FramePixelHeight > frame.ImagePixelHeight)
-        {
-            Snackbar.MessageQueue!.Enqueue("Frame height cannot be greater than image height");
+            Snackbar.MessageQueue!.Enqueue(
+                "The width or height of the image are higher than expected. Width x Height must be less than or equal to the image data length.");
 
             return;
         }
 
         //re-render selected frame
-        var selectedFrame = EfaImage[SelectedFrameIndex];
+        var selectedFrame = EpfImage[SelectedFrameIndex];
 
         Animation!.Frames[SelectedFrameIndex]
                   .Dispose();
-        Animation!.Frames[SelectedFrameIndex] = Graphics.RenderImage(selectedFrame, EfaImage.BlendingType);
+        Animation!.Frames[SelectedFrameIndex] = Graphics.RenderImage(selectedFrame, Palette);
 
         RenderFramePreview();
     }
@@ -127,16 +170,14 @@ public sealed partial class EpfEditor : IDisposable
 
         try
         {
-            var frame = EfaImage[SelectedFrameIndex];
+            var frame = EpfImage[SelectedFrameIndex];
 
             LeftTbox.Text = frame.Left.ToString();
             TopTbox.Text = frame.Top.ToString();
-            CenterXTbox.Text = frame.CenterX.ToString();
-            CenterYTbox.Text = frame.CenterY.ToString();
-            FramePixelWidthTbox.Text = frame.FramePixelWidth.ToString();
-            FramePixelHeightTbox.Text = frame.FramePixelHeight.ToString();
-            ImagePixelWidthTbox.Text = frame.ImagePixelWidth.ToString();
-            ImagePixelHeightTbox.Text = frame.ImagePixelHeight.ToString();
+            RightTbox.Text = frame.Right.ToString();
+            BottomTbox.Text = frame.Bottom.ToString();
+            CenterXTbox.Text = ((short)CenterPoints[SelectedFrameIndex].X).ToString();
+            CenterYTbox.Text = ((short)CenterPoints[SelectedFrameIndex].Y).ToString();
 
             RenderFramePreview();
         } catch
@@ -155,7 +196,7 @@ public sealed partial class EpfEditor : IDisposable
         if (!short.TryParse(LeftTbox.Text, out var newLeft))
             return;
 
-        var frame = EfaImage[SelectedFrameIndex];
+        var frame = EpfImage[SelectedFrameIndex];
         frame.Left = newLeft;
     }
 
@@ -166,95 +207,39 @@ public sealed partial class EpfEditor : IDisposable
         if (SelectedFrameIndex < 0)
             return;
 
-        if (!short.TryParse(TopTbox.Text, out var newTop))
+        if (!short.TryParse(TopTbox.Text, out var newtop))
             return;
 
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.Top = newTop;
+        var frame = EpfImage[SelectedFrameIndex];
+        frame.Top = newtop;
     }
 
-    private void CenterXTbox_OnTextChanged(object sender, TextChangedEventArgs e)
+    private void RightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
     {
         using var @lock = Sync.Enter();
 
         if (SelectedFrameIndex < 0)
             return;
 
-        if (!short.TryParse(CenterXTbox.Text, out var newCenterX))
+        if (!short.TryParse(RightTbox.Text, out var newRight))
             return;
 
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.CenterX = newCenterX;
+        var frame = EpfImage[SelectedFrameIndex];
+        frame.Right = newRight;
     }
 
-    private void CenterYTbox_OnTextChanged(object sender, TextChangedEventArgs e)
+    private void BottomTbox_OnTextChanged(object sender, TextChangedEventArgs e)
     {
         using var @lock = Sync.Enter();
 
         if (SelectedFrameIndex < 0)
             return;
 
-        if (!short.TryParse(CenterYTbox.Text, out var newCenterY))
+        if (!short.TryParse(BottomTbox.Text, out var newBottom))
             return;
 
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.CenterY = newCenterY;
-    }
-
-    private void FramePixelWidthTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(FramePixelWidthTbox.Text, out var newFramePixelWidth))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.FramePixelWidth = newFramePixelWidth;
-    }
-
-    private void FramePixelHeightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(FramePixelHeightTbox.Text, out var newFramePixelHeight))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.FramePixelHeight = newFramePixelHeight;
-    }
-
-    private void ImagePixelWidthTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(ImagePixelWidthTbox.Text, out var newImagePixelWidth))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.ImagePixelWidth = newImagePixelWidth;
-    }
-
-    private void ImagePixelHeightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(ImagePixelHeightTbox.Text, out var newImagePixelHeight))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.ImagePixelHeight = newImagePixelHeight;
+        var frame = EpfImage[SelectedFrameIndex];
+        frame.Bottom = newBottom;
     }
 
     private void FrameRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
@@ -287,7 +272,7 @@ public sealed partial class EpfEditor : IDisposable
             canvas.DrawImage(BgImage, 0, 0);
 
             // Calculate the position for the top image
-            var efaFrame = EfaImage[SelectedFrameIndex];
+            var epfFrame = EpfImage[SelectedFrameIndex];
 
             // Draw the top image in the center
             using var paint = new SKPaint();
@@ -299,8 +284,10 @@ public sealed partial class EpfEditor : IDisposable
                 centerX,
                 centerY);
 
-            var left = centerX - efaFrame.CenterX - 2;
-            var top = centerY - efaFrame.CenterY + 35;
+            var frameCenterX = CenterPoints[SelectedFrameIndex].X;
+            var frameCenterY = CenterPoints[SelectedFrameIndex].Y;
+            var left = centerX - frameCenterX - 2.17f;
+            var top = centerY - frameCenterY + 33.66f;
 
             canvas.DrawImage(
                 frame,
@@ -317,22 +304,9 @@ public sealed partial class EpfEditor : IDisposable
             canvas.DrawRect(
                 left,
                 top,
-                efaFrame.ImagePixelWidth,
-                efaFrame.ImagePixelHeight,
+                EpfImage.PixelWidth,
+                EpfImage.PixelHeight,
                 imagePaint);
-
-            // Draw the frame rectangle
-            using var framePaint = new SKPaint();
-            framePaint.Color = SKColors.Red;
-            framePaint.Style = SKPaintStyle.Stroke;
-            framePaint.StrokeWidth = 1;
-
-            canvas.DrawRect(
-                left + efaFrame.Left,
-                top + efaFrame.Top,
-                efaFrame.FramePixelWidth,
-                efaFrame.FramePixelHeight,
-                framePaint);
 
             // Draw the center point
             using var centerPaint = new SKPaint();
@@ -340,8 +314,8 @@ public sealed partial class EpfEditor : IDisposable
             centerPaint.Style = SKPaintStyle.Fill;
 
             canvas.DrawCircle(
-                left + efaFrame.CenterX,
-                top + efaFrame.CenterY,
+                left + frameCenterX,
+                top + frameCenterY,
                 2,
                 centerPaint);
 
@@ -351,10 +325,23 @@ public sealed partial class EpfEditor : IDisposable
             topLeftPaint.Style = SKPaintStyle.Fill;
 
             canvas.DrawCircle(
-                left + efaFrame.Left,
-                top + efaFrame.Top,
+                left + epfFrame.Left,
+                top + epfFrame.Top,
                 2,
                 topLeftPaint);
+
+            // Draw image bytes rect
+            using var imageBytesPaint = new SKPaint();
+            imageBytesPaint.Color = SKColors.Yellow;
+            imageBytesPaint.Style = SKPaintStyle.Stroke;
+            imageBytesPaint.StrokeWidth = 1;
+
+            canvas.DrawRect(
+                left + epfFrame.Left,
+                top + epfFrame.Top,
+                epfFrame.PixelWidth,
+                epfFrame.PixelHeight,
+                imageBytesPaint);
         } catch
         {
             //ignored
@@ -416,25 +403,15 @@ public sealed partial class EpfEditor : IDisposable
 
         Animation?.Dispose();
 
-        var transformer = EfaImage.Select(frame => Graphics.RenderImage(frame, EfaImage.BlendingType));
+        var transformer = EpfImage.Select(frame => Graphics.RenderImage(frame, Palette));
         var images = new SKImageCollection(transformer);
-        ImageAnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(EfaImage.FrameIntervalMs));
-        Animation = new Animation(images, EfaImage.FrameIntervalMs);
+        Animation = new Animation(images);
+        ImageAnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs));
         CurrentFrameIndex = 0;
     }
     #endregion
 
     #region ImageTab Events
-    private void BlendingTypeCmbx_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        var selectedItem = BlendingTypeCmbx.SelectedItem;
-
-        if (selectedItem is ComboBoxItem cbxItem && Enum.TryParse(cbxItem.Content.ToString(), true, out EfaBlendingType newBlendingType))
-            EfaImage.BlendingType = newBlendingType;
-    }
-
     private void ImageApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var @lock = Sync.Enter();
@@ -442,13 +419,22 @@ public sealed partial class EpfEditor : IDisposable
         RenderImagePreview();
     }
 
-    private void FrameInvervalMsTbox_OnTextChanged(object sender, TextChangedEventArgs e)
+    private void PixelWidthTbox_OnTextChanged(object sender, TextChangedEventArgs e)
     {
         using var @lock = Sync.Enter();
 
         //set frame interval
-        if (int.TryParse(FrameInvervalMsTbox.Text, out var newFrameIntervalMs))
-            EfaImage.FrameIntervalMs = newFrameIntervalMs;
+        if (short.TryParse(PixelWidthTbox.Text, out var newPixelWidth))
+            EpfImage.PixelWidth = newPixelWidth;
+    }
+
+    private void PixelHeightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        using var @lock = Sync.Enter();
+
+        //set frame interval
+        if (short.TryParse(PixelHeightTbox.Text, out var newPixelHeight))
+            EpfImage.PixelHeight = newPixelHeight;
     }
 
     private void ImageRenderElement_OnElementLoaded(object? sender, RoutedEventArgs e)
@@ -491,6 +477,7 @@ public sealed partial class EpfEditor : IDisposable
 
             var canvas = e.Surface.Canvas;
             var frame = Animation.Frames[CurrentFrameIndex];
+            var epfFrame = EpfImage[CurrentFrameIndex];
             var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
             var imageScale = 1.5f / dpiScale;
             var centerX = BgImage.Width / 2f / imageScale;
@@ -504,8 +491,10 @@ public sealed partial class EpfEditor : IDisposable
             // Draw the background image without additional scaling
             canvas.DrawImage(BgImage, 0, 0);
 
-            // Calculate the position for the top image
-            var efaFrame = EfaImage[CurrentFrameIndex];
+            var frameCenterX = CenterPoints[CurrentFrameIndex].X;
+            var frameCenterY = CenterPoints[CurrentFrameIndex].Y;
+            var left = centerX - frameCenterX - 2.17f;
+            var top = centerY - frameCenterY + 33.66f;
 
             // Draw the top image in the center
             using var paint = new SKPaint();
@@ -519,8 +508,8 @@ public sealed partial class EpfEditor : IDisposable
 
             canvas.DrawImage(
                 frame,
-                centerX - efaFrame.CenterX - 2,
-                centerY - efaFrame.CenterY + 35,
+                left,
+                top,
                 paint);
         } catch
         {

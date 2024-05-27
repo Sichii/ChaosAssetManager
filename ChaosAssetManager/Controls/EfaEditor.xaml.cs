@@ -306,8 +306,8 @@ public sealed partial class EfaEditor : IDisposable
                 centerX,
                 centerY);
 
-            var left = centerX - efaFrame.CenterX - 2;
-            var top = centerY - efaFrame.CenterY + 35;
+            var left = centerX - efaFrame.CenterX - 2.17f;
+            var top = centerY - efaFrame.CenterY + 33.66f;
 
             canvas.DrawImage(
                 frame,
@@ -335,8 +335,8 @@ public sealed partial class EfaEditor : IDisposable
             framePaint.StrokeWidth = 1;
 
             canvas.DrawRect(
-                left,
-                top,
+                left + efaFrame.Left,
+                top + efaFrame.Top,
                 efaFrame.FramePixelWidth,
                 efaFrame.FramePixelHeight,
                 framePaint);
@@ -539,8 +539,8 @@ public sealed partial class EfaEditor : IDisposable
 
             canvas.DrawImage(
                 frame,
-                centerX - efaFrame.CenterX - 2,
-                centerY - efaFrame.CenterY + 35,
+                centerX - efaFrame.CenterX - 2.17f,
+                centerY - efaFrame.CenterY + 33.66f,
                 paint);
         } catch
         {

@@ -65,6 +65,7 @@
                             Content="Apply"
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Right"
+                            Margin="10"
                             Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                             Click="ImageApplyBtn_OnClick" />
 
@@ -209,6 +210,7 @@
                             Content="Apply"
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Right"
+                            Margin="10"
                             Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                             Click="FrameApplyBtn_OnClick" />
 

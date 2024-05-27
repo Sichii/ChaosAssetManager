@@ -36,27 +36,25 @@
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Bottom"
                                Margin="5"
-                               Content="Blending Type:" />
+                               Content="PixelWidth:" />
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Top"
                                Margin="5"
-                               Content="Frame Interval (ms):" />
+                               Content="PixekHeight:" />
                     </StackPanel>
                     <StackPanel Grid.Column="1"
                                 VerticalAlignment="Center">
-                        <ComboBox x:Name="BlendingTypeCmbx"
-                                  VerticalAlignment="Bottom"
-                                  Margin="5"
-                                  SelectionChanged="BlendingTypeCmbx_OnSelectionChanged"
-                                  Foreground="{DynamicResource MaterialDesignBody}">
-                            <ComboBoxItem Content="Luminance" />
-                            <ComboBoxItem Content="LessLuminance" />
-                        </ComboBox>
-                        <TextBox x:Name="FrameInvervalMsTbox"
+                        <TextBox x:Name="PixelWidthTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="FrameInvervalMsTbox_OnTextChanged"
+                                 TextChanged="PixelWidthTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="PixelHeightTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="PixelHeightTbox_OnTextChanged"
                                  PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
                     </StackPanel>
 
@@ -65,6 +63,7 @@
                             Content="Apply"
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Right"
+                            Margin="10"
                             Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                             Click="ImageApplyBtn_OnClick" />
 
@@ -106,42 +105,38 @@
                                VerticalAlignment="Bottom"
                                Margin="5"
                                Content="Left:"
-                               Foreground="Yellow" />
+                               Foreground="Yellow"
+                               ToolTip="The lowest X coordinate of the frame" />
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Top"
                                Margin="5"
                                Content="Top:"
-                               Foreground="Yellow" />
+                               Foreground="Yellow"
+                               ToolTip="The lowest Y coordinate of the frame" />
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Right:"
+                               Foreground="Yellow"
+                               ToolTip="The highest X coordinate of the frame" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Bottom:"
+                               Foreground="Yellow"
+                               ToolTip="The highest Y coordinate of the frame" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom"
                                Margin="5"
                                Content="CenterX:"
-                               Foreground="Fuchsia" />
+                               Foreground="Fuchsia"
+                               ToolTip="The 'X' of the point within the ImageFrame to align with the center of the screen" />
                         <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
+                               VerticalAlignment="Bottom"
                                Margin="5"
                                Content="CenterY:"
-                               Foreground="Fuchsia" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="FramePixelWidth:"
-                               Foreground="Red" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="FramePixelHeight:"
-                               Foreground="Red" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="ImagePixelWidth:"
-                               Foreground="Blue" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="ImagePixelHeight:"
-                               Foreground="Blue" />
+                               Foreground="Fuchsia"
+                               ToolTip="The 'Y' of the point within the ImageFrame to align with the center of the screen" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="2"
@@ -158,6 +153,18 @@
                                  Foreground="{DynamicResource MaterialDesignBody}"
                                  TextChanged="TopTbox_OnTextChanged"
                                  PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="RightTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="RightTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                        <TextBox x:Name="BottomTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 TextChanged="BottomTbox_OnTextChanged"
+                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
                         <TextBox x:Name="CenterXTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
@@ -170,30 +177,6 @@
                                  Foreground="{DynamicResource MaterialDesignBody}"
                                  TextChanged="CenterYTbox_OnTextChanged"
                                  PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
-                        <TextBox x:Name="FramePixelWidthTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="FramePixelWidthTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
-                        <TextBox x:Name="FramePixelHeightTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="FramePixelHeightTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
-                        <TextBox x:Name="ImagePixelWidthTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="ImagePixelWidthTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
-                        <TextBox x:Name="ImagePixelHeightTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="ImagePixelHeightTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
                     </StackPanel>
 
                     <Button Grid.Column="2"
@@ -201,6 +184,7 @@
                             Content="Apply"
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Right"
+                            Margin="10"
                             Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                             Click="FrameApplyBtn_OnClick" />
 
