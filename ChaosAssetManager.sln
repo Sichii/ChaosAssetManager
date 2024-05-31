@@ -8,6 +8,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9A010056
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DALib", "..\dalib\DALib\DALib.csproj", "{65DB488D-295F-499E-A323-F15FF2A79851}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,5 +24,9 @@ Global
 		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{816BF27A-86BD-46C2-99C8-3212CE555E51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65DB488D-295F-499E-A323-F15FF2A79851}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65DB488D-295F-499E-A323-F15FF2A79851}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65DB488D-295F-499E-A323-F15FF2A79851}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65DB488D-295F-499E-A323-F15FF2A79851}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
