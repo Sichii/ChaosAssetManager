@@ -223,7 +223,7 @@ public partial class ConvertControl
         var fileDialog = new OpenFileDialog
         {
             Multiselect = true,
-            Filter = "Images|*.png;*.bmp;*.jpg;*.jpeg;*.epf;*.efa;*.hpf;*.spf"
+            Filter = "Images|*.png;*.bmp;*.jpg;*.jpeg;*.epf;*.efa;*.hpf;*.spf;*.mpf"
         };
 
         if (fileDialog.ShowDialog() == false)
@@ -260,7 +260,7 @@ public partial class ConvertControl
 
         var extension = distinctExtensions[0]!.ToLower();
 
-        if (extension is ".epf" or ".hpf")
+        if (extension is ".epf" or ".hpf" or ".mpf")
         {
             var openFileDialog = new OpenFileDialog
             {
