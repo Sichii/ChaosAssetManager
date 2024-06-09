@@ -1,10 +1,11 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Data;
-using System.Windows.Input;
 using Chaos.Common.Synchronization;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
+using ChaosAssetManager.ViewModel;
 using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Utility;
@@ -14,11 +15,13 @@ using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EfaEditor : IDisposable
+public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 {
     private readonly SKImage BgImage;
-    private readonly EfaFile EfaImage;
     private readonly AutoReleasingMonitor Sync;
+    private EfaFileViewModel _efaFileViewModel = null!;
+    private EfaFrameViewModel? _efaFrameViewModel;
+    private int _selectedFrameIndex;
     private Animation? Animation;
     private int CurrentFrameIndex;
     private bool Disposed;
@@ -26,23 +29,50 @@ public sealed partial class EfaEditor : IDisposable
     // ReSharper disable once NotAccessedField.Local
     private Task? ImageAnimationTask;
     private PeriodicTimer? ImageAnimationTimer;
-    private int SelectedFrameIndex;
 
-    public EfaEditor(EfaFile efaImage)
+    public EfaFileViewModel EfaFileViewModel
+    {
+        get => _efaFileViewModel;
+        set => SetField(ref _efaFileViewModel, value);
+    }
+
+    public EfaFrameViewModel? EfaFrameViewModel
+    {
+        get => _efaFrameViewModel;
+
+        set
+        {
+            SetField(ref _efaFrameViewModel, value);
+
+            if (_efaFrameViewModel is not null)
+                RenderFramePreview();
+        }
+    }
+
+    public int SelectedFrameIndex
+    {
+        get => _selectedFrameIndex;
+
+        set
+        {
+            SetField(ref _selectedFrameIndex, value);
+            EfaFrameViewModel = value >= 0 ? EfaFileViewModel[value] : null;
+        }
+    }
+
+    public EfaEditor(EfaFile efaFile)
     {
         Sync = new AutoReleasingMonitor();
-        EfaImage = efaImage;
-        BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
-        SelectedFrameIndex = -1;
 
         InitializeComponent();
 
-        BlendingTypeCmbx.Text = EfaImage.BlendingType.ToString();
-        FrameInvervalMsTbox.Text = EfaImage.FrameIntervalMs.ToString();
-        FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, EfaImage.Count));
+        BlendingTypeCmbx.ItemsSource = new CollectionView(Enum.GetNames<EfaBlendingType>());
+        FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, efaFile.Count));
+        EfaFileViewModel = new EfaFileViewModel(efaFile);
+        BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
+        SelectedFrameIndex = -1;
 
         RenderImagePreview();
-        RenderFramePreview();
     }
 
     /// <inheritdoc />
@@ -55,22 +85,25 @@ public sealed partial class EfaEditor : IDisposable
         Disposed = true;
     }
 
-    #region Shared
-    private void IntegerValidation_OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+    #region NotifyPropertyChanged
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        using var @lock = Sync.Enter();
+        if (EqualityComparer<T>.Default.Equals(field, value))
+            return false;
 
-        foreach (var c in e.Text)
-            if (!char.IsDigit(c))
-            {
-                e.Handled = true;
+        field = value;
+        OnPropertyChanged(propertyName);
 
-                return;
-            }
+        return true;
     }
     #endregion
 
-    #region FrameRender
+    #region Frame
     private void RenderFramePreview()
     {
         using var @lock = Sync.Enter();
@@ -80,9 +113,7 @@ public sealed partial class EfaEditor : IDisposable
 
         FrameRenderElement.Redraw();
     }
-    #endregion
 
-    #region FrameTab Events
     private void FrameApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var @lock = Sync.Enter();
@@ -90,7 +121,10 @@ public sealed partial class EfaEditor : IDisposable
         if (SelectedFrameIndex < 0)
             return;
 
-        var frame = EfaImage[SelectedFrameIndex];
+        var frame = EfaFrameViewModel;
+
+        if (frame == null)
+            return;
 
         if ((frame.CenterX > frame.ImagePixelWidth) || (frame.CenterY > frame.ImagePixelHeight))
         {
@@ -113,155 +147,11 @@ public sealed partial class EfaEditor : IDisposable
             return;
         }
 
-        //re-render selected frame
-        var selectedFrame = EfaImage[SelectedFrameIndex];
-
         Animation!.Frames[SelectedFrameIndex]
                   .Dispose();
-        Animation!.Frames[SelectedFrameIndex] = Graphics.RenderImage(selectedFrame, EfaImage.BlendingType);
+        Animation!.Frames[SelectedFrameIndex] = Graphics.RenderImage(frame.EfaFrame, EfaFileViewModel.BlendingType);
 
         RenderFramePreview();
-    }
-
-    private void FramesListView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        SelectedFrameIndex = FramesListView.SelectedIndex;
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        try
-        {
-            var frame = EfaImage[SelectedFrameIndex];
-
-            LeftTbox.Text = frame.Left.ToString();
-            TopTbox.Text = frame.Top.ToString();
-            CenterXTbox.Text = frame.CenterX.ToString();
-            CenterYTbox.Text = frame.CenterY.ToString();
-            FramePixelWidthTbox.Text = frame.FramePixelWidth.ToString();
-            FramePixelHeightTbox.Text = frame.FramePixelHeight.ToString();
-            ImagePixelWidthTbox.Text = frame.ImagePixelWidth.ToString();
-            ImagePixelHeightTbox.Text = frame.ImagePixelHeight.ToString();
-
-            RenderFramePreview();
-        } catch
-        {
-            //ignored
-        }
-    }
-
-    private void LeftTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(LeftTbox.Text, out var newLeft))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.Left = newLeft;
-    }
-
-    private void TopTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(TopTbox.Text, out var newTop))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.Top = newTop;
-    }
-
-    private void CenterXTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(CenterXTbox.Text, out var newCenterX))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.CenterX = newCenterX;
-    }
-
-    private void CenterYTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(CenterYTbox.Text, out var newCenterY))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.CenterY = newCenterY;
-    }
-
-    private void FramePixelWidthTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(FramePixelWidthTbox.Text, out var newFramePixelWidth))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.FramePixelWidth = newFramePixelWidth;
-    }
-
-    private void FramePixelHeightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(FramePixelHeightTbox.Text, out var newFramePixelHeight))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.FramePixelHeight = newFramePixelHeight;
-    }
-
-    private void ImagePixelWidthTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(ImagePixelWidthTbox.Text, out var newImagePixelWidth))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.ImagePixelWidth = newImagePixelWidth;
-    }
-
-    private void ImagePixelHeightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(ImagePixelHeightTbox.Text, out var newImagePixelHeight))
-            return;
-
-        var frame = EfaImage[SelectedFrameIndex];
-        frame.ImagePixelHeight = newImagePixelHeight;
     }
 
     private void FrameRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
@@ -294,7 +184,7 @@ public sealed partial class EfaEditor : IDisposable
             canvas.DrawImage(BgImage, 0, 0);
 
             // Calculate the position for the top image
-            var efaFrame = EfaImage[SelectedFrameIndex];
+            var efaFrame = EfaFrameViewModel!.EfaFrame;
 
             // Draw the top image in the center
             using var paint = new SKPaint();
@@ -404,7 +294,7 @@ public sealed partial class EfaEditor : IDisposable
     }
     #endregion
 
-    #region ImageRender
+    #region Image
     private async Task AnimateElement()
     {
         ArgumentNullException.ThrowIfNull(Animation);
@@ -436,23 +326,11 @@ public sealed partial class EfaEditor : IDisposable
 
         Animation?.Dispose();
 
-        var transformer = EfaImage.Select(frame => Graphics.RenderImage(frame, EfaImage.BlendingType));
+        var transformer = EfaFileViewModel.EfaFile.Select(frame => Graphics.RenderImage(frame, EfaFileViewModel.BlendingType));
         var images = new SKImageCollection(transformer);
-        ImageAnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(EfaImage.FrameIntervalMs));
-        Animation = new Animation(images, EfaImage.FrameIntervalMs);
+        ImageAnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(EfaFileViewModel.FrameIntervalMs));
+        Animation = new Animation(images, EfaFileViewModel.FrameIntervalMs);
         CurrentFrameIndex = 0;
-    }
-    #endregion
-
-    #region ImageTab Events
-    private void BlendingTypeCmbx_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        var selectedItem = BlendingTypeCmbx.SelectedItem;
-
-        if (selectedItem is ComboBoxItem cbxItem && Enum.TryParse(cbxItem.Content.ToString(), true, out EfaBlendingType newBlendingType))
-            EfaImage.BlendingType = newBlendingType;
     }
 
     private void ImageApplyBtn_OnClick(object sender, RoutedEventArgs e)
@@ -460,15 +338,6 @@ public sealed partial class EfaEditor : IDisposable
         using var @lock = Sync.Enter();
 
         RenderImagePreview();
-    }
-
-    private void FrameInvervalMsTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        //set frame interval
-        if (int.TryParse(FrameInvervalMsTbox.Text, out var newFrameIntervalMs))
-            EfaImage.FrameIntervalMs = newFrameIntervalMs;
     }
 
     private void ImageRenderElement_OnElementLoaded(object? sender, RoutedEventArgs e)
@@ -525,7 +394,7 @@ public sealed partial class EfaEditor : IDisposable
             canvas.DrawImage(BgImage, 0, 0);
 
             // Calculate the position for the top image
-            var efaFrame = EfaImage[CurrentFrameIndex];
+            var efaFrame = EfaFileViewModel[CurrentFrameIndex].EfaFrame;
 
             // Draw the top image in the center
             using var paint = new SKPaint();

@@ -8,7 +8,7 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 namespace ChaosAssetManager.Controls.PreviewControls;
 
-public partial class AudioPlayer : IDisposable
+public sealed partial class AudioPlayer : IDisposable
 {
     private readonly Stream AudioStream;
     private readonly bool FinishedLoading;

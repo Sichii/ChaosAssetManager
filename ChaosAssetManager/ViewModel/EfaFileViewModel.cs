@@ -10,6 +10,7 @@ public class EfaFileViewModel : INotifyPropertyChanged
     public EfaBlendingType BlendingType
     {
         get => EfaFile.BlendingType;
+
         set
         {
             if (EfaFile.BlendingType == value)
@@ -19,10 +20,11 @@ public class EfaFileViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
-    
+
     public int FrameIntervalMs
     {
         get => EfaFile.FrameIntervalMs;
+
         set
         {
             if (EfaFile.FrameIntervalMs == value)
@@ -31,6 +33,12 @@ public class EfaFileViewModel : INotifyPropertyChanged
             EfaFile.FrameIntervalMs = value;
             OnPropertyChanged();
         }
+    }
+
+    public EfaFrameViewModel this[int index]
+    {
+        get => new(EfaFile[index]);
+        set => EfaFile[index] = value.EfaFrame;
     }
 
     public EfaFile EfaFile { get; }
