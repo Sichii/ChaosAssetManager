@@ -338,6 +338,15 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
     {
         using var @lock = Sync.Enter();
 
+        var centerX = Convert.ToInt16(AllCenterXTbox.Text);
+        var centerY = Convert.ToInt16(AllCenterYTbox.Text);
+
+        foreach (var frame in EfaFileViewModel.EfaFile)
+        {
+            frame.CenterX = centerX;
+            frame.CenterY = centerY;
+        }
+
         RenderImagePreview();
     }
 

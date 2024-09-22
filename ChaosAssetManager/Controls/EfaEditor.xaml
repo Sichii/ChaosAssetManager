@@ -41,6 +41,14 @@
                                VerticalAlignment="Top"
                                Margin="5"
                                Content="Frame Interval (ms):" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Center X:" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Center Y:" />
                     </StackPanel>
                     <StackPanel Grid.Column="1"
                                 VerticalAlignment="Center">
@@ -54,6 +62,14 @@
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
                                  Text="{Binding EfaFileViewModel.FrameIntervalMs}" />
+                        <TextBox x:Name="AllCenterXTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}" />
+                        <TextBox x:Name="AllCenterYTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}" />
                     </StackPanel>
 
                     <Button Grid.Column="1"
