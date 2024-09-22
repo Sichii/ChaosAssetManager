@@ -42,12 +42,11 @@ public partial class PaletteRemapperControl
             return;
 
         var output = new List<(string Path, EpfFile File)>();
+        var fromPalette = Palette.FromFile(FromPalettePath);
+        var toPalette = Palette.FromFile(ToPalettePath);
 
         foreach (var file in SelectedFiles)
         {
-            var fromPalette = Palette.FromFile(FromPalettePath);
-            var toPalette = Palette.FromFile(ToPalettePath);
-
             var palettized = new Palettized<EpfFile>
             {
                 Entity = EpfFile.FromFile(file),
@@ -65,6 +64,8 @@ public partial class PaletteRemapperControl
 
             outFile.File.Save(targetPath);
         }
+
+        Snackbar.MessageQueue!.Enqueue("Palette remapping complete");
     }
 
     private void SelectFromPaletteBtn_OnClick(object sender, RoutedEventArgs e)

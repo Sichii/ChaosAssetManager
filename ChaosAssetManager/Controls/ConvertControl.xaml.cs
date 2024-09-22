@@ -140,6 +140,8 @@ public partial class ConvertControl
                 break;
             }
         }
+
+        Snackbar.MessageQueue!.Enqueue("Conversion successful!");
     }
 
     private void ConvertControl_OnDragEnter(object sender, DragEventArgs e)
