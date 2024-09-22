@@ -1,34 +1,41 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Chaos.Wpf.Abstractions;
 using DALib.Drawing;
 
 namespace ChaosAssetManager.ViewModel;
 
 public class EpfFileViewModel : INotifyPropertyChanged
 {
-    public short PixelWidth
+    public EpfFrameViewModel this[int index]
     {
-        get => EpfFile.PixelWidth;
-        set
-        {
-            if (EpfFile.PixelWidth == value)
-                return;
-
-            EpfFile.PixelWidth = value;
-            OnPropertyChanged();
-        }
+        get => new(EpfFile[index]);
+        set => EpfFile[index] = value.EpfFrame;
     }
-    
+
     public short PixelHeight
     {
         get => EpfFile.PixelHeight;
+
         set
         {
             if (EpfFile.PixelHeight == value)
                 return;
 
             EpfFile.PixelHeight = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public short PixelWidth
+    {
+        get => EpfFile.PixelWidth;
+
+        set
+        {
+            if (EpfFile.PixelWidth == value)
+                return;
+
+            EpfFile.PixelWidth = value;
             OnPropertyChanged();
         }
     }

@@ -1,10 +1,11 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Data;
-using System.Windows.Input;
 using Chaos.Common.Synchronization;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
+using ChaosAssetManager.ViewModel;
 using DALib.Drawing;
 using DALib.Utility;
 using SkiaSharp;
@@ -15,13 +16,16 @@ using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EpfEditor : IDisposable
+public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 {
     private readonly SKImage BgImage;
     private readonly List<SKPoint> CenterPoints;
-    private readonly EpfFile EpfImage;
     private readonly Palette Palette;
     private readonly AutoReleasingMonitor Sync;
+    private EpfFileViewModel _epfFileViewModel = null!;
+    private EpfFrameViewModel? _epfFrameViewModel;
+    private int _selectedFrameIndex;
+
     private Animation? Animation;
     private int CurrentFrameIndex;
     private bool Disposed;
@@ -29,38 +33,112 @@ public sealed partial class EpfEditor : IDisposable
     // ReSharper disable once NotAccessedField.Local
     private Task? ImageAnimationTask;
     private PeriodicTimer? ImageAnimationTimer;
-    private int SelectedFrameIndex;
+
+    public int? CurrentCenterX
+    {
+        get
+        {
+            if (_epfFrameViewModel is null)
+                return null;
+
+            return (int)CenterPoints[SelectedFrameIndex].X;
+        }
+
+        set
+        {
+            if (value is null || _epfFrameViewModel is null)
+                return;
+
+            var currentCenterPoint = CenterPoints[SelectedFrameIndex];
+
+            CenterPoints[SelectedFrameIndex] = new SKPoint(value.Value, currentCenterPoint.Y);
+
+            OnPropertyChanged();
+        }
+    }
+
+    public int? CurrentCenterY
+    {
+        get
+        {
+            if (_epfFrameViewModel is null)
+                return null;
+
+            return (int)CenterPoints[SelectedFrameIndex].Y;
+        }
+
+        set
+        {
+            if (value is null || _epfFrameViewModel is null)
+                return;
+
+            var currentCenterPoint = CenterPoints[SelectedFrameIndex];
+
+            CenterPoints[SelectedFrameIndex] = new SKPoint(currentCenterPoint.X, value.Value);
+
+            OnPropertyChanged();
+        }
+    }
+
+    public EpfFileViewModel EpfFileViewModel
+    {
+        get => _epfFileViewModel;
+        set => SetField(ref _epfFileViewModel, value);
+    }
+
+    public EpfFrameViewModel? EpfFrameViewModel
+    {
+        get => _epfFrameViewModel;
+
+        set
+        {
+            SetField(ref _epfFrameViewModel, value);
+
+            if (_epfFrameViewModel is not null)
+                RenderFramePreview();
+        }
+    }
+
+    public int SelectedFrameIndex
+    {
+        get => _selectedFrameIndex;
+
+        set
+        {
+            SetField(ref _selectedFrameIndex, value);
+            EpfFrameViewModel = value >= 0 ? EpfFileViewModel[value] : null;
+            OnPropertyChanged(nameof(CurrentCenterX));
+            OnPropertyChanged(nameof(CurrentCenterY));
+        }
+    }
 
     public EpfEditor(EpfFile epfImage, Palette palette, List<SKPoint>? centerPoints = null)
     {
         Sync = new AutoReleasingMonitor();
-        EpfImage = epfImage;
+
+        InitializeComponent();
+
         Palette = palette;
 
         CenterPoints = centerPoints
-                       ?? Enumerable.Range(0, EpfImage.Count)
-                                    .Select(_ => new SKPoint(EpfImage.PixelWidth / 2f, EpfImage.PixelHeight / 2f))
+                       ?? Enumerable.Range(0, epfImage.Count)
+                                    .Select(_ => new SKPoint(epfImage.PixelWidth / 2f, epfImage.PixelHeight / 2f))
                                     .ToList();
+        FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, epfImage.Count));
+        EpfFileViewModel = new EpfFileViewModel(epfImage);
         BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
-        SelectedFrameIndex = -1;
+        SelectedFrameIndex = 0;
 
-        if (CenterPoints.Count < EpfImage.Count)
+        if (CenterPoints.Count < epfImage.Count)
         {
             var lastPoint = CenterPoints.Last();
-            var insertCount = EpfImage.Count - CenterPoints.Count;
+            var insertCount = epfImage.Count - CenterPoints.Count;
 
             for (var i = 0; i < insertCount; i++)
                 CenterPoints.Add(lastPoint);
         }
 
-        InitializeComponent();
-
-        PixelWidthTbox.Text = EpfImage.PixelWidth.ToString();
-        PixelHeightTbox.Text = EpfImage.PixelHeight.ToString();
-        FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, EpfImage.Count));
-
         RenderImagePreview();
-        RenderFramePreview();
     }
 
     /// <inheritdoc />
@@ -73,22 +151,55 @@ public sealed partial class EpfEditor : IDisposable
         Disposed = true;
     }
 
-    #region Shared
-    private void IntegerValidation_OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+    #region NotifyPropertyChanged
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    // ReSharper disable once UnusedMethodReturnValue.Local
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        using var @lock = Sync.Enter();
+        if (EqualityComparer<T>.Default.Equals(field, value))
+            return false;
 
-        foreach (var c in e.Text)
-            if (!char.IsDigit(c))
-            {
-                e.Handled = true;
+        field = value;
+        OnPropertyChanged(propertyName);
 
-                return;
-            }
+        return true;
     }
     #endregion
 
-    #region FrameRender
+    #region Frame Events
+    private void FrameApplyBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        using var @lock = Sync.Enter();
+
+        if (SelectedFrameIndex < 0)
+            return;
+
+        var frame = EpfFrameViewModel;
+
+        if (frame == null)
+            return;
+
+        var expectedLength = frame.PixelWidth * frame.PixelHeight;
+
+        if (expectedLength > frame.EpfFrame.Data.Length)
+        {
+            Snackbar.MessageQueue!.Enqueue(
+                "The width or height of the image are higher than expected. Width x Height must be less than or equal to the image data length.");
+
+            return;
+        }
+
+        Animation!.Frames[SelectedFrameIndex]
+                  .Dispose();
+        Animation!.Frames[SelectedFrameIndex] = Graphics.RenderImage(frame.EpfFrame, Palette);
+
+        RenderFramePreview();
+    }
+
     private void RenderFramePreview()
     {
         using var @lock = Sync.Enter();
@@ -97,149 +208,6 @@ public sealed partial class EpfEditor : IDisposable
             return;
 
         FrameRenderElement.Redraw();
-    }
-    #endregion
-
-    #region FrameTab Events
-    private void CenterXTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(CenterXTbox.Text, out var newCenterX))
-            return;
-
-        var currentCenter = CenterPoints[SelectedFrameIndex];
-        currentCenter.X = newCenterX;
-        CenterPoints[SelectedFrameIndex] = currentCenter;
-    }
-
-    private void CenterYTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(CenterYTbox.Text, out var newCenterX))
-            return;
-
-        var currentCenter = CenterPoints[SelectedFrameIndex];
-        currentCenter.Y = newCenterX;
-        CenterPoints[SelectedFrameIndex] = currentCenter;
-    }
-
-    private void FrameApplyBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        var frame = EpfImage[SelectedFrameIndex];
-        var expectedLength = frame.PixelWidth * frame.PixelHeight;
-
-        if (expectedLength > frame.Data.Length)
-        {
-            Snackbar.MessageQueue!.Enqueue(
-                "The width or height of the image are higher than expected. Width x Height must be less than or equal to the image data length.");
-
-            return;
-        }
-
-        //re-render selected frame
-        var selectedFrame = EpfImage[SelectedFrameIndex];
-
-        Animation!.Frames[SelectedFrameIndex]
-                  .Dispose();
-        Animation!.Frames[SelectedFrameIndex] = Graphics.RenderImage(selectedFrame, Palette);
-
-        RenderFramePreview();
-    }
-
-    private void FramesListView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        SelectedFrameIndex = FramesListView.SelectedIndex;
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        try
-        {
-            var frame = EpfImage[SelectedFrameIndex];
-
-            LeftTbox.Text = frame.Left.ToString();
-            TopTbox.Text = frame.Top.ToString();
-            RightTbox.Text = frame.Right.ToString();
-            BottomTbox.Text = frame.Bottom.ToString();
-            CenterXTbox.Text = ((short)CenterPoints[SelectedFrameIndex].X).ToString();
-            CenterYTbox.Text = ((short)CenterPoints[SelectedFrameIndex].Y).ToString();
-
-            RenderFramePreview();
-        } catch
-        {
-            //ignored
-        }
-    }
-
-    private void LeftTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(LeftTbox.Text, out var newLeft))
-            return;
-
-        var frame = EpfImage[SelectedFrameIndex];
-        frame.Left = newLeft;
-    }
-
-    private void TopTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(TopTbox.Text, out var newtop))
-            return;
-
-        var frame = EpfImage[SelectedFrameIndex];
-        frame.Top = newtop;
-    }
-
-    private void RightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(RightTbox.Text, out var newRight))
-            return;
-
-        var frame = EpfImage[SelectedFrameIndex];
-        frame.Right = newRight;
-    }
-
-    private void BottomTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        if (SelectedFrameIndex < 0)
-            return;
-
-        if (!short.TryParse(BottomTbox.Text, out var newBottom))
-            return;
-
-        var frame = EpfImage[SelectedFrameIndex];
-        frame.Bottom = newBottom;
     }
 
     private void FrameRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
@@ -272,7 +240,7 @@ public sealed partial class EpfEditor : IDisposable
             canvas.DrawImage(BgImage, 0, 0);
 
             // Calculate the position for the top image
-            var epfFrame = EpfImage[SelectedFrameIndex];
+            var epfFrame = EpfFrameViewModel!.EpfFrame;
 
             // Draw the top image in the center
             using var paint = new SKPaint();
@@ -304,8 +272,8 @@ public sealed partial class EpfEditor : IDisposable
             canvas.DrawRect(
                 left,
                 top,
-                EpfImage.PixelWidth,
-                EpfImage.PixelHeight,
+                EpfFileViewModel.PixelWidth,
+                EpfFileViewModel.PixelHeight,
                 imagePaint);
 
             // Draw the center point
@@ -371,7 +339,14 @@ public sealed partial class EpfEditor : IDisposable
     }
     #endregion
 
-    #region ImageRender
+    #region Image Events
+    private void ImageApplyBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        using var @lock = Sync.Enter();
+
+        RenderImagePreview();
+    }
+
     private async Task AnimateElement()
     {
         ArgumentNullException.ThrowIfNull(Animation);
@@ -403,38 +378,11 @@ public sealed partial class EpfEditor : IDisposable
 
         Animation?.Dispose();
 
-        var transformer = EpfImage.Select(frame => Graphics.RenderImage(frame, Palette));
+        var transformer = EpfFileViewModel.EpfFile.Select(frame => Graphics.RenderImage(frame, Palette));
         var images = new SKImageCollection(transformer);
         Animation = new Animation(images);
         ImageAnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs));
         CurrentFrameIndex = 0;
-    }
-    #endregion
-
-    #region ImageTab Events
-    private void ImageApplyBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        RenderImagePreview();
-    }
-
-    private void PixelWidthTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        //set frame interval
-        if (short.TryParse(PixelWidthTbox.Text, out var newPixelWidth))
-            EpfImage.PixelWidth = newPixelWidth;
-    }
-
-    private void PixelHeightTbox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        using var @lock = Sync.Enter();
-
-        //set frame interval
-        if (short.TryParse(PixelHeightTbox.Text, out var newPixelHeight))
-            EpfImage.PixelHeight = newPixelHeight;
     }
 
     private void ImageRenderElement_OnElementLoaded(object? sender, RoutedEventArgs e)
@@ -477,7 +425,6 @@ public sealed partial class EpfEditor : IDisposable
 
             var canvas = e.Surface.Canvas;
             var frame = Animation.Frames[CurrentFrameIndex];
-            var epfFrame = EpfImage[CurrentFrameIndex];
             var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
             var imageScale = 1.5f / dpiScale;
             var centerX = BgImage.Width / 2f / imageScale;

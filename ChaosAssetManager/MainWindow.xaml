@@ -38,6 +38,12 @@
                 <controls:EditorControl x:Name="EffectEditorView" />
             </TabItem>
 
+            <TabItem Header="Palette Remapper"
+                     Name="PaletteRemapperTab"
+                     Style="{StaticResource MaterialDesignTabItem}">
+                <controls:PaletteRemapperControl x:Name="PaletteRemapperView" />
+            </TabItem>
+
             <TabItem Header="MetaFile Editor"
                      Name="MetaFileEditorTab"
                      Style="{StaticResource MaterialDesignTabItem}">

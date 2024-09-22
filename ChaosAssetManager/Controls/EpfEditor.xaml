@@ -48,14 +48,12 @@
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="PixelWidthTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding EpfFileViewModel.PixelWidth}" />
                         <TextBox x:Name="PixelHeightTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="PixelHeightTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding EpfFileViewModel.PixelHeight}" />
                     </StackPanel>
 
                     <Button Grid.Column="1"
@@ -97,7 +95,7 @@
                               HorizontalAlignment="Left"
                               MinWidth="50"
                               ScrollViewer.VerticalScrollBarVisibility="Visible"
-                              SelectionChanged="FramesListView_OnSelectionChanged" />
+                              SelectedItem="{Binding SelectedFrameIndex}" />
 
                     <StackPanel Grid.Column="1"
                                 VerticalAlignment="Center">
@@ -145,38 +143,32 @@
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="LeftTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding EpfFrameViewModel.Left, FallbackValue=''}" />
                         <TextBox x:Name="TopTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="TopTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding EpfFrameViewModel.Top, FallbackValue=''}" />
                         <TextBox x:Name="RightTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="RightTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding EpfFrameViewModel.Right, FallbackValue=''}" />
                         <TextBox x:Name="BottomTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="BottomTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding EpfFrameViewModel.Bottom, FallbackValue=''}" />
                         <TextBox x:Name="CenterXTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="CenterXTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding CurrentCenterX, FallbackValue=''}" />
                         <TextBox x:Name="CenterYTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 TextChanged="CenterYTbox_OnTextChanged"
-                                 PreviewTextInput="IntegerValidation_OnPreviewTextInput" />
+                                 Text="{Binding CurrentCenterY, FallbackValue=''}" />
                     </StackPanel>
 
                     <Button Grid.Column="2"

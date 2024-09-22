@@ -70,7 +70,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
         FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, efaFile.Count));
         EfaFileViewModel = new EfaFileViewModel(efaFile);
         BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
-        SelectedFrameIndex = -1;
+        SelectedFrameIndex = 0;
 
         RenderImagePreview();
     }
@@ -91,6 +91,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
+    // ReSharper disable once UnusedMethodReturnValue.Local
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))

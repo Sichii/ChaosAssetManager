@@ -1,0 +1,68 @@
+﻿<UserControl x:Class="ChaosAssetManager.Controls.PaletteRemapperControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="700"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             AllowDrop="True">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Button x:Name="SelectImagesBtn"
+                Grid.Row="0"
+                Grid.Column="0"
+                HorizontalAlignment="Center"
+                Content="Select images"
+                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                Click="SelectImagesBtn_OnClick" />
+
+        <Button x:Name="SelectFromPaletteBtn"
+                Grid.Row="1"
+                Grid.Column="0"
+                HorizontalAlignment="Center"
+                Content="Select FromPalette"
+                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                Click="SelectFromPaletteBtn_OnClick" />
+
+        <Button x:Name="SelectToPaletteBtn"
+                Grid.Row="2"
+                Grid.Column="0"
+                HorizontalAlignment="Center"
+                Content="Select ToPalette"
+                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                Click="SelectToPaletteBtn_OnClick" />
+
+        <Button x:Name="RemapImagePaletteBtn"
+                Grid.Row="1"
+                Grid.Column="1"
+                HorizontalAlignment="Center"
+                Content="Remap Image Palette"
+                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                Click="RemapImagePaletteBtn_OnClick" />
+
+        <materialDesign:Snackbar Name="Snackbar"
+                                 Grid.ColumnSpan="99"
+                                 Grid.RowSpan="99"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="0"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>

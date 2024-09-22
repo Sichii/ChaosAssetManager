@@ -12,7 +12,6 @@ namespace ChaosAssetManager.Controls;
 
 public sealed partial class MetaFileEditor
 {
-    private MetaFile? MetaFile;
     public MetaFileViewModel? MetaFileViewModel { get; set; }
 
     public MetaFileEditor() => InitializeComponent();
@@ -66,10 +65,10 @@ public sealed partial class MetaFileEditor
         if (string.IsNullOrEmpty(fileDialog.FileName) || (fileDialog.FileNames.Length > 1))
             return;
 
-        MetaFile = MetaFile.FromFile(fileDialog.FileName, true);
+        var metaFile = MetaFile.FromFile(fileDialog.FileName, true);
 
         MetaFileTreeView.ItemsSource = null;
-        MetaFileViewModel = new MetaFileViewModel(MetaFile);
+        MetaFileViewModel = new MetaFileViewModel(metaFile);
         MetaFileTreeView.ItemsSource = MetaFileViewModel.Entries;
     }
 
@@ -102,19 +101,22 @@ public sealed partial class MetaFileEditor
 
     private void Save_OnClick(object sender, RoutedEventArgs e)
     {
-        if (MetaFile is null || MetaFileViewModel is null)
+        if (MetaFileViewModel is null)
             return;
 
-        MetaFile = [];
+        var metaFile = new MetaFile();
 
-        foreach (var entry in MetaFileViewModel.Entries)
-            MetaFile.Add(new MetaFileEntry(entry.Key, entry.Properties.Select(str => str.String)));
+        foreach (var entryViewModel in MetaFileViewModel.Entries)
+        {
+            var entry = new MetaFileEntry(entryViewModel.Key, entryViewModel.Properties.Select(str => str.String));
+            metaFile.Add(entry);
+        }
 
         var saveDialog = new SaveFileDialog();
 
         if (saveDialog.ShowDialog() == false)
             return;
 
-        MetaFile.Save(saveDialog.FileName);
+        metaFile.Save(saveDialog.FileName);
     }
 }
