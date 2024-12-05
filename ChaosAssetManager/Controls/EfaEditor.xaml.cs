@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Data;
-using Chaos.Common.Synchronization;
+using ChaosAssetManager.Extensions;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
@@ -18,13 +18,13 @@ namespace ChaosAssetManager.Controls;
 public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 {
     private readonly SKImage BgImage;
-    private readonly AutoReleasingMonitor Sync;
+    private readonly Lock Sync;
     private EfaFileViewModel _efaFileViewModel = null!;
     private EfaFrameViewModel? _efaFrameViewModel;
     private int _selectedFrameIndex;
     private Animation? Animation;
     private int CurrentFrameIndex;
-    private bool Disposed;
+    private int Disposed;
 
     // ReSharper disable once NotAccessedField.Local
     private Task? ImageAnimationTask;
@@ -62,14 +62,14 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 
     public EfaEditor(EfaFile efaFile)
     {
-        Sync = new AutoReleasingMonitor();
+        Sync = new Lock();
 
         InitializeComponent();
 
         BlendingTypeCmbx.ItemsSource = new CollectionView(Enum.GetNames<EfaBlendingType>());
         FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, efaFile.Count));
         EfaFileViewModel = new EfaFileViewModel(efaFile);
-        BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
+        BgImage = ChaosAssetManager.Resources.previewbg.ToSkImage();
         SelectedFrameIndex = 0;
 
         RenderImagePreview();
@@ -78,11 +78,19 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
     /// <inheritdoc />
     public void Dispose()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
+
+        if (Interlocked.CompareExchange(ref Disposed, 1, 0) == 1)
+            return;
 
         Animation?.Dispose();
         BgImage.Dispose();
-        Disposed = true;
+        FrameRenderElement?.Dispose();
+        ImageRenderElement?.Dispose();
+
+        Animation = null;
+        FrameRenderElement = null;
+        ImageRenderElement = null;
     }
 
     #region NotifyPropertyChanged
@@ -107,7 +115,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
     #region Frame
     private void RenderFramePreview()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         if (SelectedFrameIndex < 0)
             return;
@@ -117,7 +125,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 
     private void FrameApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         if (SelectedFrameIndex < 0)
             return;
@@ -155,7 +163,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
         RenderFramePreview();
     }
 
-    private void FrameRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
+    private void FrameRenderElement_OnPaint(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Animation);
 
@@ -164,9 +172,9 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
-            if (Disposed)
+            if (Disposed == 1)
                 return;
 
             var frame = Animation!.Frames[SelectedFrameIndex];
@@ -307,9 +315,9 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
             {
                 await ImageAnimationTimer.WaitForNextTickAsync();
 
-                using var @lock = Sync.Enter();
+                using var @lock = Sync.EnterScope();
 
-                if (Disposed)
+                if (Disposed == 1)
                     return;
 
                 CurrentFrameIndex = (CurrentFrameIndex + 1) % Animation.Frames.Count;
@@ -323,7 +331,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 
     private void RenderImagePreview()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         Animation?.Dispose();
 
@@ -336,7 +344,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
 
     private void ImageApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         var centerX = Convert.ToInt16(AllCenterXTbox.Text);
         var centerY = Convert.ToInt16(AllCenterYTbox.Text);
@@ -377,15 +385,15 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
         }
     }
 
-    private void ImageRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
+    private void ImageRenderElement_OnPaint(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Animation);
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
-            if (Disposed)
+            if (Disposed == 1)
                 return;
 
             var canvas = e.Surface.Canvas;

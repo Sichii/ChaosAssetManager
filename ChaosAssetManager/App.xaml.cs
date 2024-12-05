@@ -1,4 +1,7 @@
-﻿namespace ChaosAssetManager;
+﻿using System.Runtime;
+using System.Windows;
+
+namespace ChaosAssetManager;
 
 /// <summary>
 ///     Interaction logic for App.xaml

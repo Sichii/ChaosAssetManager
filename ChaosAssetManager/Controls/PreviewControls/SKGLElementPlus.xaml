@@ -1,9 +1,8 @@
-﻿<UserControl x:Class="ChaosAssetManager.Controls.PreviewControls.SKElementPlus"
+﻿<UserControl x:Class="ChaosAssetManager.Controls.PreviewControls.SKGLElementPlus"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:wpf="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              d:DesignHeight="300"
@@ -15,12 +14,6 @@
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid>
-        <wpf:SKElement x:Name="Element"
-                       MouseWheel="SkElement_MouseWheel"
-                       MouseDown="SkElement_MouseDown"
-                       MouseMove="SkElement_MouseMove"
-                       MouseUp="SkElement_MouseUp"
-                       PaintSurface="ElementOnPaintSurface"
-                       Loaded="Element_OnLoaded" />
+        <ContentControl x:Name="ElementContent" />
     </Grid>
 </UserControl>

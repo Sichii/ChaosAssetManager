@@ -1,6 +1,7 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Data;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
 using DALib.Drawing;
@@ -9,7 +10,7 @@ using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls.PreviewControls;
 
-public sealed partial class TileViewerControl
+public sealed partial class TileViewerControl : IDisposable
 {
     private readonly DataArchive Archive;
     private readonly DataArchiveEntry Entry;
@@ -33,6 +34,9 @@ public sealed partial class TileViewerControl
         var collectionView = new CollectionView(Enumerable.Range(0, Tileset.Count));
         TileListView.ItemsSource = collectionView;
     }
+
+    /// <inheritdoc />
+    public void Dispose() => (TilePreview?.Content as IDisposable)?.Dispose();
 
     private void TileListView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {

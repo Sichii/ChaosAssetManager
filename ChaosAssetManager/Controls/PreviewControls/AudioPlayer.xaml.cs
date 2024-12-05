@@ -2,7 +2,6 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using Chaos.Common.Synchronization;
 using NAudio.Wave;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
@@ -13,10 +12,10 @@ public sealed partial class AudioPlayer : IDisposable
     private readonly Stream AudioStream;
     private readonly bool FinishedLoading;
     private readonly MediaFoundationReader MediaReader;
-    private readonly AutoReleasingMonitor Sync;
+    private readonly Lock Sync;
     private readonly PeriodicTimer Timer;
     private readonly IWavePlayer WaveOutDevice;
-    private bool IsDisposed;
+    private int Disposed;
     private long StartTimeStamp;
 
     // ReSharper disable once NotAccessedField.Local
@@ -26,7 +25,7 @@ public sealed partial class AudioPlayer : IDisposable
     {
         InitializeComponent();
 
-        Sync = new AutoReleasingMonitor();
+        Sync = new Lock();
         AudioStream = audioStream;
         MediaReader = new StreamMediaFoundationReader(AudioStream);
         WaveOutDevice = new WaveOutEvent();
@@ -42,18 +41,19 @@ public sealed partial class AudioPlayer : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
+
+        if (Interlocked.CompareExchange(ref Disposed, 1, 0) == 1)
+            return;
 
         AudioStream.Dispose();
         WaveOutDevice.Dispose();
         MediaReader.Dispose();
-
-        IsDisposed = true;
     }
 
     private void PlayButton_Click(object sender, RoutedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         WaveOutDevice.Play();
         StartTimeStamp = Stopwatch.GetTimestamp() + MediaReader.CurrentTime.Ticks;
@@ -65,7 +65,7 @@ public sealed partial class AudioPlayer : IDisposable
 
     private void StopButton_Click(object sender, RoutedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         WaveOutDevice.Stop();
     }
@@ -74,14 +74,14 @@ public sealed partial class AudioPlayer : IDisposable
     {
         while (true)
         {
-            using var @lock = Sync.Enter();
-
             await Timer.WaitForNextTickAsync();
+
+            using var @lock = Sync.EnterScope();
 
             if (!FinishedLoading)
                 continue;
 
-            if (IsDisposed)
+            if (Disposed == 1)
                 return;
 
             if (WaveOutDevice.PlaybackState != PlaybackState.Playing)
@@ -102,14 +102,14 @@ public sealed partial class AudioPlayer : IDisposable
         if (!FinishedLoading)
             return;
 
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         WaveOutDevice.Volume = (float)VolumeSlider.Value;
     }
 
     private void WaveOutDeviceOnPlaybackStopped(object? sender, StoppedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         ProgressSlider.Value = 0;
         MediaReader.Seek(0, SeekOrigin.Begin);

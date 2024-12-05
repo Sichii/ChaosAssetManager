@@ -17,13 +17,20 @@ using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class ArchivesControl
+public sealed partial class ArchivesControl : IDisposable
 {
     private string ArchiveName = string.Empty;
     private string ArchiveRoot = string.Empty;
     public DataArchive? Archive { get; set; }
 
     public ArchivesControl() => InitializeComponent();
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        (Preview?.Content as IDisposable)?.Dispose();
+        Archive?.Dispose();
+    }
 
     #region Events
     private void ArchivesControl_OnDragEnter(object sender, DragEventArgs e)

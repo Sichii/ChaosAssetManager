@@ -1,50 +1,75 @@
-﻿using System.Windows;
-using System.Windows.Input;
-using Chaos.Common.Synchronization;
+﻿using System.Windows.Input;
 using ChaosAssetManager.Helpers;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
+using SkiaSharp.Views.WPF;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace ChaosAssetManager.Controls.PreviewControls;
 
-public partial class SKElementPlus
+public sealed partial class SKGLElementPlus : IDisposable
 {
-    private readonly AutoReleasingMonitor Sync;
+    private readonly Lock Sync;
+    private readonly SKGLElement Element;
     private bool IsPanning;
     private SKPoint LastPanPoint;
+    public MouseButton DragButton { get; set; } = MouseButton.Left;
     public SKMatrix Matrix { get; set; }
 
-    public SKElementPlus()
+    public SKGLElementPlus()
     {
         Matrix = SKMatrix.CreateIdentity();
         InitializeComponent();
 
-        Sync = new AutoReleasingMonitor();
+        Sync = new Lock();
+
+        Element = SkGlElementPool.Instance.Get();
+        Element.MouseWheel += SkElement_MouseWheel;
+        Element.MouseDown += SkElement_MouseDown;
+        Element.MouseMove += SkElement_MouseMove;
+        Element.MouseUp += SkElement_MouseUp;
+        Element.PaintSurface += ElementOnPaintSurface;
+        Element.InvalidateVisual();
+
+        ElementContent.Content = Element;
     }
 
-    private void Element_OnLoaded(object sender, RoutedEventArgs e) => ElementLoaded?.Invoke(sender, e);
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Paint = null;
 
-    public event EventHandler<RoutedEventArgs>? ElementLoaded;
+        ElementContent.Content = null;
 
-    private void ElementOnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+        Element.MouseWheel -= SkElement_MouseWheel;
+        Element.MouseDown -= SkElement_MouseDown;
+        Element.MouseMove -= SkElement_MouseMove;
+        Element.MouseUp -= SkElement_MouseUp;
+        Element.PaintSurface -= ElementOnPaintSurface;
+
+        SkGlElementPool.Instance.Return(Element);
+    }
+
+    private void ElementOnPaintSurface(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Black);
             canvas.SetMatrix(Matrix);
 
             Paint?.Invoke(sender, e);
+
+            canvas.Flush();
         } catch
         {
             //ignored
         }
     }
 
-    public event EventHandler<SKPaintSurfaceEventArgs>? Paint;
+    public event EventHandler<SKPaintGLSurfaceEventArgs>? Paint;
 
     public void Redraw() => Element?.InvalidateVisual();
 
@@ -52,11 +77,10 @@ public partial class SKElementPlus
     private void SkElement_MouseWheel(object sender, MouseWheelEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Element);
-        ArgumentNullException.ThrowIfNull(Matrix);
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
             var position = e.GetPosition(Element);
@@ -86,14 +110,31 @@ public partial class SKElementPlus
 
     private void SkElement_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.LeftButton != MouseButtonState.Pressed)
-            return;
+        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+        switch (DragButton)
+        {
+            case MouseButton.Left:
+                if (e.LeftButton != MouseButtonState.Pressed)
+                    return;
+
+                break;
+            case MouseButton.Right:
+                if (e.RightButton != MouseButtonState.Pressed)
+                    return;
+
+                break;
+            case MouseButton.Middle:
+                if (e.MiddleButton != MouseButtonState.Pressed)
+                    return;
+
+                break;
+        }
 
         ArgumentNullException.ThrowIfNull(Element);
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             IsPanning = true;
             var position = e.GetPosition(Element);
@@ -107,15 +148,34 @@ public partial class SKElementPlus
 
     private void SkElement_MouseMove(object sender, MouseEventArgs e)
     {
-        if (!IsPanning || (e.LeftButton != MouseButtonState.Pressed))
+        if (!IsPanning)
             return;
 
+        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+        switch (DragButton)
+        {
+            case MouseButton.Left:
+                if (e.LeftButton != MouseButtonState.Pressed)
+                    return;
+
+                break;
+            case MouseButton.Right:
+                if (e.RightButton != MouseButtonState.Pressed)
+                    return;
+
+                break;
+            case MouseButton.Middle:
+                if (e.MiddleButton != MouseButtonState.Pressed)
+                    return;
+
+                break;
+        }
+
         ArgumentNullException.ThrowIfNull(Element);
-        ArgumentNullException.ThrowIfNull(Matrix);
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             var position = e.GetPosition(Element);
             var dpiScale = DpiHelper.GetDpiScaleFactor();
@@ -139,7 +199,7 @@ public partial class SKElementPlus
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             IsPanning = false;
             Element.ReleaseMouseCapture();

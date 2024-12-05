@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Data;
-using Chaos.Common.Synchronization;
+using ChaosAssetManager.Extensions;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
@@ -21,7 +21,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
     private readonly SKImage BgImage;
     private readonly List<SKPoint> CenterPoints;
     private readonly Palette Palette;
-    private readonly AutoReleasingMonitor Sync;
+    private readonly Lock Sync;
     private EpfFileViewModel _epfFileViewModel = null!;
     private EpfFrameViewModel? _epfFrameViewModel;
     private int _selectedFrameIndex;
@@ -114,7 +114,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
     public EpfEditor(EpfFile epfImage, Palette palette, List<SKPoint>? centerPoints = null)
     {
-        Sync = new AutoReleasingMonitor();
+        Sync = new Lock();
 
         InitializeComponent();
 
@@ -126,7 +126,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
                                     .ToList();
         FramesListView.ItemsSource = new CollectionView(Enumerable.Range(0, epfImage.Count));
         EpfFileViewModel = new EpfFileViewModel(epfImage);
-        BgImage = ChaosAssetManager.Resources.previewbg.ToSKImage();
+        BgImage = ChaosAssetManager.Resources.previewbg.ToSkImage();
         SelectedFrameIndex = 0;
 
         if (CenterPoints.Count < epfImage.Count)
@@ -144,7 +144,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
     /// <inheritdoc />
     public void Dispose()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         Animation?.Dispose();
         BgImage.Dispose();
@@ -173,7 +173,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
     #region Frame Events
     private void FrameApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         if (SelectedFrameIndex < 0)
             return;
@@ -202,7 +202,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
     private void RenderFramePreview()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         if (SelectedFrameIndex < 0)
             return;
@@ -210,7 +210,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
         FrameRenderElement.Redraw();
     }
 
-    private void FrameRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
+    private void FrameRenderElement_OnPaint(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Animation);
 
@@ -219,7 +219,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             if (Disposed)
                 return;
@@ -342,7 +342,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
     #region Image Events
     private void ImageApplyBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         RenderImagePreview();
     }
@@ -358,7 +358,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
             {
                 await ImageAnimationTimer.WaitForNextTickAsync();
 
-                using var @lock = Sync.Enter();
+                using var @lock = Sync.EnterScope();
 
                 if (Disposed)
                     return;
@@ -374,7 +374,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
     private void RenderImagePreview()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
         Animation?.Dispose();
 
@@ -412,13 +412,13 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
         }
     }
 
-    private void ImageRenderElement_OnPaint(object? sender, SKPaintSurfaceEventArgs e)
+    private void ImageRenderElement_OnPaint(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Animation);
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
             if (Disposed)
                 return;

@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Windows;
-using Chaos.Common.Synchronization;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
@@ -15,15 +14,15 @@ public sealed partial class EntryPreviewControl : IDisposable
     private readonly string ArchiveName = null!;
     private readonly string ArchiveRoot = null!;
     private readonly DataArchiveEntry Entry = null!;
-    private readonly AutoReleasingMonitor Sync;
+    private readonly Lock Sync;
     private Animation? Animation;
 
     // ReSharper disable once NotAccessedField.Local
     private Task? AnimationTask;
     private PeriodicTimer? AnimationTimer;
     private int CurrentFrameIndex;
-    private bool Disposed;
-    private SKElementPlus? Element;
+    private int Disposed;
+    private SKGLElementPlus? Element;
 
     public EntryPreviewControl(
         DataArchive archive,
@@ -35,7 +34,7 @@ public sealed partial class EntryPreviewControl : IDisposable
         Entry = entry;
         ArchiveName = archiveName;
         ArchiveRoot = archiveRoot;
-        Sync = new AutoReleasingMonitor();
+        Sync = new Lock();
 
         InitializeComponent();
         Initialize();
@@ -44,7 +43,7 @@ public sealed partial class EntryPreviewControl : IDisposable
     public EntryPreviewControl(Animation animation)
     {
         Animation = animation;
-        Sync = new AutoReleasingMonitor();
+        Sync = new Lock();
 
         InitializeComponent();
         GenerateElement();
@@ -53,15 +52,18 @@ public sealed partial class EntryPreviewControl : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        using var @lock = Sync.Enter();
+        using var @lock = Sync.EnterScope();
 
-        if (Disposed)
+        if (Interlocked.CompareExchange(ref Disposed, 1, 0) == 1)
             return;
-
-        Disposed = true;
 
         Animation?.Dispose();
         AnimationTimer?.Dispose();
+        Element?.Dispose();
+
+        Animation = null;
+        AnimationTimer = null;
+        Element = null;
     }
 
     private void Initialize()
@@ -182,9 +184,9 @@ public sealed partial class EntryPreviewControl : IDisposable
             {
                 await AnimationTimer.WaitForNextTickAsync();
 
-                using var @lock = Sync.Enter();
+                using var @lock = Sync.EnterScope();
 
-                if (Disposed)
+                if (Disposed == 1)
                     return;
 
                 CurrentFrameIndex = (CurrentFrameIndex + 1) % Animation.Frames.Count;
@@ -202,8 +204,10 @@ public sealed partial class EntryPreviewControl : IDisposable
 
         try
         {
+            AnimationTimer?.Dispose();
             AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs));
-            Element = new SKElementPlus();
+            Element?.Dispose();
+            Element = new SKGLElementPlus();
             Element.Paint += ElementPaintSurface;
             Element.Loaded += ElementOnLoaded;
 
@@ -264,15 +268,15 @@ public sealed partial class EntryPreviewControl : IDisposable
         }
     }
 
-    private void ElementPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    private void ElementPaintSurface(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(Animation);
 
         try
         {
-            using var @lock = Sync.Enter();
+            using var @lock = Sync.EnterScope();
 
-            if (Disposed)
+            if (Disposed == 1)
                 return;
 
             var canvas = e.Surface.Canvas;

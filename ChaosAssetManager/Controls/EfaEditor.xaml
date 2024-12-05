@@ -81,13 +81,13 @@
                             Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                             Click="ImageApplyBtn_OnClick" />
 
-                    <previewControls:SKElementPlus Grid.Column="3"
-                                                   x:Name="ImageRenderElement"
-                                                   Margin="10"
-                                                   MinWidth="250"
-                                                   MinHeight="250"
-                                                   Paint="ImageRenderElement_OnPaint"
-                                                   ElementLoaded="ImageRenderElement_OnElementLoaded" />
+                    <previewControls:SKGLElementPlus Grid.Column="3"
+                                                     x:Name="ImageRenderElement"
+                                                     Margin="10"
+                                                     MinWidth="250"
+                                                     MinHeight="250"
+                                                     Paint="ImageRenderElement_OnPaint"
+                                                     Loaded="ImageRenderElement_OnElementLoaded" />
 
                 </Grid>
             </TabItem>
@@ -218,13 +218,13 @@
                             Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                             Click="FrameApplyBtn_OnClick" />
 
-                    <previewControls:SKElementPlus Grid.Column="4"
-                                                   x:Name="FrameRenderElement"
-                                                   Margin="10"
-                                                   MinWidth="250"
-                                                   MinHeight="250"
-                                                   Paint="FrameRenderElement_OnPaint"
-                                                   ElementLoaded="FrameRenderElement_OnElementLoaded" />
+                    <previewControls:SKGLElementPlus Grid.Column="4"
+                                                     x:Name="FrameRenderElement"
+                                                     Margin="10"
+                                                     MinWidth="250"
+                                                     MinHeight="250"
+                                                     Paint="FrameRenderElement_OnPaint"
+                                                     Loaded="FrameRenderElement_OnElementLoaded" />
                 </Grid>
             </TabItem>
         </TabControl>
