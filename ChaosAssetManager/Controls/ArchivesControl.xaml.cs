@@ -2,17 +2,18 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using Chaos.Common.Comparers;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls.PreviewControls;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
+using DALib;
 using DALib.Data;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
+using NaturalStringComparer = ChaosAssetManager.Comparers.NaturalStringComparer;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
@@ -299,7 +300,7 @@ public sealed partial class ArchivesControl : IDisposable
             ArchivesView.ItemsSource = new CollectionView(
                 Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
                        .Select(
-                           group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, new NaturalStringComparer()))));
+                           group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, NaturalStringComparer.Instance))));
     }
     #endregion
 }

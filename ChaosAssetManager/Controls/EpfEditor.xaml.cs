@@ -231,18 +231,17 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
             var centerX = BgImage.Width / 2f / imageScale;
             var centerY = BgImage.Height / 2f / imageScale;
 
-            // Sometimes frames can be null
+            // sometimes frames can be null
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (frame is null)
                 return;
 
-            // Draw the background image without additional scaling
+            // draw the background image without additional scaling
             canvas.DrawImage(BgImage, 0, 0);
 
-            // Calculate the position for the top image
             var epfFrame = EpfFrameViewModel!.EpfFrame;
 
-            // Draw the top image in the center
+            // draw the top image in the center
             using var paint = new SKPaint();
             paint.BlendMode = SKBlendMode.SrcATop;
 
