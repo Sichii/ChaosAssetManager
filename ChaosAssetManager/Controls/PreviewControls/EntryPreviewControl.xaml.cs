@@ -81,6 +81,17 @@ public sealed partial class EntryPreviewControl : IDisposable
 
                 break;
             }
+            case ".pal":
+            {
+                var animation = RenderUtil.RenderPalette(Entry);
+
+                if (animation is null)
+                    break;
+
+                Animation = animation;
+
+                break;
+            }
             case ".efa":
             {
                 var animation = RenderUtil.RenderEfa(Entry);

@@ -337,6 +337,21 @@ public static partial class RenderUtil
         }
     }
 
+    public static Animation? RenderPalette(DataArchiveEntry entry)
+    {
+        try
+        {
+            var palette = Palette.FromEntry(entry);
+            var image = Graphics.RenderImage(palette);
+            var frames = new SKImageCollection([image]);
+
+            return new Animation(frames);
+        } catch
+        {
+            return null;
+        }
+    }
+
     public static Animation? RenderSpf(DataArchiveEntry entry)
     {
         try

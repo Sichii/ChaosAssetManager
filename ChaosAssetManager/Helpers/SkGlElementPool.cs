@@ -19,6 +19,6 @@ public sealed class SkGlElementPool : DefaultObjectPool<SKGLElement>
     public override void Return(SKGLElement obj)
     {
         base.Return(obj);
-        obj.GRContext.PurgeResources();
+        obj.GRContext?.PurgeResources();
     }
 }

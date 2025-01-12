@@ -13,7 +13,6 @@ using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
-using NaturalStringComparer = ChaosAssetManager.Comparers.NaturalStringComparer;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
@@ -147,11 +146,15 @@ public sealed partial class ArchivesControl : IDisposable
         };
 
         if (saveFileDialog.ShowDialog() == true)
-        {
-            Archive?.Save(saveFileDialog.FileName);
+            try
+            {
+                Archive?.Save(saveFileDialog.FileName);
 
-            ShowMessage("Archive compiled successfully!");
-        }
+                ShowMessage("Archive compiled successfully!");
+            } catch
+            {
+                ShowMessage("Failed to compile archive! (Target in use?)", TimeSpan.FromSeconds(2));
+            }
     }
 
     private void ExtractBtn_OnClick(object sender, RoutedEventArgs e)
