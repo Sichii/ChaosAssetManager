@@ -7,6 +7,7 @@ using ChaosAssetManager.Controls.PreviewControls;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib;
+using DALib.Comparers;
 using DALib.Data;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
@@ -303,7 +304,7 @@ public sealed partial class ArchivesControl : IDisposable
             ArchivesView.ItemsSource = new CollectionView(
                 Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
                        .Select(
-                           group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, NaturalStringComparer.Instance))));
+                           group => new EntryGrouping(group.Key, group.OrderBy(entry => entry.EntryName, StringComparer.OrdinalIgnoreCase))));
     }
     #endregion
 }
