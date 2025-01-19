@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
+using ChaosAssetManager.Helpers;
 using DALib.Abstractions;
 using DALib.Drawing;
 using SkiaSharp;
@@ -24,7 +25,8 @@ public partial class EditorControl
 
         var fileDialog = new OpenFileDialog
         {
-            Filter = "DA Graphics|*.efa;*.epf"
+            Filter = "DA Graphics|*.efa;*.epf",
+            InitialDirectory = PathHelper.Instance.EditorImageFromPath
         };
 
         if (fileDialog.ShowDialog() == false)
@@ -34,6 +36,9 @@ public partial class EditorControl
             return;
 
         CurrentPath = fileDialog.FileName;
+
+        PathHelper.Instance.EditorImageFromPath = Path.GetDirectoryName(CurrentPath);
+        PathHelper.Instance.Save();
 
         var extension = Path.GetExtension(CurrentPath)
                             .ToLower();
@@ -55,7 +60,8 @@ public partial class EditorControl
 
                 var paletteDialog = new OpenFileDialog
                 {
-                    Filter = "Palette|*.pal"
+                    Filter = "Palette|*.pal",
+                    InitialDirectory = PathHelper.Instance.EditorPalFromPath
                 };
 
                 if (paletteDialog.ShowDialog() == false)
@@ -63,6 +69,9 @@ public partial class EditorControl
 
                 if (string.IsNullOrEmpty(paletteDialog.FileName) || (paletteDialog.FileNames.Length > 1))
                     return;
+
+                PathHelper.Instance.EditorPalFromPath = Path.GetDirectoryName(paletteDialog.FileName);
+                PathHelper.Instance.Save();
 
                 var palette = Palette.FromFile(paletteDialog.FileName);
                 var root = Path.GetDirectoryName(CurrentPath)!;
@@ -97,11 +106,15 @@ public partial class EditorControl
     {
         var saveFileDialog = new SaveFileDialog
         {
-            Filter = "DA Graphics|*.efa;*.epf"
+            Filter = "DA Graphics|*.efa;*.epf",
+            InitialDirectory = PathHelper.Instance.EditorImageToPath
         };
 
         if (saveFileDialog.ShowDialog() == false)
             return;
+
+        PathHelper.Instance.EditorImageToPath = Path.GetDirectoryName(saveFileDialog.FileName);
+        PathHelper.Instance.Save();
 
         CurrentItem?.Save(saveFileDialog.FileName);
 

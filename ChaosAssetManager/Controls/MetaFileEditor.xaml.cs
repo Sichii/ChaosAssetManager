@@ -1,7 +1,9 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using Chaos.Wpf.Observables;
 using ChaosAssetManager.Extensions;
+using ChaosAssetManager.Helpers;
 using ChaosAssetManager.ViewModel;
 using DALib.Data;
 using Button = System.Windows.Controls.Button;
@@ -57,7 +59,10 @@ public sealed partial class MetaFileEditor
 
     private void Load_OnClick(object sender, RoutedEventArgs e)
     {
-        var fileDialog = new OpenFileDialog();
+        var fileDialog = new OpenFileDialog
+        {
+            InitialDirectory = PathHelper.Instance.MetaFileEditorFromPath
+        };
 
         if (fileDialog.ShowDialog() == false)
             return;
@@ -70,6 +75,9 @@ public sealed partial class MetaFileEditor
         MetaFileTreeView.ItemsSource = null;
         MetaFileViewModel = new MetaFileViewModel(metaFile);
         MetaFileTreeView.ItemsSource = MetaFileViewModel.Entries;
+
+        PathHelper.Instance.MetaFileEditorFromPath = Path.GetDirectoryName(fileDialog.FileName);
+        PathHelper.Instance.Save();
     }
 
     private void RemoveEntryBtn_OnClick(object sender, RoutedEventArgs e)
@@ -112,11 +120,17 @@ public sealed partial class MetaFileEditor
             metaFile.Add(entry);
         }
 
-        var saveDialog = new SaveFileDialog();
+        var saveDialog = new SaveFileDialog
+        {
+            InitialDirectory = PathHelper.Instance.MetaFileEditorToPath
+        };
 
         if (saveDialog.ShowDialog() == false)
             return;
 
         metaFile.Save(saveDialog.FileName);
+
+        PathHelper.Instance.MetaFileEditorToPath = Path.GetDirectoryName(saveDialog.FileName);
+        PathHelper.Instance.Save();
     }
 }

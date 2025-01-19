@@ -42,6 +42,9 @@ public sealed partial class ArchivesControl : IDisposable
 
         var files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
 
+        if (files.Length == 0)
+            return;
+
         if (files.Count(file => file.EndsWithI(".dat")) > 1)
         {
             ShowMessage("Please only drop one archive at a time!");
@@ -54,6 +57,10 @@ public sealed partial class ArchivesControl : IDisposable
         if (archivePath is not null)
         {
             LoadArchive(archivePath);
+
+            PathHelper.Instance.ArchiveLoadFromPath = Path.GetDirectoryName(archivePath);
+            PathHelper.Instance.Save();
+
             ShowMessage("Archive loaded successfully!");
 
             return;
@@ -87,7 +94,14 @@ public sealed partial class ArchivesControl : IDisposable
         }
 
         if (patched)
+        {
+            var firstPath = files.First();
+
+            PathHelper.Instance.PatchFromPath = Path.GetDirectoryName(firstPath);
+            PathHelper.Instance.Save();
+
             ShowMessage("Archive patched successfully!");
+        }
     }
 
     private void ArchivesView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -120,17 +134,23 @@ public sealed partial class ArchivesControl : IDisposable
     private void CompileBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var folderBrowserDialog = new FolderBrowserDialog();
+        folderBrowserDialog.InitialDirectory = PathHelper.Instance.ArchiveCompileFromPath!;
 
         if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
         {
             var saveFileDialog = new SaveFileDialog
             {
-                Filter = "Data Archive (*.dat)|*.dat"
+                Filter = "Data Archive (*.dat)|*.dat",
+                InitialDirectory = PathHelper.Instance.ArchiveCompileToPath
             };
 
             if (saveFileDialog.ShowDialog() == true)
             {
                 DataArchive.Compile(folderBrowserDialog.SelectedPath, saveFileDialog.FileName);
+
+                PathHelper.Instance.ArchiveCompileFromPath = folderBrowserDialog.SelectedPath;
+                PathHelper.Instance.ArchiveCompileToPath = Path.GetDirectoryName(saveFileDialog.FileName);
+                PathHelper.Instance.Save();
 
                 ShowMessage("Archive compiled successfully!");
             }
@@ -141,13 +161,17 @@ public sealed partial class ArchivesControl : IDisposable
     {
         var saveFileDialog = new SaveFileDialog
         {
-            Filter = "Data Archive (*.dat)|*.dat"
+            Filter = "Data Archive (*.dat)|*.dat",
+            InitialDirectory = PathHelper.Instance.ArchiveCompileToToPath
         };
 
         if (saveFileDialog.ShowDialog() == true)
             try
             {
                 Archive?.Save(saveFileDialog.FileName);
+
+                PathHelper.Instance.ArchiveCompileToToPath = Path.GetDirectoryName(saveFileDialog.FileName);
+                PathHelper.Instance.Save();
 
                 ShowMessage("Archive compiled successfully!");
             } catch
@@ -160,17 +184,23 @@ public sealed partial class ArchivesControl : IDisposable
     {
         var saveFileDialog = new SaveFileDialog
         {
-            Filter = "Data Archive (*.dat)|*.dat"
+            Filter = "Data Archive (*.dat)|*.dat",
+            InitialDirectory = PathHelper.Instance.ArchiveExtractFromPath
         };
 
         if (saveFileDialog.ShowDialog() == true)
         {
             using var folderBrowserDialog = new FolderBrowserDialog();
+            folderBrowserDialog.InitialDirectory = PathHelper.Instance.ArchiveExtractToPath!;
 
             if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
             {
                 using var archive = DataArchive.FromFile(saveFileDialog.FileName);
                 archive.ExtractTo(folderBrowserDialog.SelectedPath);
+
+                PathHelper.Instance.ArchiveExtractFromPath = Path.GetDirectoryName(saveFileDialog.FileName);
+                PathHelper.Instance.ArchiveExtractToPath = folderBrowserDialog.SelectedPath;
+                PathHelper.Instance.Save();
 
                 ShowMessage("Archive extracted successfully!");
             }
@@ -180,6 +210,7 @@ public sealed partial class ArchivesControl : IDisposable
     private void ExtractSelectionBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var folderBrowserDialog = new FolderBrowserDialog();
+        folderBrowserDialog.InitialDirectory = PathHelper.Instance.ArchiveExtractSelectionToPath!;
 
         if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
             foreach (DataArchiveEntry entry in ArchivesView.SelectedItems)
@@ -190,6 +221,9 @@ public sealed partial class ArchivesControl : IDisposable
 
                 entrySegment.CopyTo(outStream);
 
+                PathHelper.Instance.ArchiveExtractSelectionToPath = folderBrowserDialog.SelectedPath;
+                PathHelper.Instance.Save();
+
                 ShowMessage("Entries extracted successfully!");
             }
     }
@@ -197,10 +231,14 @@ public sealed partial class ArchivesControl : IDisposable
     private void ExtractToBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var folderBrowserDialog = new FolderBrowserDialog();
+        folderBrowserDialog.InitialDirectory = PathHelper.Instance.ArchiveExtractToToPath!;
 
         if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
         {
             Archive?.ExtractTo(folderBrowserDialog.SelectedPath);
+
+            PathHelper.Instance.ArchiveExtractToToPath = folderBrowserDialog.SelectedPath;
+            PathHelper.Instance.Save();
 
             ShowMessage("Archive extracted successfully!");
         }
@@ -210,12 +248,17 @@ public sealed partial class ArchivesControl : IDisposable
     {
         var openFileDialog = new OpenFileDialog
         {
-            Filter = "Data Archive (*.dat)|*.dat"
+            Filter = "Data Archive (*.dat)|*.dat",
+            InitialDirectory = PathHelper.Instance.ArchiveLoadFromPath
         };
 
         if (openFileDialog.ShowDialog() == true)
         {
             LoadArchive(openFileDialog.FileName);
+
+            PathHelper.Instance.ArchiveLoadFromPath = Path.GetDirectoryName(openFileDialog.FileName);
+            PathHelper.Instance.Save();
+
             ShowMessage("Archive loaded successfully!");
         }
     }
@@ -225,7 +268,8 @@ public sealed partial class ArchivesControl : IDisposable
         var openFileDialog = new OpenFileDialog
         {
             Filter = "All Files (*.*)|*.*",
-            Multiselect = true
+            Multiselect = true,
+            InitialDirectory = PathHelper.Instance.PatchFromPath
         };
 
         if (openFileDialog.ShowDialog() == true)
@@ -244,6 +288,9 @@ public sealed partial class ArchivesControl : IDisposable
                 var entry = Archive![entryName];
                 ArchivesView.SelectedItems.Add(entry);
             }
+
+            PathHelper.Instance.PatchFromPath = Path.GetDirectoryName(openFileDialog.FileName);
+            PathHelper.Instance.Save();
 
             ShowMessage("Archive patched successfully!");
         }

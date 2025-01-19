@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Helpers;
 using DALib.Drawing;
 using DALib.Extensions;
 using DALib.Utility;
@@ -26,7 +27,10 @@ public partial class PaletteRemapperControl
             return;
         }
 
-        var openFolderDialog = new OpenFolderDialog();
+        var openFolderDialog = new OpenFolderDialog
+        {
+            InitialDirectory = PathHelper.Instance.PaletteRemapperImageToPath
+        };
 
         if (openFolderDialog.ShowDialog() == false)
             return;
@@ -65,6 +69,9 @@ public partial class PaletteRemapperControl
             outFile.File.Save(targetPath);
         }
 
+        PathHelper.Instance.PaletteRemapperImageToPath = openFolderDialog.FolderName;
+        PathHelper.Instance.Save();
+
         Snackbar.MessageQueue!.Enqueue("Palette remapping complete");
     }
 
@@ -72,7 +79,8 @@ public partial class PaletteRemapperControl
     {
         var openFileDialog = new OpenFileDialog
         {
-            Filter = "PAL Files|*.pal"
+            Filter = "PAL Files|*.pal",
+            InitialDirectory = PathHelper.Instance.PaletteRemapperPalFromPath
         };
 
         if (openFileDialog.ShowDialog() == false)
@@ -86,6 +94,9 @@ public partial class PaletteRemapperControl
         }
 
         FromPalettePath = openFileDialog.FileName;
+
+        PathHelper.Instance.PaletteRemapperPalFromPath = Path.GetDirectoryName(FromPalettePath);
+        PathHelper.Instance.Save();
     }
 
     private void SelectImagesBtn_OnClick(object sender, RoutedEventArgs e)
@@ -93,7 +104,8 @@ public partial class PaletteRemapperControl
         var fileDialog = new OpenFileDialog
         {
             Multiselect = true,
-            Filter = "Images|*.epf"
+            Filter = "Images|*.epf",
+            InitialDirectory = PathHelper.Instance.PaletteRemapperImageFromPath
         };
 
         if (fileDialog.ShowDialog() == false)
@@ -103,14 +115,27 @@ public partial class PaletteRemapperControl
             return;
         }
 
+        if (fileDialog.FileNames.Length == 0)
+        {
+            SelectedFiles = [];
+
+            return;
+        }
+
         SelectedFiles = fileDialog.FileNames.ToList();
+
+        var first = SelectedFiles.First();
+
+        PathHelper.Instance.PaletteRemapperImageFromPath = Path.GetDirectoryName(first);
+        PathHelper.Instance.Save();
     }
 
     private void SelectToPaletteBtn_OnClick(object sender, RoutedEventArgs e)
     {
         var openFileDialog = new OpenFileDialog
         {
-            Filter = "PAL Files|*.pal"
+            Filter = "PAL Files|*.pal",
+            InitialDirectory = PathHelper.Instance.PaletteRemapperPalToPath
         };
 
         if (openFileDialog.ShowDialog() == false)
@@ -123,6 +148,12 @@ public partial class PaletteRemapperControl
             return;
         }
 
+        if (openFileDialog.FileNames.Length == 0)
+            return;
+
         ToPalettePath = openFileDialog.FileName;
+
+        PathHelper.Instance.PaletteRemapperPalToPath = Path.GetDirectoryName(ToPalettePath);
+        PathHelper.Instance.Save();
     }
 }

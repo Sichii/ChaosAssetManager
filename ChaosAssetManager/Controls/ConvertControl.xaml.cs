@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using Chaos.Extensions.Common;
+using ChaosAssetManager.Helpers;
 using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Utility;
@@ -51,7 +52,8 @@ public partial class ConvertControl
 
         var saveFileDialog = new SaveFileDialog
         {
-            Filter = $"Images|{targetExtension}"
+            Filter = $"Images|{targetExtension}",
+            InitialDirectory = PathHelper.Instance.ConvertImageToPath
         };
 
         if (saveFileDialog.ShowDialog() == false)
@@ -141,6 +143,9 @@ public partial class ConvertControl
             }
         }
 
+        PathHelper.Instance.ConvertImageToPath = targetDirectory;
+        PathHelper.Instance.Save();
+
         Snackbar.MessageQueue!.Enqueue("Conversion successful!");
     }
 
@@ -153,6 +158,14 @@ public partial class ConvertControl
             return;
 
         var files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+
+        if (files.Length == 0)
+            return;
+
+        var first = files[0];
+
+        PathHelper.Instance.ConvertImageFromPath = Path.GetDirectoryName(first);
+        PathHelper.Instance.Save();
 
         TryLoadFiles(files);
     }
@@ -225,15 +238,19 @@ public partial class ConvertControl
         var fileDialog = new OpenFileDialog
         {
             Multiselect = true,
-            Filter = "Images|*.png;*.bmp;*.jpg;*.jpeg;*.epf;*.efa;*.hpf;*.spf;*.mpf"
+            Filter = "Images|*.png;*.bmp;*.jpg;*.jpeg;*.epf;*.efa;*.hpf;*.spf;*.mpf",
+            InitialDirectory = PathHelper.Instance.ConvertImageFromPath
         };
 
-        if (fileDialog.ShowDialog() == false)
+        if ((fileDialog.ShowDialog() == false) || (fileDialog.FileNames.Length == 0))
         {
             SelectedFiles = [];
 
             return;
         }
+
+        PathHelper.Instance.ConvertImageFromPath = Path.GetDirectoryName(fileDialog.FileNames[0]);
+        PathHelper.Instance.Save();
 
         TryLoadFiles(fileDialog.FileNames);
     }
@@ -267,7 +284,8 @@ public partial class ConvertControl
             var openFileDialog = new OpenFileDialog
             {
                 Multiselect = true,
-                Filter = "PAL Files|*.pal"
+                Filter = "PAL Files|*.pal",
+                InitialDirectory = PathHelper.Instance.ConvertPalFromPath
             };
 
             if (openFileDialog.ShowDialog() == false)
@@ -281,6 +299,9 @@ public partial class ConvertControl
             }
 
             PalettePath = openFileDialog.FileNames[0];
+
+            PathHelper.Instance.ConvertPalFromPath = Path.GetDirectoryName(PalettePath);
+            PathHelper.Instance.Save();
         }
 
         SelectedFiles = files.ToList();
