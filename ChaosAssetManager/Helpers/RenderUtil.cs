@@ -26,7 +26,7 @@ public static partial class RenderUtil
     private static IDictionary<int, Palette>? BackstoryPaletteLookup;
     private static Palette? StaffPalette;
     private static PaletteLookup? ItemPaletteLookup;
-    private static TileAnimationTable? TileAnimationTable;
+    private static TileAnimationTable? ForegroundAnimationTable;
     private static IDictionary<int, Palette>? DyePalettes;
 
     private static SKImage CreateGrid(ICollection<SKImage> images, int paddingX = 2, int paddingY = 2)
@@ -269,7 +269,7 @@ public static partial class RenderUtil
 
             StsPaletteLookup ??= PaletteLookup.FromArchive("sts", archive)
                                               .Freeze();
-            TileAnimationTable ??= TileAnimationTable.FromArchive("stcani", archive);
+            ForegroundAnimationTable ??= TileAnimationTable.FromArchive("stcani", archive);
 
             var hpfFile = HpfFile.FromEntry(entry);
             List<HpfFile> hpfFiles = [hpfFile];
@@ -287,7 +287,7 @@ public static partial class RenderUtil
 
                 //if there's an animation entry for this tile, get the tile sequence
                 //load those hpf files from the archive and use those as the frames to render
-                if (TileAnimationTable.TryGetEntry(identifier, out var aniEntry))
+                if (ForegroundAnimationTable.TryGetEntry(identifier, out var aniEntry))
                     hpfFiles = aniEntry.Select(tileId => HpfFile.FromEntry(archive[$"stc{tileId:D5}.hpf"]))
                                        .ToList();
             } else
@@ -314,7 +314,7 @@ public static partial class RenderUtil
             return null;
         }
     }
-
+    
     public static Animation? RenderMpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
@@ -414,7 +414,7 @@ public static partial class RenderUtil
         Legend01Palette = null;
         StaffPalette = null;
         ItemPaletteLookup = null;
-        TileAnimationTable = null;
+        ForegroundAnimationTable = null;
         RohEfctPaletteLookup = null;
         RohMefcPaletteLookup = null;
         RohMptPaletteLookup = null;

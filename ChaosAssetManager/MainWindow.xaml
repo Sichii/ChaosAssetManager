@@ -7,8 +7,6 @@
         xmlns:controls="clr-namespace:ChaosAssetManager.Controls"
         mc:Ignorable="d"
         Title="Chaos Asset Manager"
-        Height="600"
-        Width="1066"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         TextElement.FontWeight="Medium"

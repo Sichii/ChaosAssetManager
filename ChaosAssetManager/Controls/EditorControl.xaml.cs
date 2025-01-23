@@ -81,7 +81,7 @@ public partial class EditorControl
 
                 if (File.Exists(tblPath))
                 {
-                    tblPoints = new List<SKPoint>();
+                    tblPoints = [];
 
                     using var reader = new BinaryReader(File.OpenRead(tblPath));
 
@@ -91,7 +91,12 @@ public partial class EditorControl
                         var y = reader.ReadInt16();
                         tblPoints.Add(new SKPoint(x, y));
                     }
-                }
+
+                    if (tblPoints.Count < epfFile.Count)
+                        tblPoints.AddRange(Enumerable.Repeat(new SKPoint(0, 0), epfFile.Count - tblPoints.Count));
+                } else
+                    tblPoints = Enumerable.Repeat(new SKPoint(0, 0), epfFile.Count)
+                                          .ToList();
 
                 CurrentItem = epfFile;
                 CenterPoints = tblPoints;

@@ -7,5 +7,11 @@ namespace ChaosAssetManager;
 /// </summary>
 public partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+
+        Width = SystemParameters.PrimaryScreenWidth * 0.5;
+        Height = SystemParameters.PrimaryScreenHeight * 0.5;
+    }
 }

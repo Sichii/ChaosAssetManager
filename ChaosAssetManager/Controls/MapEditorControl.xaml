@@ -13,5 +13,66 @@
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
-    <Grid />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Menu Grid.Row="0"
+              Grid.Column="0"
+              Grid.ColumnSpan="99"
+              VerticalAlignment="Top"
+              HorizontalAlignment="Stretch"
+              materialDesign:MenuAssist.TopLevelMenuItemHeight="30">
+            <MenuItem x:Name="LoadMapBtn"
+                      Header="Load Map" />
+            <MenuItem x:Name="ArchivePathBtn"
+                      Header="Archive Path" />
+        </Menu>
+
+        <TabControl Grid.Row="1"
+                    Grid.Column="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    x:Name="MapEditorTabControl" />
+        
+        <TabControl Grid.Row="1"
+                    Grid.Column="1">
+            <TabItem Header="Tiles">
+                <ListView x:Name="TilesControl"
+                          ItemsSource="{Binding Tiles}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Width="30"
+                                               Source="{Binding Converter={StaticResource TileConverter}}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </TabItem>
+            <TabItem Header="Structures">
+                <ListView x:Name="StructuresControl" />
+            </TabItem>
+        </TabControl>
+
+
+        <!--<ToolBarTray Grid.Row="0">
+            <ToolBar ClipToBounds="True">
+                ~1~<MenuItem x:Name="LoadMapBtn"
+                          Header="Load Map"/>@1@
+                <Separator />
+            </ToolBar>
+        </ToolBarTray>-->
+    </Grid>
 </UserControl>

@@ -5,7 +5,7 @@ using Chaos.Common.Utilities;
 
 namespace ChaosAssetManager.Helpers;
 
-public class PathHelper
+public sealed class PathHelper
 {
     [JsonIgnore]
     private const string PATH = $"{nameof(PathHelper)}.json";
@@ -46,6 +46,7 @@ public class PathHelper
     public string? PaletteRemapperImageFromPath { get; set; }
     public string? PaletteRemapperPalFromPath { get; set; }
     public string? ArchiveExtractFromPath { get; set; }
+    public string? MapEditorArchivePath { get; set; }
     #endregion
 
     #region To
