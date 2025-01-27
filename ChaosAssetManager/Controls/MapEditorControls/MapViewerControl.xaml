@@ -1,0 +1,21 @@
+﻿<UserControl x:Class="ChaosAssetManager.Controls.MapEditorControls.MapViewerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="800"
+             d:DesignWidth="1422"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContextChanged="MapViewerControl_OnDataContextChanged"
+             Padding="0"
+             Margin="0">
+    <Grid>
+        <ContentControl x:Name="Content" />
+    </Grid>
+</UserControl>

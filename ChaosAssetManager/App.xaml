@@ -2,6 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:ChaosAssetManager.Converters"
+             xmlns:viewModel="clr-namespace:ChaosAssetManager.ViewModel"
+             xmlns:mapEditorControls="clr-namespace:ChaosAssetManager.Controls.MapEditorControls"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -13,7 +16,16 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignExtensions;component/Themes/Generic.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignExtensions;component/Themes/MaterialDesignDarkTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <JournalEntryListConverter x:Key="TileConverter" />
+
+            <converters:EditingTileTypeConverter x:Key="TileTypeConverter" />
+            <converters:RectangleMapBoundsConverter x:Key="RectangleMapBoundsConverter" />
+
+            <DataTemplate x:Key="MapViewerDataTemplate"
+                          DataType="{x:Type viewModel:MapViewerViewModel}"
+                          x:Shared="False">
+                <mapEditorControls:MapViewerControl />
+            </DataTemplate>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

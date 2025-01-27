@@ -56,6 +56,12 @@
                      Name="AbilityIconCreatorTab"
                      Style="{StaticResource MaterialDesignTabItem}" />
 
+            <TabItem Header="Map Editor"
+                     Name="MapEditorTab"
+                     Style="{StaticResource MaterialDesignTabItem}">
+                <controls:MapEditorControl x:Name="MapEditorView" />
+            </TabItem>
+
         </TabControl>
     </Grid>
 </Window>

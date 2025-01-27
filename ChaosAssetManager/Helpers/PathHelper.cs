@@ -27,6 +27,24 @@ public sealed class PathHelper
             }
     }
 
+    public bool ArchivePathIsValid()
+    {
+        if (string.IsNullOrEmpty(MapEditorArchivePath))
+            return false;
+
+        var iaPath = Path.Combine(MapEditorArchivePath!, "ia.dat");
+
+        if (!File.Exists(iaPath))
+            return false;
+
+        var seoPath = Path.Combine(MapEditorArchivePath!, "seo.dat");
+
+        if (!File.Exists(seoPath))
+            return false;
+
+        return true;
+    }
+
     public void Save()
         => JsonSerializerEx.Serialize(
             PATH,

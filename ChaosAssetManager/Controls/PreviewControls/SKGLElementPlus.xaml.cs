@@ -9,8 +9,8 @@ namespace ChaosAssetManager.Controls.PreviewControls;
 
 public sealed partial class SKGLElementPlus : IDisposable
 {
-    private readonly Lock Sync;
     private readonly SKGLElement Element;
+    private readonly Lock Sync;
     private bool IsPanning;
     private SKPoint LastPanPoint;
     public MouseButton DragButton { get; set; } = MouseButton.Left;
@@ -71,7 +71,7 @@ public sealed partial class SKGLElementPlus : IDisposable
 
     public event EventHandler<SKPaintGLSurfaceEventArgs>? Paint;
 
-    public void Redraw() => Element?.InvalidateVisual();
+    public void Redraw() => Element.InvalidateVisual();
 
     #region Preview Controls
     private void SkElement_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -106,6 +106,18 @@ public sealed partial class SKGLElementPlus : IDisposable
         {
             //ignored
         }
+    }
+
+    public SKPoint? GetMousePoint()
+    {
+        var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
+        var position = Mouse.GetPosition(Element);
+        var mousePoint = new SKPoint((float)position.X * dpiScale, (float)position.Y * dpiScale);
+
+        if (!Matrix.TryInvert(out var inverseMatrix))
+            return null;
+
+        return inverseMatrix.MapPoint(mousePoint);
     }
 
     private void SkElement_MouseDown(object sender, MouseButtonEventArgs e)

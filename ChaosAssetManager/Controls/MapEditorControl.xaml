@@ -1,12 +1,15 @@
 ﻿<UserControl x:Class="ChaosAssetManager.Controls.MapEditorControl"
+             x:Name="Self"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:mapEditorControls="clr-namespace:ChaosAssetManager.Controls.MapEditorControls"
+             xmlns:viewModel="clr-namespace:ChaosAssetManager.ViewModel"
              mc:Ignorable="d"
-             d:DesignHeight="450"
-             d:DesignWidth="700"
+             d:DesignHeight="900"
+             d:DesignWidth="1400"
              Background="{DynamicResource MaterialDesignPaper}"
              TextElement.FontWeight="Medium"
              TextElement.FontSize="14"
@@ -16,12 +19,14 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="250" />
         </Grid.ColumnDefinitions>
 
         <Menu Grid.Row="0"
@@ -30,49 +35,471 @@
               VerticalAlignment="Top"
               HorizontalAlignment="Stretch"
               materialDesign:MenuAssist.TopLevelMenuItemHeight="30">
-            <MenuItem x:Name="LoadMapBtn"
-                      Header="Load Map" />
+            <MenuItem x:Name="NewBtn"
+                      Header="New">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Width: " />
+                    <TextBox Grid.Column="1"
+                             x:Name="NewMapWidthTbx"
+                             Width="50"
+                             TabIndex="0" />
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Height: " />
+                    <TextBox Grid.Column="1"
+                             x:Name="NewMapHeightTbx"
+                             Width="50"
+                             TabIndex="1" />
+                </Grid>
+                <Grid>
+                    <Button Content="Create"
+                            TabIndex="2"
+                            Click="NewMapCreateBtn_OnClick" />
+                </Grid>
+            </MenuItem>
+            <MenuItem x:Name="LoadBtn"
+                      Header="Load"
+                      Click="LoadBtn_OnClick" />
+            <MenuItem x:Name="SaveBtn"
+                      Header="Save"
+                      Click="SaveBtn_OnClick" />
+            <MenuItem x:Name="SaveAsBtn"
+                      Header="SaveAs"
+                      Click="SaveAsBtn_OnClick" />
             <MenuItem x:Name="ArchivePathBtn"
-                      Header="Archive Path" />
+                      Header="Archive Path"
+                      Click="ArchivePathBtn_OnClick" />
+
         </Menu>
 
-        <TabControl Grid.Row="1"
+        <ToolBarTray Grid.Row="1"
+                     Grid.Column="0"
+                     Grid.ColumnSpan="99"
+                     Style="{StaticResource MaterialDesignToolBarTray}">
+            <ToolBar Style="{StaticResource MaterialDesignToolBar}"
+                     MaxHeight="45">
+                <TextBlock Text="Options: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ListBox SelectionMode="Extended"
+                         materialDesign:ListBoxAssist.IsToggle="True"
+                         materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True">
+                    <ListBoxItem x:Name="SnowTileSetBtn"
+                                 Content="{materialDesign:PackIcon Kind=Snowflake, Size=28}"
+                                 Foreground="Snow"
+                                 Padding="0,5"
+                                 MouseLeftButtonUp="SnowTileSetBtn_OnMouseLeftButtonUp"
+                                 ToolTip="Swaps to the snow tileset" />
+                </ListBox>
+                <Separator />
+                <TextBlock Text="Show: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ListBox SelectionMode="Extended"
+                         materialDesign:ListBoxAssist.IsToggle="True"
+                         materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True">
+                    <ListBoxItem x:Name="ShowBackgroundBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 IsSelected="{Binding ViewModel.ShowBackground}"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Show background tiles">
+                        <Path Width="40"
+                              Height="30"
+                              Fill="Green"
+                              Data="M 0,0 L 0,30 L 40,30 L 40,0 Z" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="ShowLeftForegroundBtn"
+                                 HorizontalContentAlignment="Left"
+                                 VerticalContentAlignment="Center"
+                                 IsSelected="{Binding ViewModel.ShowLeftForeground}"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Show left foreground tiles">
+                        <Path Width="30"
+                              Height="30"
+                              Fill="Green"
+                              Data="M 5,0 L 5,30 L 25,40 L 25,0 Z" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="ShowRightForegroundBtn"
+                                 HorizontalContentAlignment="Right"
+                                 VerticalContentAlignment="Center"
+                                 IsSelected="{Binding ViewModel.ShowRightForeground}"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Show right foreground tiles">
+                        <Path Width="30"
+                              Height="30"
+                              Fill="Green"
+                              Data="M 5,0 L 5,30 L 25,30 L 25,0 Z" />
+                    </ListBoxItem>
+                </ListBox>
+                <Separator />
+                <TextBlock Text="Edit: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ListBox SelectedIndex="0"
+                         materialDesign:ListBoxAssist.IsToggle="True"
+                         materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True"
+                         SelectionChanged="EditTileType_OnSelectionChanged">
+                    <ListBoxItem x:Name="EditBackgroundBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Place background tiles">
+                        <Path Width="40"
+                              Height="30"
+                              Fill="Green"
+                              Data="M 0,0 L 0,30 L 40,30 L 40,0 Z" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="EditLeftForegroundBtn"
+                                 HorizontalContentAlignment="Left"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Place left foreground tiles">
+                        <Path Width="30"
+                              Height="30"
+                              Fill="Green"
+                              Data="M 5,0 L 5,30 L 25,40 L 25,0 Z" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="EditRightForegroundBtn"
+                                 HorizontalContentAlignment="Right"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Place right foreground tiles">
+                        <Path Width="30"
+                              Height="30"
+                              Fill="Green"
+                              Data="M 5,0 L 5,30 L 25,30 L 25,0 Z" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="EditForegroundBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Place right foreground tiles">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Path Grid.Column="0"
+                                  Width="20"
+                                  Height="30"
+                                  Fill="Green"
+                                  Data="M 0,0 L 0,30 L 15,30 L 15,0 Z" />
+                            <Path Grid.Column="1"
+                                  Width="20"
+                                  Height="30"
+                                  Fill="Green"
+                                  Data="M 5,0 L 5,30 L 20,30 L 20,0 Z" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="EditAllBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Place right foreground tiles">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="0"
+                                  Grid.ColumnSpan="99"
+                                  Width="40"
+                                  Height="40"
+                                  Fill="LawnGreen"
+                                  Data="M 0,0 L 0,30 L 40,30 L 40,0 Z" />
+                            <Path Grid.Column="0"
+                                  Width="20"
+                                  Height="40"
+                                  Fill="Green"
+                                  Data="M 2,2 L 2,28 L 15,28 L 15,2 Z" />
+                            <Path Grid.Column="1"
+                                  Width="20"
+                                  Height="40"
+                                  Fill="Green"
+                                  Data="M 5,2 L 5,28 L 18,28 L 18,2 Z" />
+                        </Grid>
+                    </ListBoxItem>
+                </ListBox>
+                <Separator />
+                <TextBlock Text="Tools: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ListBox SelectedIndex="0"
+                         materialDesign:ListBoxAssist.IsToggle="True"
+                         materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True"
+                         SelectionChanged="EditingToolType_OnSelectionChanged">
+                    <ListBoxItem x:Name="DrawToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1">
+                        <materialDesign:PackIcon Kind="Pencil" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="SelectToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1">
+                        <materialDesign:PackIcon Kind="Select" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="SampleToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1">
+                        <materialDesign:PackIcon Kind="Eyedropper" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="EraseToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1">
+                        <materialDesign:PackIcon Kind="Eraser" />
+                    </ListBoxItem>
+                </ListBox>
+                <Separator />
+                <TextBlock Text="Size: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ComboBox x:Name="SizeSelectorCmbx"
+                          ItemsSource="{Binding ViewModel.PossibleBounds}"
+                          SelectedItem="{Binding ViewModel.CurrentMapViewer.Bounds, Converter={StaticResource RectangleMapBoundsConverter}}" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <TabControl Grid.Row="2"
                     Grid.Column="0"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    x:Name="MapEditorTabControl" />
-        
-        <TabControl Grid.Row="1"
-                    Grid.Column="1">
-            <TabItem Header="Tiles">
-                <ListView x:Name="TilesControl"
-                          ItemsSource="{Binding Tiles}">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Image Width="30"
-                                               Source="{Binding Converter={StaticResource TileConverter}}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+                    x:Name="MapViewerTabControl"
+                    ItemsSource="{Binding ViewModel.Maps}"
+                    Style="{StaticResource MaterialDesignTabControl}"
+                    materialDesign:TabAssist.HasFilledTab="True"
+                    ContentTemplate="{StaticResource MapViewerDataTemplate}"
+                    SelectionChanged="MapViewerTabControl_OnSelectionChanged">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem"
+                       BasedOn="{StaticResource MaterialDesignTabItem}">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver"
+                                 Value="True">
+                            <Setter Property="Background"
+                                    Value="DimGray" />
+                        </Trigger>
+                    </Style.Triggers>
+
+                    <Setter Property="Header"
+                            Value="{Binding FileName}" />
+
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding}"
+                                               Foreground="White"
+                                               VerticalAlignment="Center" />
+
+                                    <Button Grid.Column="1"
+                                            Content="{materialDesign:PackIcon Kind=Close}"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Padding="0"
+                                            Width="20"
+                                            Height="20"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Margin="5, 0, 0, 0"
+                                            Foreground="White"
+                                            Click="MapCloseBtn_OnClick" />
+                                </Grid>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.ItemContainerStyle>
+        </TabControl>
+
+        <TabControl Grid.Row="2"
+                    Grid.Column="1"
+                    Style="{StaticResource MaterialDesignUniformTabControl}">
+
+            <TabItem Header="Tiles"
+                     Style="{StaticResource MaterialDesignTabItem}">
+                <DataGrid x:Name="TilesControl"
+                          SelectionMode="Single"
+                          SelectionUnit="Cell"
+                          HeadersVisibility="None"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          SelectedCellsChanged="TilesControl_OnSelectedCellsChanged">
+                    <DataGrid.ItemsSource>
+                        <MultiBinding Converter="{StaticResource TileTypeConverter}">
+                            <Binding Path="ViewModel.EditingLayerFlags" />
+                            <Binding Path="ViewModel" />
+                        </MultiBinding>
+                    </DataGrid.ItemsSource>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow"
+                               BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                            <!-- Remove extra spacing from each row -->
+                            <Setter Property="Height"
+                                    Value="Auto" />
+                            <Setter Property="Padding"
+                                    Value="0" />
+                            <Setter Property="Margin"
+                                    Value="0" />
+                            <Setter Property="HorizontalContentAlignment"
+                                    Value="Left" />
+
+                            <Style.Triggers>
+                                <!-- By default, the entire row highlights on hover.
+                     This trigger sets it transparent when hovered, 
+                     effectively disabling row hover. -->
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter Property="Background"
+                                            Value="Transparent" />
+                                </Trigger>
+
+                                <!-- Similarly, remove row highlight on selection 
+                     (optional; otherwise the row might highlight on selection). -->
+                                <Trigger Property="IsSelected"
+                                         Value="True">
+                                    <Setter Property="Background"
+                                            Value="Transparent" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell"
+                               BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                            <!-- Remove default padding and borders -->
+                            <Setter Property="Padding"
+                                    Value="1" />
+                            <Setter Property="Margin"
+                                    Value="0" />
+                            <Setter Property="BorderThickness"
+                                    Value="0" />
+                            <Setter Property="BorderBrush"
+                                    Value="DimGray" />
+                            <Setter Property="HorizontalContentAlignment"
+                                    Value="Left" />
+                            <Setter Property="HorizontalAlignment"
+                                    Value="Left" />
+                            <!-- Remove focus visuals if you don't want a focus rectangle -->
+                            <Setter Property="FocusVisualStyle"
+                                    Value="{x:Null}" />
+
+                            <Style.Triggers>
+                                <!-- Hover (IsMouseOver = True) on the cell itself -->
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter Property="Background"
+                                            Value="DimGray" />
+                                </Trigger>
+
+                                <!-- If you also want a cell to highlight when 'selected'
+                     (rather than the whole row), do something like: -->
+                                <Trigger Property="IsSelected"
+                                         Value="True">
+                                    <Setter Property="Background"
+                                            Value="DimGray" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.CellStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="56">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile1}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="56">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile2}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="56">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile3}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="56">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile4}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
             </TabItem>
-            <TabItem Header="Structures">
+            <TabItem Header="Structures"
+                     Style="{StaticResource MaterialDesignTabItem}">
                 <ListView x:Name="StructuresControl" />
             </TabItem>
         </TabControl>
 
+        <materialDesign:ColorZone Grid.Row="3"
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="99"
+                                  materialDesign:ColorZoneAssist.Mode="SecondaryDark">
+            <Grid>
+                <TextBlock Text="{Binding ViewModel.MouseHoverTileCoordinates, StringFormat='Tile Coords: {0}'}"
+                           HorizontalAlignment="Left"
+                           Margin="5, 0" />
 
-        <!--<ToolBarTray Grid.Row="0">
-            <ToolBar ClipToBounds="True">
-                ~1~<MenuItem x:Name="LoadMapBtn"
-                          Header="Load Map"/>@1@
-                <Separator />
-            </ToolBar>
-        </ToolBarTray>-->
+                <TextBlock Text="{Binding ViewModel.SelectedTileIndex, StringFormat='Tile Id: {0}'}"
+                           HorizontalAlignment="Right"
+                           Margin="5, 0"
+                           ToolTip="This is the actual tile id. When background tiles are saved to a map file, they are +1'd" />
+            </Grid>
+        </materialDesign:ColorZone>
+
+        <materialDesign:Snackbar Name="Snackbar"
+                                 Grid.ColumnSpan="99"
+                                 Grid.RowSpan="99"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="0"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
     </Grid>
 </UserControl>

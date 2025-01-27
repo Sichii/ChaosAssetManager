@@ -5,7 +5,7 @@ namespace ChaosAssetManager.Helpers;
 
 public sealed class SkGlElementPool : DefaultObjectPool<SKGLElement>
 {
-    public static SkGlElementPool Instance { get; } = new(5);
+    public static SkGlElementPool Instance { get; } = new(ushort.MaxValue);
 
     /// <inheritdoc />
     public SkGlElementPool()
