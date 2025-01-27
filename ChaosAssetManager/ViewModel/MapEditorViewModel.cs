@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using Chaos.Wpf.Abstractions;
+using Chaos.Wpf.Collections.ObjectModel;
 using ChaosAssetManager.Controls;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Model;
@@ -9,7 +10,7 @@ namespace ChaosAssetManager.ViewModel;
 
 public class MapEditorViewModel : NotifyPropertyChangedBase
 {
-    public List<TileRowViewModel> BackgroundTiles
+    public ObservingCollection<TileRowViewModel> BackgroundTiles
     {
         get;
         set => SetField(ref field, value);
@@ -27,7 +28,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set => SetField(ref field, value);
     } = LayerFlags.Background;
 
-    public List<TileRowViewModel> ForegroundTiles
+    public ObservingCollection<TileRowViewModel> ForegroundTiles
     {
         get;
         set => SetField(ref field, value);
@@ -106,4 +107,11 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
     } = null;
 
     public ObservableCollection<MapViewerViewModel> Maps { get; } = [];
+
+    public MapEditorViewModel()
+    {
+        ForegroundTiles.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ForegroundTiles));
+        BackgroundTiles.CollectionChanged += (_, _) => OnPropertyChanged(nameof(BackgroundTiles));
+        PossibleBounds.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PossibleBounds));
+    }
 }

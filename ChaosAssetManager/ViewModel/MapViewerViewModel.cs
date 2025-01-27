@@ -4,6 +4,7 @@ using Chaos.Time.Abstractions;
 using Chaos.Wpf.Abstractions;
 using Chaos.Wpf.Collections.ObjectModel;
 using ChaosAssetManager.Controls.MapEditorControls;
+using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using SkiaSharp;
@@ -79,6 +80,9 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
     public ObservingCollection<TileViewModel> RawBackgroundTiles { get; } = [];
     public ObservingCollection<TileViewModel> RawLeftForegroundTiles { get; } = [];
     public ObservableCollection<TileViewModel> RawRightForegroundTiles { get; } = [];
+    public FixedSizeDeque<ActionContext> RedoableActions { get; } = new(20);
+
+    public FixedSizeDeque<ActionContext> UndoableActions { get; } = new(20);
 
     public ListSegment2D<TileViewModel> BackgroundTilesView => new(RawBackgroundTiles, Bounds.Width);
 
@@ -106,6 +110,24 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
             tile.Update(delta);
     }
 
+    public void AddAction(
+        ActionType actionType,
+        TileGrab before,
+        TileGrab after,
+        LayerFlags layerFlags)
+    {
+        var actionContext = new ActionContext
+        {
+            ActionType = actionType,
+            Before = before,
+            After = after,
+            LayerFlags = layerFlags
+        };
+
+        UndoableActions.AddNewest(actionContext);
+        RedoableActions.Clear();
+    }
+
     public void Initialize()
     {
         foreach (var tile in RawBackgroundTiles)
@@ -119,5 +141,25 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
         BackgroundChangePending = false;
         ForegroundChangePending = false;
+    }
+
+    public void RedoAction()
+    {
+        if (RedoableActions.Count == 0)
+            return;
+
+        var action = RedoableActions.PopNewest();
+        action.Redo(this);
+        UndoableActions.AddNewest(action);
+    }
+
+    public void UndoAction()
+    {
+        if (UndoableActions.Count == 0)
+            return;
+
+        var action = UndoableActions.PopNewest();
+        action.Undo(this);
+        RedoableActions.AddNewest(action);
     }
 }

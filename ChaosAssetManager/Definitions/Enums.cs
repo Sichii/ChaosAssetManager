@@ -17,3 +17,9 @@ public enum LayerFlags
     Foreground = LeftForeground | RightForeground,
     All = Background | Foreground
 }
+
+public enum ActionType
+{
+    Draw,
+    Erase
+}

@@ -50,20 +50,18 @@ public partial class TilePickerEntryControl
             return;
 
         var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
-        var finalScaleFactor = 1.5f;
-        var dpiScaleFactor = finalScaleFactor / dpiScale;
 
         //animated foregrounds might have different heights
         var maxHeight = TileViewModel.Animation.Frames.Max(x => x.Height);
 
-        Element.Width = frame.Width * 2.0f;
-        Element.Height = maxHeight * dpiScaleFactor;
+        Element.Width = 112;
+        Element.Height = maxHeight;
 
         //draw the frame at the bottom of the control
         var drawY = maxHeight - frame.Height;
 
         canvas.Clear(SKColors.Transparent);
-        canvas.Scale(finalScaleFactor);
+        canvas.Scale(dpiScale);
         canvas.DrawImage(frame, 0, drawY);
 
         canvas.Flush();

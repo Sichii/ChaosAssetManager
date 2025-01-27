@@ -69,7 +69,7 @@ public partial class MapViewerControl
         };
     }
 
-    private SKPoint ConvertMouseToTileCoordinates(SKPoint mousePoint)
+    public SKPoint ConvertMouseToTileCoordinates(SKPoint mousePoint)
     {
         var mouseX = mousePoint.X;
         var mouseY = mousePoint.Y;
@@ -97,69 +97,16 @@ public partial class MapViewerControl
         if (TileGrab is null || (tileCoordinates == new SKPoint(-1, -1)))
             return;
 
-        var tileX = (int)tileCoordinates.X;
-        var tileY = (int)tileCoordinates.Y;
+        var after = TileGrab.WithTileCoordinates(tileCoordinates);
+        var before = TileGrab.CreateFrom(ViewModel, after, MapEditorViewModel.EditingLayerFlags);
 
-        if (TileGrab.HasBackgroundTiles && MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background))
-            for (var y = 0; y < TileGrab.Bounds.Height; y++)
-            {
-                for (var x = 0; x < TileGrab.Bounds.Width; x++)
-                {
-                    var tile = TileGrab.BackgroundTilesView[x, y]
-                                       .Clone();
-                    tile.Initialize();
-                    var bgTiles = ViewModel.BackgroundTilesView;
+        ViewModel.AddAction(
+            ActionType.Draw,
+            before,
+            after,
+            MapEditorViewModel.EditingLayerFlags);
 
-                    var point = new Point(tileX + x, tileY + y);
-
-                    if (!ViewModel.Bounds.Contains(point))
-                        continue;
-
-                    bgTiles[point.X, point.Y] = tile;
-                }
-            }
-
-        if (TileGrab.HasLeftForegroundTiles && MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground))
-            for (var y = 0; y < TileGrab.Bounds.Height; y++)
-            {
-                for (var x = 0; x < TileGrab.Bounds.Width; x++)
-                {
-                    var tile = TileGrab.LeftForegroundTilesView[x, y]
-                                       .Clone();
-                    tile.LayerFlags = LayerFlags.LeftForeground;
-
-                    tile.Initialize();
-                    var fgTiles = ViewModel.LeftForegroundTilesView;
-
-                    var point = new Point(tileX + x, tileY + y);
-
-                    if (!ViewModel.Bounds.Contains(point))
-                        continue;
-
-                    fgTiles[point.X, point.Y] = tile;
-                }
-            }
-
-        if (TileGrab.HasRightForegroundTiles && MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground))
-            for (var y = 0; y < TileGrab.Bounds.Height; y++)
-            {
-                for (var x = 0; x < TileGrab.Bounds.Width; x++)
-                {
-                    var tile = TileGrab.RightForegroundTilesView[x, y]
-                                       .Clone();
-                    tile.LayerFlags = LayerFlags.RightForeground;
-
-                    tile.Initialize();
-                    var fgTiles = ViewModel.RightForegroundTilesView;
-
-                    var point = new Point(tileX + x, tileY + y);
-
-                    if (!ViewModel.Bounds.Contains(point))
-                        continue;
-
-                    fgTiles[point.X, point.Y] = tile;
-                }
-            }
+        TileGrab.Apply(ViewModel, MapEditorViewModel.EditingLayerFlags);
     }
 
     private void HandleSelectToolClick(SKPoint tileCoordinates)
@@ -277,33 +224,18 @@ public partial class MapViewerControl
     {
         HandleEraseToolDrag(tileCoordinates);
 
-        //delete tiles from map that are in the tilegraab
         if (TileGrab is null)
             return;
 
-        for (var y = TileGrab.Bounds.Top; y <= TileGrab.Bounds.Bottom; y++)
-        {
-            for (var x = TileGrab.Bounds.Left; x <= TileGrab.Bounds.Right; x++)
-            {
-                if (TileGrab.HasBackgroundTiles && MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background))
-                {
-                    var local = ViewModel.BackgroundTilesView;
-                    local[x, y] = TileViewModel.EmptyBackground;
-                }
+        var before = TileGrab.CreateFrom(ViewModel, TileGrab, MapEditorViewModel.EditingLayerFlags);
 
-                if (TileGrab.HasLeftForegroundTiles && MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground))
-                {
-                    var local = ViewModel.LeftForegroundTilesView;
-                    local[x, y] = TileViewModel.EmptyLeftForeground;
-                }
+        ViewModel.AddAction(
+            ActionType.Erase,
+            before,
+            TileGrab,
+            MapEditorViewModel.EditingLayerFlags);
 
-                if (TileGrab.HasRightForegroundTiles && MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground))
-                {
-                    var local = ViewModel.RightForegroundTilesView;
-                    local[x, y] = TileViewModel.EmptyRightForeground;
-                }
-            }
-        }
+        TileGrab?.Erase(ViewModel, MapEditorViewModel.EditingLayerFlags);
     }
 
     private void HandleSelectToolDrag(SKPoint tileCoordinates)
@@ -320,40 +252,12 @@ public partial class MapViewerControl
         var topX = Math.Min(startX, tileX);
         var topY = Math.Min(startY, tileY);
 
-        var selectionBounds = new Rectangle(
-            topX,
-            topY,
+        TileGrab = TileGrab.Create(
+            ViewModel,
+            new SKPoint(topX, topY),
             selectionWidth,
-            selectionHeight);
-
-        TileGrab.Bounds = selectionBounds;
-
-        if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background))
-        {
-            TileGrab.RawBackgroundTiles.Clear();
-
-            for (var y = 0; y < selectionHeight; y++)
-                for (var x = 0; x < selectionWidth; x++)
-                    TileGrab.RawBackgroundTiles.Add(ViewModel.BackgroundTilesView[topX + x, topY + y]);
-        }
-
-        if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground))
-        {
-            TileGrab.RawLeftForegroundTiles.Clear();
-
-            for (var y = 0; y < selectionHeight; y++)
-                for (var x = 0; x < selectionWidth; x++)
-                    TileGrab.RawLeftForegroundTiles.Add(ViewModel.LeftForegroundTilesView[topX + x, topY + y]);
-        }
-
-        if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground))
-        {
-            TileGrab.RawRightForegroundTiles.Clear();
-
-            for (var y = 0; y < selectionHeight; y++)
-                for (var x = 0; x < selectionWidth; x++)
-                    TileGrab.RawRightForegroundTiles.Add(ViewModel.RightForegroundTilesView[topX + x, topY + y]);
-        }
+            selectionHeight,
+            MapEditorViewModel.EditingLayerFlags);
     }
     #endregion
 
@@ -495,7 +399,7 @@ public partial class MapViewerControl
 
     private void RenderBackground(SKPoint mouseCoordinates, ListSegment2D<TileViewModel> backgroundTiles)
     {
-        if (ViewModel is { BackgroundChangePending: false, ForegroundChangePending: false })
+        if (ViewModel is { BackgroundChangePending: false })
             return;
 
         var width = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
@@ -624,7 +528,7 @@ public partial class MapViewerControl
         ListSegment2D<TileViewModel> leftForegroundTiles,
         ListSegment2D<TileViewModel> rightForegroundTiles)
     {
-        if (!ViewModel.ForegroundChangePending)
+        if (ViewModel is { ForegroundChangePending: false })
             return;
 
         var width = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
@@ -896,7 +800,11 @@ public partial class MapViewerControl
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         // removal from the collection will trigger this and set datacontext to null
         if (ViewModel is null)
+        {
+            DataContext = MapViewerViewModel.Empty;
+
             return;
+        }
 
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         ViewModel.Control = this;

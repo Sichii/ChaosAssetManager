@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,6 +15,7 @@ using DALib.Drawing;
 using DALib.Extensions;
 using ArgumentOutOfRangeException = System.ArgumentOutOfRangeException;
 using Button = System.Windows.Controls.Button;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using Rectangle = Chaos.Geometry.Rectangle;
 
 // ReSharper disable ClassCanBeSealed.Global
@@ -58,6 +58,20 @@ public partial class MapEditorControl
             MapEditorRenderUtil.Clear();
             PopulateTileViewModels();
         }
+    }
+
+    private void DoRedo()
+    {
+        var selectedViewer = MapViewerTabControl.SelectedItem as MapViewerViewModel ?? MapViewerViewModel.Empty;
+
+        selectedViewer.RedoAction();
+    }
+
+    private void DoUndo()
+    {
+        var selectedViewer = MapViewerTabControl.SelectedItem as MapViewerViewModel ?? MapViewerViewModel.Empty;
+
+        selectedViewer.UndoAction();
     }
 
     private void EditingToolType_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -127,6 +141,13 @@ public partial class MapEditorControl
 
     private void LoadBtn_OnClick(object sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrEmpty(PathHelper.Instance.MapEditorArchivePath))
+        {
+            ShowMessage("Fix the archive path first");
+
+            return;
+        }
+
         using var openFileDialog = new OpenFileDialog();
         openFileDialog.Filter = "Map files (*.map)|*.map";
 
@@ -231,12 +252,25 @@ public partial class MapEditorControl
         ViewModel.Maps.Remove(viewer);
     }
 
+    private void MapEditorControl_OnKeyDown(object sender, KeyEventArgs e)
+    {
+        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+        switch (e.Key)
+        {
+            case Key.Z when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                DoUndo();
+
+                break;
+            case Key.Y when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                DoRedo();
+
+                break;
+        }
+    }
+
     private void MapViewerTabControl_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var selectedTab = (MapViewerViewModel)MapViewerTabControl.SelectedItem;
-
-        if (selectedTab is null)
-            return;
+        var selectedTab = MapViewerTabControl.SelectedItem as MapViewerViewModel ?? MapViewerViewModel.Empty;
 
         ViewModel.PossibleBounds = new ObservableCollection<MapBounds>(selectedTab.PossibleBounds);
         ViewModel.CurrentMapViewer = selectedTab;
@@ -244,6 +278,13 @@ public partial class MapEditorControl
 
     private void NewMapCreateBtn_OnClick(object sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrEmpty(PathHelper.Instance.MapEditorArchivePath))
+        {
+            ShowMessage("Fix the archive path first");
+
+            return;
+        }
+
         if (!byte.TryParse(NewMapWidthTbx.Text, out var width))
         {
             ShowMessage("Invalid width");
@@ -345,6 +386,8 @@ public partial class MapEditorControl
         ViewModel.BackgroundTiles.AddRange(backgroundtiles);
     }
 
+    private void RedoBtn_OnClick(object sender, RoutedEventArgs e) => DoRedo();
+
     private void SaveAsBtn_OnClick(object sender, RoutedEventArgs e)
     {
         var viewer = (MapViewerViewModel)MapViewerTabControl.SelectedItem;
@@ -432,10 +475,10 @@ public partial class MapEditorControl
 
         ViewModel.SnowTileset = listBoxItem.IsSelected;
 
-        foreach (ref var row in CollectionsMarshal.AsSpan(ViewModel.BackgroundTiles))
+        foreach (var row in ViewModel.BackgroundTiles)
             row.Refresh();
 
-        foreach (ref var row in CollectionsMarshal.AsSpan(ViewModel.ForegroundTiles))
+        foreach (var row in ViewModel.ForegroundTiles)
             row.Refresh();
     }
 
@@ -509,6 +552,8 @@ public partial class MapEditorControl
         ViewModel.TileGrab = tileGrab;
     }
 
+    private void UndoBtn_OnClick(object sender, RoutedEventArgs e) => DoUndo();
+
     private async Task UpdateLoop()
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(1000d / 30d));
@@ -521,10 +566,10 @@ public partial class MapEditorControl
 
                 var delta = deltaTime.GetDelta;
 
-                foreach (ref var row in CollectionsMarshal.AsSpan(ViewModel.BackgroundTiles))
+                foreach (var row in ViewModel.BackgroundTiles)
                     row.Update(delta);
 
-                foreach (ref var row in CollectionsMarshal.AsSpan(ViewModel.ForegroundTiles))
+                foreach (var row in ViewModel.ForegroundTiles)
                     row.Update(delta);
 
                 ViewModel.CurrentMapViewer.Update(delta);
