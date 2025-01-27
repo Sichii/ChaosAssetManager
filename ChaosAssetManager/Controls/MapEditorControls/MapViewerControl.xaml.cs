@@ -374,36 +374,32 @@ public partial class MapViewerControl
     {
         var canvas = e.Surface.Canvas;
 
-        canvas.Clear(SKColors.Black);
-
         var mousePoint = Element.GetMousePoint();
         var mapPoint = ConvertMouseToTileCoordinates(mousePoint!.Value);
-
-        var backgroundTiles = ViewModel.BackgroundTilesView;
-        var leftForegroundTiles = ViewModel.LeftForegroundTilesView;
-        var rightForegroundTiles = ViewModel.RightForegroundTilesView;
-
-        RenderBackground(mapPoint, backgroundTiles);
-        RenderForeground(mapPoint, leftForegroundTiles, rightForegroundTiles);
+        
+        if (ViewModel.BackgroundChangePending)
+            RenderBackground(mapPoint);
+        
+        if (ViewModel.ForegroundChangePending)
+            RenderForeground(mapPoint);
 
         canvas.DrawImage(BackgroundImage, SKPoint.Empty);
         canvas.DrawImage(ForegroundImage, SKPoint.Empty);
 
         //draw tabgrid if enabled
 
-        canvas.Flush();
-
         ViewModel.BackgroundChangePending = false;
         ViewModel.ForegroundChangePending = false;
     }
 
-    private void RenderBackground(SKPoint mouseCoordinates, ListSegment2D<TileViewModel> backgroundTiles)
+    private void RenderBackground(SKPoint mouseCoordinates)
     {
         if (ViewModel is { BackgroundChangePending: false })
             return;
 
         var width = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
         var height = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_HEIGHT + FOREGROUND_PADDING;
+        var bgTiles = ViewModel.BackgroundTilesView;
 
         using var bitmap = new SKBitmap(width, height);
 
@@ -414,19 +410,24 @@ public partial class MapViewerControl
             var bgInitialDrawX = (ViewModel.Bounds.Height - 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
             var bgInitialDrawY = FOREGROUND_PADDING;
             var bounds = ViewModel.Bounds;
+            var tgbgTiles = new ListSegment2D<TileViewModel>();
+            
+            if(TileGrab is not null)
+                tgbgTiles = TileGrab.BackgroundTilesView;
 
             for (var y = 0; y < bounds.Height; y++)
             {
                 for (var x = 0; x < bounds.Width; x++)
                 {
                     var point = new Point(x, y);
-                    var tileViewModel = backgroundTiles[x, y];
+                    var tileViewModel = bgTiles[x, y];
                     SKPaint? paint = null;
 
                     if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background))
                         HandleBackgroundToolHover(
                             point,
                             mouseCoordinates,
+                            tgbgTiles,
                             ref tileViewModel,
                             ref paint);
 
@@ -453,6 +454,7 @@ public partial class MapViewerControl
     private void HandleBackgroundToolHover(
         Point currentPoint,
         SKPoint mouseCoordinates,
+        ListSegment2D<TileViewModel> backgroundTiles,
         ref TileViewModel tileViewModel,
         ref SKPaint? paint)
     {
@@ -480,7 +482,7 @@ public partial class MapViewerControl
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
 
-                    tileViewModel = tileGrab.BackgroundTilesView[tileGrabX, tileGrabY];
+                    tileViewModel = backgroundTiles[tileGrabX, tileGrabY];
                 }
 
                 break;
@@ -523,16 +525,12 @@ public partial class MapViewerControl
         }
     }
 
-    private void RenderForeground(
-        SKPoint mouseCoordinates,
-        ListSegment2D<TileViewModel> leftForegroundTiles,
-        ListSegment2D<TileViewModel> rightForegroundTiles)
+    private void RenderForeground(SKPoint mouseCoordinates)
     {
-        if (ViewModel is { ForegroundChangePending: false })
-            return;
-
         var width = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
         var height = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_HEIGHT + FOREGROUND_PADDING;
+        var lfgTiles = ViewModel.LeftForegroundTilesView;
+        var rfgTiles = ViewModel.RightForegroundTilesView;
 
         using var bitmap = new SKBitmap(width, height);
         using var canvas = new SKCanvas(bitmap);
@@ -540,13 +538,21 @@ public partial class MapViewerControl
         var fgInitialDrawX = (ViewModel.Bounds.Height - 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
         var fgInitialDrawY = FOREGROUND_PADDING;
         var bounds = ViewModel.Bounds;
+        var tglfgTiles = new ListSegment2D<TileViewModel>();
+        var tgrfgTiles = new ListSegment2D<TileViewModel>();
+
+        if (TileGrab is not null)
+        {
+            tglfgTiles = TileGrab.LeftForegroundTilesView;
+            tgrfgTiles = TileGrab.RightForegroundTilesView;
+        }
 
         for (var y = 0; y < bounds.Height; y++)
         {
             for (var x = 0; x < bounds.Width; x++)
             {
-                var leftTileViewModel = leftForegroundTiles[x, y];
-                var rightTileViewModel = rightForegroundTiles[x, y];
+                var leftTileViewModel = lfgTiles[x, y];
+                var rightTileViewModel = rfgTiles[x, y];
                 var point = new Point(x, y);
                 SKPaint? leftForegroundPaint = null;
                 SKPaint? rightForegroundPaint = null;
@@ -555,6 +561,7 @@ public partial class MapViewerControl
                     HandleLeftForegroundToolHover(
                         point,
                         mouseCoordinates,
+                        tglfgTiles,
                         ref leftTileViewModel,
                         ref leftForegroundPaint);
 
@@ -562,6 +569,7 @@ public partial class MapViewerControl
                     HandleRightForegroundToolHover(
                         point,
                         mouseCoordinates,
+                        tgrfgTiles,
                         ref rightTileViewModel,
                         ref rightForegroundPaint);
 
@@ -600,6 +608,7 @@ public partial class MapViewerControl
     private void HandleLeftForegroundToolHover(
         Point currentPoint,
         SKPoint mouseCoordinates,
+        ListSegment2D<TileViewModel> leftForegroundTiles,
         ref TileViewModel currentFrame,
         ref SKPaint? paint)
     {
@@ -617,7 +626,7 @@ public partial class MapViewerControl
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
             : null;
-
+        
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
@@ -627,7 +636,7 @@ public partial class MapViewerControl
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
 
-                    currentFrame = tileGrab.LeftForegroundTilesView[tileGrabX, tileGrabY];
+                    currentFrame = leftForegroundTiles[tileGrabX, tileGrabY];
                 }
 
                 break;
@@ -673,6 +682,7 @@ public partial class MapViewerControl
     private void HandleRightForegroundToolHover(
         Point currentPoint,
         SKPoint mouseCoordinates,
+        ListSegment2D<TileViewModel> rightForegroundTiles, 
         ref TileViewModel currentFrame,
         ref SKPaint? paint)
     {
@@ -690,7 +700,7 @@ public partial class MapViewerControl
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
             : null;
-
+        
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
@@ -700,7 +710,7 @@ public partial class MapViewerControl
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
 
-                    currentFrame = tileGrab.RightForegroundTilesView[tileGrabX, tileGrabY];
+                    currentFrame = rightForegroundTiles[tileGrabX, tileGrabY];
                 }
 
                 break;
