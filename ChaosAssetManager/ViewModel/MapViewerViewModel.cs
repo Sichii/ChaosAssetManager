@@ -10,6 +10,8 @@ using ChaosAssetManager.Model;
 using SkiaSharp;
 using Rectangle = Chaos.Geometry.Rectangle;
 
+#pragma warning disable CS8618, CS9264
+
 namespace ChaosAssetManager.ViewModel;
 
 public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
@@ -114,14 +116,16 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         ActionType actionType,
         TileGrab before,
         TileGrab after,
-        LayerFlags layerFlags)
+        LayerFlags layerFlags,
+        SKPoint tileCoordinates)
     {
         var actionContext = new ActionContext
         {
             ActionType = actionType,
             Before = before,
             After = after,
-            LayerFlags = layerFlags
+            LayerFlags = layerFlags,
+            TileCoordinates = tileCoordinates
         };
 
         UndoableActions.AddNewest(actionContext);

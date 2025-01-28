@@ -25,7 +25,15 @@ public partial class MapViewerControl
     public const int FOREGROUND_PADDING = 512;
     private SKImage? BackgroundImage;
     private SKImage? ForegroundImage;
-    private TileGrab? TileGrab;
+
+    private TileGrab? HistoricalTileGrab { get; set; }
+
+    private TileGrab? TileGrab
+    {
+        get => MapEditorViewModel.TileGrab;
+        set => MapEditorViewModel.TileGrab = value;
+    }
+
     public SKGLElementPlus Element { get; }
     private MapEditorViewModel MapEditorViewModel => MapEditorControl.Instance.ViewModel;
     public MapViewerViewModel ViewModel => (DataContext as MapViewerViewModel)!;
@@ -98,41 +106,25 @@ public partial class MapViewerControl
             return;
 
         var after = TileGrab.WithTileCoordinates(tileCoordinates);
-        var before = TileGrab.CreateFrom(ViewModel, after, MapEditorViewModel.EditingLayerFlags);
+        var before = TileGrab.CreateFrom(ViewModel, after, MapEditorViewModel.EditingLayerFlags, tileCoordinates);
 
         ViewModel.AddAction(
             ActionType.Draw,
             before,
             after,
-            MapEditorViewModel.EditingLayerFlags);
+            MapEditorViewModel.EditingLayerFlags,
+            tileCoordinates);
 
         TileGrab.Apply(ViewModel, MapEditorViewModel.EditingLayerFlags);
     }
 
     private void HandleSelectToolClick(SKPoint tileCoordinates)
-    {
-        var tileX = (int)tileCoordinates.X;
-        var tileY = (int)tileCoordinates.Y;
-
-        TileGrab = new TileGrab
-        {
-            Bounds = new Rectangle(
-                0,
-                0,
-                1,
-                1),
-            SelectionStart = new SKPoint(tileX, tileY)
-        };
-
-        if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background))
-            TileGrab.RawBackgroundTiles.Add(ViewModel.BackgroundTilesView[tileX, tileY]);
-
-        if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground))
-            TileGrab.RawLeftForegroundTiles.Add(ViewModel.LeftForegroundTilesView[tileX, tileY]);
-
-        if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground))
-            TileGrab.RawRightForegroundTiles.Add(ViewModel.RightForegroundTilesView[tileX, tileY]);
-    }
+        => TileGrab = TileGrab.Create(
+            ViewModel,
+            tileCoordinates,
+            1,
+            1,
+            MapEditorViewModel.EditingLayerFlags);
 
     private void HandleSampleToolClick(SKPoint tileCoordinates)
     {
@@ -143,7 +135,7 @@ public partial class MapViewerControl
         {
             case LayerFlags.Background:
             {
-                var sampledTile = ViewModel.LeftForegroundTilesView[(int)tileCoordinates.X, (int)tileCoordinates.Y];
+                var sampledTile = ViewModel.BackgroundTilesView[(int)tileCoordinates.X, (int)tileCoordinates.Y];
 
                 var originalTile = MapEditorViewModel.BackgroundTiles
                                                      .SelectMany(
@@ -226,14 +218,19 @@ public partial class MapViewerControl
 
         if (TileGrab is null)
             return;
+        
+        var topX = Math.Min((int)TileGrab.SelectionStart!.Value.X, (int)tileCoordinates.X);
+        var topY = Math.Min((int)TileGrab.SelectionStart!.Value.Y, (int)tileCoordinates.Y);
+        tileCoordinates = new SKPoint(topX, topY);
 
-        var before = TileGrab.CreateFrom(ViewModel, TileGrab, MapEditorViewModel.EditingLayerFlags);
+        var before = TileGrab.CreateFrom(ViewModel, TileGrab, MapEditorViewModel.EditingLayerFlags, tileCoordinates);
 
         ViewModel.AddAction(
             ActionType.Erase,
             before,
             TileGrab,
-            MapEditorViewModel.EditingLayerFlags);
+            MapEditorViewModel.EditingLayerFlags,
+            tileCoordinates);
 
         TileGrab?.Erase(ViewModel, MapEditorViewModel.EditingLayerFlags);
     }
@@ -243,6 +240,7 @@ public partial class MapViewerControl
         if (TileGrab?.SelectionStart is null)
             return;
 
+        var originalSelectionStart = TileGrab.SelectionStart.Value;
         var startX = (int)TileGrab.SelectionStart.Value.X;
         var startY = (int)TileGrab.SelectionStart.Value.Y;
         var tileX = (int)tileCoordinates.X;
@@ -258,6 +256,7 @@ public partial class MapViewerControl
             selectionWidth,
             selectionHeight,
             MapEditorViewModel.EditingLayerFlags);
+        TileGrab.SelectionStart = originalSelectionStart;
     }
     #endregion
 
@@ -376,10 +375,10 @@ public partial class MapViewerControl
 
         var mousePoint = Element.GetMousePoint();
         var mapPoint = ConvertMouseToTileCoordinates(mousePoint!.Value);
-        
+
         if (ViewModel.BackgroundChangePending)
             RenderBackground(mapPoint);
-        
+
         if (ViewModel.ForegroundChangePending)
             RenderForeground(mapPoint);
 
@@ -411,8 +410,8 @@ public partial class MapViewerControl
             var bgInitialDrawY = FOREGROUND_PADDING;
             var bounds = ViewModel.Bounds;
             var tgbgTiles = new ListSegment2D<TileViewModel>();
-            
-            if(TileGrab is not null)
+
+            if (TileGrab is not null)
                 tgbgTiles = TileGrab.BackgroundTilesView;
 
             for (var y = 0; y < bounds.Height; y++)
@@ -458,7 +457,7 @@ public partial class MapViewerControl
         ref TileViewModel tileViewModel,
         ref SKPaint? paint)
     {
-        if (mouseCoordinates == new SKPoint(-1, -1))
+        if ((mouseCoordinates == new SKPoint(-1, -1)) || TileGrab is null)
             return;
 
         var tileGrab = TileGrab;
@@ -626,7 +625,7 @@ public partial class MapViewerControl
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
             : null;
-        
+
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
@@ -682,7 +681,7 @@ public partial class MapViewerControl
     private void HandleRightForegroundToolHover(
         Point currentPoint,
         SKPoint mouseCoordinates,
-        ListSegment2D<TileViewModel> rightForegroundTiles, 
+        ListSegment2D<TileViewModel> rightForegroundTiles,
         ref TileViewModel currentFrame,
         ref SKPaint? paint)
     {
@@ -700,7 +699,7 @@ public partial class MapViewerControl
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
             : null;
-        
+
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
@@ -762,13 +761,13 @@ public partial class MapViewerControl
 
         if (e.PropertyName.EqualsI(nameof(MapEditorViewModel.TileGrab)) && MapEditorViewModel.TileGrab is not null)
         {
-            if (TileGrab is not null)
-                TileGrab.PropertyChanged -= TileGrabOnPropertyChanged;
+            if (HistoricalTileGrab is not null)
+                HistoricalTileGrab.PropertyChanged -= TileGrabOnPropertyChanged;
 
-            TileGrab = MapEditorViewModel.TileGrab;
+            HistoricalTileGrab = MapEditorViewModel.TileGrab;
 
-            if (TileGrab is not null)
-                TileGrab.PropertyChanged += TileGrabOnPropertyChanged;
+            if (HistoricalTileGrab is not null)
+                HistoricalTileGrab.PropertyChanged += TileGrabOnPropertyChanged;
         }
     }
 

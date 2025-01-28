@@ -53,7 +53,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
             tile.Update(delta);
     }
 
-    public void Apply(MapViewerViewModel viewModel, LayerFlags layerFlags)
+    public void Apply(MapViewerViewModel viewModel, LayerFlags layerFlags, SKPoint? tileCoordinatesOverride = null)
     {
         var vmbgTiles = viewModel.BackgroundTilesView;
         var vmlfgTiles = viewModel.LeftForegroundTilesView;
@@ -62,19 +62,17 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
         var tglfgTiles = LeftForegroundTilesView;
         var tgrfgTiles = RightForegroundTilesView;
 
-        var bounds = Bounds;
+        var mousePosition = viewModel.Control!.Element.GetMousePoint()!;
+        var tileCoordinates = viewModel.Control.ConvertMouseToTileCoordinates(mousePosition.Value);
 
-        if (SelectionStart is null)
-        {
-            var mousePosition = viewModel.Control!.Element.GetMousePoint()!;
-            var tileCoordinates = viewModel.Control.ConvertMouseToTileCoordinates(mousePosition.Value);
+        if (tileCoordinatesOverride.HasValue)
+            tileCoordinates = tileCoordinatesOverride.Value;
 
-            bounds = new Rectangle(
-                (int)tileCoordinates.X,
-                (int)tileCoordinates.Y,
-                bounds.Width,
-                bounds.Height);
-        }
+        var bounds = new Rectangle(
+            (int)tileCoordinates.X,
+            (int)tileCoordinates.Y,
+            Bounds.Width,
+            Bounds.Height);
 
         if (layerFlags.HasFlag(LayerFlags.Background))
             for (var y = bounds.Top; y <= bounds.Bottom; y++)
@@ -146,6 +144,8 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
     {
         var tileX = (int)tileCoordinates.X;
         var tileY = (int)tileCoordinates.Y;
+        width = Math.Min(width, viewModel.Bounds.Width - tileX);
+        height = Math.Min(height, viewModel.Bounds.Height - tileY);
 
         var selectionBounds = new Rectangle(
             tileX,
@@ -214,17 +214,25 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
         return ret;
     }
 
-    public static TileGrab CreateFrom(MapViewerViewModel viewModel, TileGrab other, LayerFlags layerFlags)
+    public static TileGrab CreateFrom(
+        MapViewerViewModel viewModel,
+        TileGrab other,
+        LayerFlags layerFlags,
+        SKPoint tileCoordinates)
     {
         if (other.SelectionStart is null)
             throw new InvalidOperationException();
 
-        return Create(
+        var ret = Create(
             viewModel,
-            other.SelectionStart.Value,
+            tileCoordinates,
             other.Bounds.Width,
             other.Bounds.Height,
             layerFlags);
+        
+        ret.SelectionStart = other.SelectionStart;
+
+        return ret;
     }
 
     public void Erase(MapViewerViewModel viewModel, LayerFlags layerFlags)
