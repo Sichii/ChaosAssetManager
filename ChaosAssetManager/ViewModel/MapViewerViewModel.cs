@@ -49,7 +49,14 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
     public bool ForegroundChangePending
     {
         get;
-        set => SetField(ref field, value);
+
+        set
+        {
+            SetField(ref field, value);
+
+            if (value)
+                TabMapChangePending = true;
+        }
     }
 
     public required string FromPath
@@ -64,12 +71,20 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
     }
 
     public required List<MapBounds> PossibleBounds { get; set; } = [];
+
+    public bool TabMapChangePending
+    {
+        get;
+        set => SetField(ref field, value);
+    }
+
     public SKMatrix ViwerTransform { get; set; } = SKMatrix.Identity;
 
     public static MapViewerViewModel Empty { get; } = new()
     {
         BackgroundChangePending = true,
         ForegroundChangePending = true,
+        TabMapChangePending = true,
         PossibleBounds = [],
         Bounds = new Rectangle(
             0,

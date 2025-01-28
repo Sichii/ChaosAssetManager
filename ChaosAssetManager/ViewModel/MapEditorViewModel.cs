@@ -94,6 +94,17 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         }
     } = true;
 
+    public bool ShowTabMap
+    {
+        get;
+
+        set
+        {
+            SetField(ref field, value);
+            MapEditorControl.Instance.ViewModel.CurrentMapViewer.TabMapChangePending = true;
+        }
+    } = false;
+
     public bool SnowTileset
     {
         get;

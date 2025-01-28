@@ -132,6 +132,14 @@
                 <ListBox SelectionMode="Extended"
                          materialDesign:ListBoxAssist.IsToggle="True"
                          materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True">
+                    <ListBoxItem x:Name="ShowTabMapBtn"
+                                 Content="{materialDesign:PackIcon Kind=Tab, Size=28}"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 IsSelected="{Binding ViewModel.ShowTabMap}"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Show tab map overlay" />
                     <ListBoxItem x:Name="ShowBackgroundBtn"
                                  HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center"

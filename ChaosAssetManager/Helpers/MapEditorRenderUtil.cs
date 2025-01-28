@@ -1,9 +1,12 @@
 ﻿using Chaos.Extensions.Common;
+using Chaos.Geometry;
 using ChaosAssetManager.Model;
 using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Utility;
+using SkiaSharp;
 using Graphics = DALib.Drawing.Graphics;
+using Point = Chaos.Geometry.Point;
 
 namespace ChaosAssetManager.Helpers;
 
@@ -12,6 +15,7 @@ public static class MapEditorRenderUtil
     private static readonly Lock Sync = new();
     private static readonly MapImageCache SnowMapImageCache = new();
     private static MapImageCache MapImageCache = new();
+    private static SKImage? TabWallImage;
 
     public static void Clear()
     {
@@ -32,6 +36,21 @@ public static class MapEditorRenderUtil
         Sotp = null;
 
         ArchiveCache.Clear();
+    }
+
+    public static bool IsWall(int tileIndex)
+    {
+        if (tileIndex == 0)
+            return false;
+        
+        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat")["sotp.dat"]
+                             .ToSpan()
+                             .ToArray()
+                             .Select(value => (TileFlags)value)
+                             .ToArray();
+
+        return Sotp[tileIndex]
+            .HasFlag(TileFlags.Wall);
     }
 
     public static Animation? RenderAnimatedBackground(int tileIndex, bool snowTileSet = false)
@@ -170,6 +189,46 @@ public static class MapEditorRenderUtil
         {
             return null;
         }
+    }
+
+    public static SKImage RenderTabWall()
+    {
+        if (TabWallImage is not null)
+            return TabWallImage;
+
+        using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, 28);
+        using var canvas = new SKCanvas(bitmap);
+
+        var diamondPolygon = new Polygon(
+            [
+                new Point(CONSTANTS.HALF_TILE_WIDTH, 0),
+                new Point(CONSTANTS.TILE_WIDTH, CONSTANTS.HALF_TILE_HEIGHT),
+                new Point(CONSTANTS.HALF_TILE_WIDTH, 28),
+                new Point(0, CONSTANTS.HALF_TILE_HEIGHT)
+            ]);
+
+        using var path = new SKPath();
+        path.MoveTo(diamondPolygon.Vertices[0].X, diamondPolygon.Vertices[0].Y);
+
+        foreach (var vertex in diamondPolygon.Skip(1))
+            path.LineTo(vertex.X, vertex.Y);
+
+        path.Close();
+
+        using var fill = new SKPaint();
+        fill.Color = SKColors.Snow.WithAlpha(128);
+        fill.Style = SKPaintStyle.Fill;
+
+        using var outline = new SKPaint();
+        outline.Color = SKColors.DimGray;
+        outline.Style = SKPaintStyle.Stroke;
+
+        canvas.DrawPath(path, fill);
+        canvas.DrawPath(path, outline);
+
+        TabWallImage = SKImage.FromBitmap(bitmap);
+
+        return TabWallImage;
     }
 
     #region Background
