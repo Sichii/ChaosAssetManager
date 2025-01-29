@@ -1,4 +1,5 @@
 ﻿using Chaos.Extensions.Geometry;
+using Chaos.Geometry;
 using Chaos.Time.Abstractions;
 using Chaos.Wpf.Abstractions;
 using Chaos.Wpf.Collections.ObjectModel;
@@ -68,7 +69,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
         if (tileCoordinatesOverride.HasValue)
             tileCoordinates = tileCoordinatesOverride.Value;
 
-        var bounds = new Rectangle(
+        var bounds = new ValueRectangle(
             (int)tileCoordinates.X,
             (int)tileCoordinates.Y,
             Bounds.Width,
@@ -229,7 +230,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
             other.Bounds.Width,
             other.Bounds.Height,
             layerFlags);
-        
+
         ret.SelectionStart = other.SelectionStart;
 
         return ret;

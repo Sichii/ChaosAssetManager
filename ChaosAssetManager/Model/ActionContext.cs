@@ -5,7 +5,7 @@ using SkiaSharp;
 
 namespace ChaosAssetManager.Model;
 
-public class ActionContext
+public sealed class ActionContext 
 {
     public required ActionType ActionType { get; init; }
     public required TileGrab After { get; init; }
@@ -40,5 +40,6 @@ public class ActionContext
     {
         MapEditorControl.Instance.ViewModel.TileGrab = Before;
         Before.Apply(viewModel, LayerFlags, TileCoordinates);
+        MapEditorControl.Instance.ViewModel.TileGrab = After;
     }
 }

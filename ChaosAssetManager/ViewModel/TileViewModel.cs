@@ -1,4 +1,5 @@
-﻿using Chaos.Time;
+﻿using Chaos.Common.Utilities;
+using Chaos.Time;
 using Chaos.Time.Abstractions;
 using Chaos.Wpf.Abstractions;
 using ChaosAssetManager.Controls;
@@ -11,6 +12,8 @@ namespace ChaosAssetManager.ViewModel;
 
 public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
+    private static readonly DateTime Origin = DateTime.FromOADate(50);
+
     public Animation? Animation
     {
         get;
@@ -102,7 +105,9 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
         => new()
         {
             LayerFlags = LayerFlags,
-            TileId = TileId
+            TileId = TileId,
+            CurrentFrameIndex = CurrentFrameIndex,
+            FrameTimer = DeepClone.CreateRequired(FrameTimer)
         };
 
     public void Initialize()
@@ -114,9 +119,11 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
         if (Animation is null)
             return;
 
-        FrameTimer = new IntervalTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs), false);
-        FrameTimer.SetOrigin(DateTime.FromOADate(50));
-        CurrentFrameIndex = 0;
+        if (FrameTimer is null)
+        {
+            FrameTimer = new IntervalTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs), false);
+            FrameTimer.SetOrigin(Origin);
+        }
 
         OnPropertyChanged(nameof(CurrentFrameIndex));
     }

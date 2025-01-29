@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Chaos.Extensions.Common;
 using Chaos.Extensions.Geometry;
+using Chaos.Geometry;
 using ChaosAssetManager.Controls.PreviewControls;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Helpers;
@@ -14,7 +15,7 @@ using SkiaSharp.Views.Desktop;
 using DALIB_CONSTANTS = DALib.Definitions.CONSTANTS;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = Chaos.Geometry.Point;
-using Rectangle = Chaos.Geometry.Rectangle;
+
 #pragma warning disable CS8618, CS9264
 
 // ReSharper disable ClassCanBeSealed.Global
@@ -36,9 +37,10 @@ public partial class MapViewerControl
         set => MapEditorViewModel.TileGrab = value;
     }
 
+    public MapViewerViewModel ViewModel { get; set; }
+
     public SKGLElementPlus Element { get; }
     private MapEditorViewModel MapEditorViewModel => MapEditorControl.Instance.ViewModel;
-    public MapViewerViewModel ViewModel { get; set; }
 
     public MapViewerControl()
     {
@@ -53,12 +55,18 @@ public partial class MapViewerControl
 
         Content.Content = Element;
         MapEditorViewModel.PropertyChanged += MapEditorViewModelOnPropertyChanged;
+
+        if (MapEditorViewModel.TileGrab is not null)
+        {
+            HistoricalTileGrab = MapEditorViewModel.TileGrab;
+            MapEditorViewModel.TileGrab.PropertyChanged += TileGrabOnPropertyChanged;
+        }
     }
 
     #region Utilities
     private SKPaint GetBrightenPaint()
     {
-        const float BRIGHTEN_FACTOR = 2.0f;
+        const float BRIGHTEN_FACTOR = 1.75f;
         
         // @formatter:off
         var colorMatrix = new[]
@@ -387,19 +395,22 @@ public partial class MapViewerControl
         var mousePoint = Element.GetMousePoint();
         var leftButtonPressed = Mouse.LeftButton == MouseButtonState.Pressed;
         var mapPoint = ConvertMouseToTileCoordinates(mousePoint!.Value);
-        
+
         // ReSharper disable once ConvertIfStatementToSwitchStatement
-        if(ViewModel is { BackgroundChangePending: true, ForegroundChangePending: true, TabMapChangePending: true })
-            Parallel.Invoke(() => RenderBackground(mapPoint), () => RenderForeground(mapPoint, leftButtonPressed), () => RenderTabMap(mapPoint, leftButtonPressed));
-        else if(ViewModel is { BackgroundChangePending: true, ForegroundChangePending: true })
-            Parallel.Invoke(() => RenderBackground(mapPoint), () => RenderForeground(mapPoint, leftButtonPressed));
-        else if(ViewModel is { BackgroundChangePending: true, TabMapChangePending: true })
-            Parallel.Invoke(() => RenderBackground(mapPoint), () => RenderTabMap(mapPoint, leftButtonPressed));
-        else if(ViewModel is { ForegroundChangePending: true, TabMapChangePending: true })
+        if (ViewModel is { BackgroundChangePending: true, ForegroundChangePending: true, TabMapChangePending: true })
+            Parallel.Invoke(
+                () => RenderBackground(mapPoint, leftButtonPressed),
+                () => RenderForeground(mapPoint, leftButtonPressed),
+                () => RenderTabMap(mapPoint, leftButtonPressed));
+        else if (ViewModel is { BackgroundChangePending: true, ForegroundChangePending: true })
+            Parallel.Invoke(() => RenderBackground(mapPoint, leftButtonPressed), () => RenderForeground(mapPoint, leftButtonPressed));
+        else if (ViewModel is { BackgroundChangePending: true, TabMapChangePending: true })
+            Parallel.Invoke(() => RenderBackground(mapPoint, leftButtonPressed), () => RenderTabMap(mapPoint, leftButtonPressed));
+        else if (ViewModel is { ForegroundChangePending: true, TabMapChangePending: true })
             Parallel.Invoke(() => RenderForeground(mapPoint, leftButtonPressed), () => RenderTabMap(mapPoint, leftButtonPressed));
-        else if(ViewModel.BackgroundChangePending)
-            RenderBackground(mapPoint);
-        else if(ViewModel.ForegroundChangePending)
+        else if (ViewModel.BackgroundChangePending)
+            RenderBackground(mapPoint, leftButtonPressed);
+        else if (ViewModel.ForegroundChangePending)
             RenderForeground(mapPoint, leftButtonPressed);
         else if (ViewModel.TabMapChangePending)
             RenderTabMap(mapPoint, leftButtonPressed);
@@ -474,7 +485,7 @@ public partial class MapViewerControl
                         ref rightTileViewModel,
                         ref rightForegroundPaint,
                         leftButtonPressed);
-                
+
                 var isWall = MapEditorRenderUtil.IsWall(leftTileViewModel.TileId) || MapEditorRenderUtil.IsWall(rightTileViewModel.TileId);
                 var paint = leftForegroundPaint ?? rightForegroundPaint;
 
@@ -494,7 +505,7 @@ public partial class MapViewerControl
         TabMapImage = SKImage.FromBitmap(bitmap);
     }
 
-    private void RenderBackground(SKPoint mouseCoordinates)
+    private void RenderBackground(SKPoint mouseCoordinates, bool leftButtonPressed)
     {
         if (ViewModel is { BackgroundChangePending: false })
             return;
@@ -513,6 +524,7 @@ public partial class MapViewerControl
             var bgInitialDrawY = FOREGROUND_PADDING;
             var bounds = ViewModel.Bounds;
             var tgbgTiles = new ListSegment2D<TileViewModel>();
+            var isEditingBackground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background);
 
             if (TileGrab is not null)
                 tgbgTiles = TileGrab.BackgroundTilesView;
@@ -525,13 +537,14 @@ public partial class MapViewerControl
                     var tileViewModel = bgTiles[x, y];
                     SKPaint? paint = null;
 
-                    if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background))
+                    if (isEditingBackground)
                         HandleBackgroundToolHover(
                             point,
                             mouseCoordinates,
                             tgbgTiles,
                             ref tileViewModel,
-                            ref paint);
+                            ref paint,
+                            leftButtonPressed);
 
                     var currentFrame = tileViewModel.CurrentFrame;
 
@@ -558,9 +571,10 @@ public partial class MapViewerControl
         SKPoint mouseCoordinates,
         ListSegment2D<TileViewModel> backgroundTiles,
         ref TileViewModel tileViewModel,
-        ref SKPaint? paint)
+        ref SKPaint? paint,
+        bool leftButtonPressed)
     {
-        if ((mouseCoordinates == new SKPoint(-1, -1)) || TileGrab is null)
+        if (mouseCoordinates == new SKPoint(-1, -1))
             return;
 
         var tileGrab = TileGrab;
@@ -568,18 +582,22 @@ public partial class MapViewerControl
         var selectionBounds = tileGrab?.SelectionStart is not null ? tileGrab.Bounds : null;
 
         var drawBounds = tileGrab is not null
-            ? new Rectangle(
+            ? new ValueRectangle(
                 (int)mouseCoordinates.X,
                 (int)mouseCoordinates.Y,
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
-            : null;
+            : new ValueRectangle(
+                -1,
+                -1,
+                0,
+                0);
 
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
             {
-                if ((drawBounds?.Contains(currentPoint) ?? false) && tileGrab!.HasBackgroundTiles)
+                if (drawBounds.Contains(currentPoint) && tileGrab!.HasBackgroundTiles)
                 {
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
@@ -591,7 +609,7 @@ public partial class MapViewerControl
             }
             case ToolType.Select:
             {
-                if (Mouse.LeftButton == MouseButtonState.Pressed)
+                if (leftButtonPressed)
                 {
                     //if lmb is pressed, highlight all tiles in the selection rectangle
                     if (selectionBounds?.Contains(currentPoint) ?? false)
@@ -610,7 +628,7 @@ public partial class MapViewerControl
 
                 break;
             case ToolType.Erase:
-                if (Mouse.LeftButton == MouseButtonState.Pressed)
+                if (leftButtonPressed)
                 {
                     //if lmb is pressed, highlight all tiles in the selection rectangle
                     if (selectionBounds?.Contains(currentPoint) ?? false)
@@ -642,6 +660,8 @@ public partial class MapViewerControl
         var bounds = ViewModel.Bounds;
         var tglfgTiles = new ListSegment2D<TileViewModel>();
         var tgrfgTiles = new ListSegment2D<TileViewModel>();
+        var isEditingLeftForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground);
+        var isEditingRightForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground);
 
         if (TileGrab is not null)
         {
@@ -659,7 +679,7 @@ public partial class MapViewerControl
                 SKPaint? leftForegroundPaint = null;
                 SKPaint? rightForegroundPaint = null;
 
-                if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground))
+                if (isEditingLeftForeground)
                     HandleLeftForegroundToolHover(
                         point,
                         mouseCoordinates,
@@ -668,7 +688,7 @@ public partial class MapViewerControl
                         ref leftForegroundPaint,
                         leftButtonPressed);
 
-                if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground))
+                if (isEditingRightForeground)
                     HandleRightForegroundToolHover(
                         point,
                         mouseCoordinates,
@@ -680,7 +700,10 @@ public partial class MapViewerControl
                 var leftCurrentFrame = leftTileViewModel.CurrentFrame;
                 var rightCurrentFrame = rightTileViewModel.CurrentFrame;
 
-                if (MapEditorViewModel.ShowLeftForeground && leftCurrentFrame is not null && ((leftTileViewModel.TileId % 10000) > 1))
+                if (MapEditorViewModel.ShowLeftForeground
+                    && leftCurrentFrame is not null
+                    && (leftTileViewModel.TileId >= 13)
+                    && ((leftTileViewModel.TileId % 10000) > 1))
                     canvas.DrawImage(
                         leftCurrentFrame,
                         fgInitialDrawX + x * DALIB_CONSTANTS.HALF_TILE_WIDTH,
@@ -690,7 +713,10 @@ public partial class MapViewerControl
                         + DALIB_CONSTANTS.HALF_TILE_HEIGHT,
                         leftForegroundPaint);
 
-                if (MapEditorViewModel.ShowRightForeground && rightCurrentFrame is not null && ((rightTileViewModel.TileId % 10000) > 1))
+                if (MapEditorViewModel.ShowRightForeground
+                    && rightCurrentFrame is not null
+                    && (rightTileViewModel.TileId >= 13)
+                    && ((rightTileViewModel.TileId % 10000) > 1))
                     canvas.DrawImage(
                         rightCurrentFrame,
                         fgInitialDrawX + (x + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH,
@@ -725,18 +751,22 @@ public partial class MapViewerControl
         var selectionBounds = tileGrab?.SelectionStart is not null ? tileGrab.Bounds : null;
 
         var drawBounds = tileGrab is not null
-            ? new Rectangle(
+            ? new ValueRectangle(
                 (int)mouseCoordinates.X,
                 (int)mouseCoordinates.Y,
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
-            : null;
+            : new ValueRectangle(
+                -1,
+                -1,
+                0,
+                0);
 
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
             {
-                if ((drawBounds?.Contains(currentPoint) ?? false) && tileGrab!.HasLeftForegroundTiles)
+                if (drawBounds.Contains(currentPoint) && tileGrab!.HasLeftForegroundTiles)
                 {
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
@@ -800,18 +830,22 @@ public partial class MapViewerControl
         var selectionBounds = tileGrab?.SelectionStart is not null ? tileGrab.Bounds : null;
 
         var drawBounds = tileGrab is not null
-            ? new Rectangle(
+            ? new ValueRectangle(
                 (int)mouseCoordinates.X,
                 (int)mouseCoordinates.Y,
                 tileGrab.Bounds.Width,
                 tileGrab.Bounds.Height)
-            : null;
+            : new ValueRectangle(
+                -1,
+                -1,
+                0,
+                0);
 
         switch (MapEditorViewModel.SelectedTool)
         {
             case ToolType.Draw:
             {
-                if ((drawBounds?.Contains(currentPoint) ?? false) && tileGrab!.HasRightForegroundTiles)
+                if (drawBounds.Contains(currentPoint) && tileGrab!.HasRightForegroundTiles)
                 {
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
@@ -931,17 +965,6 @@ public partial class MapViewerControl
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         ViewModel.Control = this;
         Element.Matrix = ViewModel.ViwerTransform;
-
-        if (TileGrab is not null)
-        {
-            TileGrab.PropertyChanged -= TileGrabOnPropertyChanged;
-            TileGrab = null;
-        }
-
-        TileGrab = MapEditorViewModel.TileGrab;
-
-        if (TileGrab is not null)
-            TileGrab.PropertyChanged += TileGrabOnPropertyChanged;
 
         ViewModel.BackgroundChangePending = true;
         ViewModel.ForegroundChangePending = true;

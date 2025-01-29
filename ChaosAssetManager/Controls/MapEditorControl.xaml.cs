@@ -390,6 +390,13 @@ public partial class MapEditorControl
 
     private void SaveAsBtn_OnClick(object sender, RoutedEventArgs e)
     {
+        if (MapViewerTabControl.SelectedItem is null)
+        {
+            ShowMessage("No map selected");
+
+            return;
+        }
+
         var viewer = (MapViewerViewModel)MapViewerTabControl.SelectedItem;
 
         using var saveFileDialog = new SaveFileDialog();
@@ -405,13 +412,20 @@ public partial class MapEditorControl
             }
 
             viewer.FromPath = saveFileDialog.FileName.WithExtension(".map");
-        }
 
-        SaveBtn_OnClick(sender, e);
+            SaveBtn_OnClick(sender, e);
+        }
     }
 
     private void SaveBtn_OnClick(object sender, RoutedEventArgs e)
     {
+        if (MapViewerTabControl.SelectedItem is null)
+        {
+            ShowMessage("No map selected");
+
+            return;
+        }
+
         var viewer = (MapViewerViewModel)MapViewerTabControl.SelectedItem;
 
         if (viewer.FromPath.EqualsI(CONSTANTS.NEW_MAP_NAME))

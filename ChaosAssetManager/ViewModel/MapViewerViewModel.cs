@@ -97,9 +97,9 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
     public ObservingCollection<TileViewModel> RawBackgroundTiles { get; } = [];
     public ObservingCollection<TileViewModel> RawLeftForegroundTiles { get; } = [];
     public ObservableCollection<TileViewModel> RawRightForegroundTiles { get; } = [];
-    public FixedSizeDeque<ActionContext> RedoableActions { get; } = new(20);
+    public FixedSizeDeque<ActionContext> RedoableActions { get; } = new(100);
 
-    public FixedSizeDeque<ActionContext> UndoableActions { get; } = new(20);
+    public FixedSizeDeque<ActionContext> UndoableActions { get; } = new(100);
 
     public ListSegment2D<TileViewModel> BackgroundTilesView => new(RawBackgroundTiles, Bounds.Width);
 

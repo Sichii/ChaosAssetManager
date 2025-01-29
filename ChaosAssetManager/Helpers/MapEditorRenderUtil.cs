@@ -1,5 +1,4 @@
 ﻿using Chaos.Extensions.Common;
-using Chaos.Geometry;
 using ChaosAssetManager.Model;
 using DALib.Definitions;
 using DALib.Drawing;
@@ -42,12 +41,15 @@ public static class MapEditorRenderUtil
     {
         if (tileIndex == 0)
             return false;
-        
+
         Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat")["sotp.dat"]
                              .ToSpan()
                              .ToArray()
                              .Select(value => (TileFlags)value)
                              .ToArray();
+
+        if (tileIndex >= Sotp.Length)
+            return false;
 
         return Sotp[tileIndex]
             .HasFlag(TileFlags.Wall);
@@ -199,18 +201,18 @@ public static class MapEditorRenderUtil
         using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, 28);
         using var canvas = new SKCanvas(bitmap);
 
-        var diamondPolygon = new Polygon(
-            [
-                new Point(CONSTANTS.HALF_TILE_WIDTH, 0),
-                new Point(CONSTANTS.TILE_WIDTH, CONSTANTS.HALF_TILE_HEIGHT),
-                new Point(CONSTANTS.HALF_TILE_WIDTH, 28),
-                new Point(0, CONSTANTS.HALF_TILE_HEIGHT)
-            ]);
+        Span<Point> vertices =
+        [
+            new(CONSTANTS.HALF_TILE_WIDTH, 0),
+            new(CONSTANTS.TILE_WIDTH, CONSTANTS.HALF_TILE_HEIGHT),
+            new(CONSTANTS.HALF_TILE_WIDTH, 28),
+            new(0, CONSTANTS.HALF_TILE_HEIGHT)
+        ];
 
         using var path = new SKPath();
-        path.MoveTo(diamondPolygon.Vertices[0].X, diamondPolygon.Vertices[0].Y);
+        path.MoveTo(vertices[0].X, vertices[0].Y);
 
-        foreach (var vertex in diamondPolygon.Skip(1))
+        foreach (var vertex in vertices[1..])
             path.LineTo(vertex.X, vertex.Y);
 
         path.Close();

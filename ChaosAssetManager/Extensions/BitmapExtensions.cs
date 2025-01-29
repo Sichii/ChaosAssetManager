@@ -13,26 +13,6 @@ public static class BitmapExtensions
         bitmap.ToSkPixmap(pixmap);
 
         return skImage;
-
-        /*
-        var rect = new Rectangle(
-            0,
-            0,
-            bitmap.Width,
-            bitmap.Height);
-        var bmpData = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-
-        using var skBitmap = new SKBitmap(
-            bitmap.Width,
-            bitmap.Height,
-            SKColorType.Bgra8888,
-            SKAlphaType.Premul);
-
-        skBitmap.InstallPixels(skBitmap.Info, bmpData.Scan0, bmpData.Stride);
-
-        bitmap.UnlockBits(bmpData);
-
-        return SKImage.FromBitmap(skBitmap);*/
     }
 
     public static void ToSkPixmap(this Bitmap bitmap, SKPixmap pixmap)

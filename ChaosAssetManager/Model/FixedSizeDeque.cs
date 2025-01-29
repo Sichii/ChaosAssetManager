@@ -1,6 +1,8 @@
-﻿namespace ChaosAssetManager.Model;
+﻿using System.Collections;
 
-public class FixedSizeDeque<T>
+namespace ChaosAssetManager.Model;
+
+public sealed class FixedSizeDeque<T> : IEnumerable<T>
 {
     private readonly LinkedList<T> List = [];
     private readonly int MaxSize;
@@ -99,4 +101,10 @@ public class FixedSizeDeque<T>
 
         return oldest;
     }
+
+    /// <inheritdoc />
+    public IEnumerator<T> GetEnumerator() => List.GetEnumerator();
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
