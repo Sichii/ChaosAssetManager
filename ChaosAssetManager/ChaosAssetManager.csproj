@@ -8,6 +8,7 @@
         <UseWPF>true</UseWPF>
         <UseWindowsForms>true</UseWindowsForms>
         <LangVersion>preview</LangVersion>
+        <ApplicationIcon>Resources\chaosAssetManager.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -70,6 +71,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\dalib\DALib\DALib.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\" />
     </ItemGroup>
 
 </Project>

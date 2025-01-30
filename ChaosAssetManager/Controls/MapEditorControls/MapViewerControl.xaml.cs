@@ -230,7 +230,7 @@ public partial class MapViewerControl
     {
         HandleEraseToolDrag(tileCoordinates);
 
-        if (TileGrab is null)
+        if (TileGrab?.SelectionStart is null)
             return;
 
         var topX = Math.Min((int)TileGrab.SelectionStart!.Value.X, (int)tileCoordinates.X);

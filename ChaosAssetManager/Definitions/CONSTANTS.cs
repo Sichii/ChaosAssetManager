@@ -376,7 +376,7 @@ public static class CONSTANTS
                 {
                     { 0, 3 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 991,
@@ -391,7 +391,7 @@ public static class CONSTANTS
                     { 3 },
                     { 2 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1012,
@@ -404,7 +404,7 @@ public static class CONSTANTS
                 {
                     { 0, 3 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1015,
@@ -419,7 +419,7 @@ public static class CONSTANTS
                     { 3 },
                     { 2 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1018,
@@ -447,7 +447,7 @@ public static class CONSTANTS
                     { 3 },
                     { 2 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1030,
@@ -460,7 +460,7 @@ public static class CONSTANTS
                 {
                     { 0, 3 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1033,
@@ -475,7 +475,7 @@ public static class CONSTANTS
                     { 3 },
                     { 2 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1036,
@@ -488,7 +488,7 @@ public static class CONSTANTS
                 {
                     { 0, 3 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1042,
@@ -503,7 +503,7 @@ public static class CONSTANTS
                     { 3 },
                     { 2 }
                 }));
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 1066,
@@ -516,7 +516,330 @@ public static class CONSTANTS
                 {
                     { 0, 3 }
                 }));
-        
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1120,
+                1155,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1156,
+                1164,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1165,
+                1173,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1174,
+                1182,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1183,
+                1191,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1192,
+                1197,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1198,
+                1203,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1204,
+                1221,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1222,
+                1224,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1225,
+                1236,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1237,
+                1248,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1249,
+                1257,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1258,
+                1266,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1267,
+                1269,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1270,
+                1272,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1273,
+                1275,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1276,
+                1278,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1279,
+                1287,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1288,
+                1296,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1297,
+                1323,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1324,
+                1350,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1351,
+                1359,
+                lfgPattern: new[,]
+                {
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 3 }
+                }));
+
+        fgStructures.AddRange(
+            CreateFromPattern(
+                1360,
+                1368,
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 3 },
+                    { 2 }
+                }));
+
         FOREGROUND_STRUCTURES = [..fgStructures];
 
         // @formatter:keep_existing_initializer_arrangement restore
@@ -545,10 +868,11 @@ public static class CONSTANTS
     ///     The patterns are 2D array where each element contains a number that corresponds to the order the tiles should be
     ///     placed in
     ///     <br />
-    /// <br />
+    ///     <br />
     ///     The number zero means there is no tile at that position
     ///     <br />
-    ///     Rows are rows, Columns are columns [y, x]... the array will be rotated when it is interpreted into data so that it matches up with [x, y]
+    ///     Rows are rows, Columns are columns [y, x]... the array will be rotated when it is interpreted into data so that it
+    ///     matches up with [x, y]
     /// </remarks>
     private static IEnumerable<StructureViewModel> CreateFromPattern(
         int start,
