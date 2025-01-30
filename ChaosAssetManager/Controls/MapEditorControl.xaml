@@ -609,7 +609,7 @@
                         </Style>
                     </DataGrid.CellStyle>
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="SizeToCells">
+                        <DataGridTemplateColumn Width="224">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate DataType="{x:Type viewModel:StructureViewModel}">
                                     <mapEditorControls:StructurePickerEntry />
