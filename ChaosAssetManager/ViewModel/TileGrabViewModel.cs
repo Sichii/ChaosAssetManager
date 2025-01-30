@@ -5,14 +5,13 @@ using Chaos.Wpf.Abstractions;
 using Chaos.Wpf.Collections.ObjectModel;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Helpers;
-using ChaosAssetManager.ViewModel;
 using SkiaSharp;
 using Point = Chaos.Geometry.Point;
 using Rectangle = Chaos.Geometry.Rectangle;
 
-namespace ChaosAssetManager.Model;
+namespace ChaosAssetManager.ViewModel;
 
-public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
+public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
     public required Rectangle Bounds { get; set; }
     public SKPoint? SelectionStart { get; set; }
@@ -34,7 +33,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
 
     public ListSegment2D<TileViewModel> RightForegroundTilesView => new(RawRightForegroundTiles, Bounds.Width);
 
-    public TileGrab()
+    public TileGrabViewModel()
     {
         RawBackgroundTiles.CollectionChanged += (_, _) => OnPropertyChanged(nameof(RawBackgroundTiles));
         RawLeftForegroundTiles.CollectionChanged += (_, _) => OnPropertyChanged(nameof(RawLeftForegroundTiles));
@@ -54,17 +53,17 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
             tile.Update(delta);
     }
 
-    public void Apply(MapViewerViewModel viewModel, LayerFlags layerFlags, SKPoint? tileCoordinatesOverride = null)
+    public void Apply(MapViewerViewModel viewer, LayerFlags layerFlags, SKPoint? tileCoordinatesOverride = null)
     {
-        var vmbgTiles = viewModel.BackgroundTilesView;
-        var vmlfgTiles = viewModel.LeftForegroundTilesView;
-        var vmrfgTiles = viewModel.RightForegroundTilesView;
+        var vmbgTiles = viewer.BackgroundTilesView;
+        var vmlfgTiles = viewer.LeftForegroundTilesView;
+        var vmrfgTiles = viewer.RightForegroundTilesView;
         var tgbgTiles = BackgroundTilesView;
         var tglfgTiles = LeftForegroundTilesView;
         var tgrfgTiles = RightForegroundTilesView;
 
-        var mousePosition = viewModel.Control!.Element.GetMousePoint()!;
-        var tileCoordinates = viewModel.Control.ConvertMouseToTileCoordinates(mousePosition.Value);
+        var mousePosition = viewer.Control!.Element.GetMousePoint()!;
+        var tileCoordinates = viewer.Control.ConvertMouseToTileCoordinates(mousePosition.Value);
 
         if (tileCoordinatesOverride.HasValue)
             tileCoordinates = tileCoordinatesOverride.Value;
@@ -81,7 +80,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 {
                     var point = new Point(x, y);
 
-                    if (!viewModel.Bounds.Contains(point))
+                    if (!viewer.Bounds.Contains(point))
                         continue;
 
                     var tileGrabX = x - bounds.Left;
@@ -101,7 +100,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 {
                     var point = new Point(x, y);
 
-                    if (!viewModel.Bounds.Contains(point))
+                    if (!viewer.Bounds.Contains(point))
                         continue;
 
                     var tileGrabX = x - bounds.Left;
@@ -121,7 +120,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 {
                     var point = new Point(x, y);
 
-                    if (!viewModel.Bounds.Contains(point))
+                    if (!viewer.Bounds.Contains(point))
                         continue;
 
                     var tileGrabX = x - bounds.Left;
@@ -136,8 +135,43 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 }
     }
 
-    public static TileGrab Create(
-        MapViewerViewModel viewModel,
+    public TileGrabViewModel Clone()
+    {
+        var ret = new TileGrabViewModel
+        {
+            SelectionStart = SelectionStart,
+            Bounds = Bounds
+        };
+
+        foreach (var tile in RawBackgroundTiles)
+        {
+            var cloned = tile.Clone();
+            cloned.Initialize();
+
+            ret.RawBackgroundTiles.Add(cloned);
+        }
+
+        foreach (var tile in RawLeftForegroundTiles)
+        {
+            var cloned = tile.Clone();
+            cloned.Initialize();
+
+            ret.RawLeftForegroundTiles.Add(cloned);
+        }
+
+        foreach (var tile in RawRightForegroundTiles)
+        {
+            var cloned = tile.Clone();
+            cloned.Initialize();
+
+            ret.RawRightForegroundTiles.Add(cloned);
+        }
+
+        return ret;
+    }
+
+    public static TileGrabViewModel Create(
+        MapViewerViewModel viewer,
         SKPoint tileCoordinates,
         int width,
         int height,
@@ -145,8 +179,8 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
     {
         var tileX = (int)tileCoordinates.X;
         var tileY = (int)tileCoordinates.Y;
-        width = Math.Min(width, viewModel.Bounds.Width - tileX);
-        height = Math.Min(height, viewModel.Bounds.Height - tileY);
+        width = Math.Min(width, viewer.Bounds.Width - tileX);
+        height = Math.Min(height, viewer.Bounds.Height - tileY);
 
         var selectionBounds = new Rectangle(
             tileX,
@@ -154,15 +188,15 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
             width,
             height);
 
-        var ret = new TileGrab
+        var ret = new TileGrabViewModel
         {
             SelectionStart = tileCoordinates,
             Bounds = selectionBounds
         };
 
-        var vmbgTiles = viewModel.BackgroundTilesView;
-        var vmlfgTiles = viewModel.LeftForegroundTilesView;
-        var vmrfgTiles = viewModel.RightForegroundTilesView;
+        var vmbgTiles = viewer.BackgroundTilesView;
+        var vmlfgTiles = viewer.LeftForegroundTilesView;
+        var vmrfgTiles = viewer.RightForegroundTilesView;
 
         if (layerFlags.HasFlag(LayerFlags.Background))
             for (var y = tileY; y <= selectionBounds.Bottom; y++)
@@ -170,7 +204,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 {
                     var point = new Point(x, y);
 
-                    if (!viewModel.Bounds.Contains(point))
+                    if (!viewer.Bounds.Contains(point))
                         continue;
 
                     var tile = vmbgTiles[x, y]
@@ -186,7 +220,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 {
                     var point = new Point(x, y);
 
-                    if (!viewModel.Bounds.Contains(point))
+                    if (!viewer.Bounds.Contains(point))
                         continue;
 
                     var tile = vmlfgTiles[x, y]
@@ -202,7 +236,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
                 {
                     var point = new Point(x, y);
 
-                    if (!viewModel.Bounds.Contains(point))
+                    if (!viewer.Bounds.Contains(point))
                         continue;
 
                     var tile = vmrfgTiles[x, y]
@@ -215,9 +249,9 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
         return ret;
     }
 
-    public static TileGrab CreateFrom(
-        MapViewerViewModel viewModel,
-        TileGrab other,
+    public static TileGrabViewModel CreateFrom(
+        MapViewerViewModel viewer,
+        TileGrabViewModel other,
         LayerFlags layerFlags,
         SKPoint tileCoordinates)
     {
@@ -225,7 +259,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
             throw new InvalidOperationException();
 
         var ret = Create(
-            viewModel,
+            viewer,
             tileCoordinates,
             other.Bounds.Width,
             other.Bounds.Height,
@@ -236,11 +270,11 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
         return ret;
     }
 
-    public void Erase(MapViewerViewModel viewModel, LayerFlags layerFlags)
+    public void Erase(MapViewerViewModel viewer, LayerFlags layerFlags)
     {
-        var vmbgTiles = viewModel.BackgroundTilesView;
-        var vmlfgTiles = viewModel.LeftForegroundTilesView;
-        var vmrfgTiles = viewModel.RightForegroundTilesView;
+        var vmbgTiles = viewer.BackgroundTilesView;
+        var vmlfgTiles = viewer.LeftForegroundTilesView;
+        var vmrfgTiles = viewer.RightForegroundTilesView;
 
         for (var y = Bounds.Top; y <= Bounds.Bottom; y++)
         {
@@ -258,7 +292,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
         }
     }
 
-    public TileGrab WithTileCoordinates(SKPoint tileCoordinates)
+    public TileGrabViewModel WithTileCoordinates(SKPoint tileCoordinates)
     {
         var tileX = (int)tileCoordinates.X;
         var tileY = (int)tileCoordinates.Y;
@@ -269,7 +303,7 @@ public sealed class TileGrab : NotifyPropertyChangedBase, IDeltaUpdatable
             Bounds.Width,
             Bounds.Height);
 
-        var ret = new TileGrab
+        var ret = new TileGrabViewModel
         {
             SelectionStart = tileCoordinates,
             Bounds = selectionBounds

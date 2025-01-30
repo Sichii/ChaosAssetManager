@@ -129,8 +129,8 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
     public void AddAction(
         ActionType actionType,
-        TileGrab before,
-        TileGrab after,
+        TileGrabViewModel before,
+        TileGrabViewModel after,
         LayerFlags layerFlags,
         SKPoint tileCoordinates)
     {

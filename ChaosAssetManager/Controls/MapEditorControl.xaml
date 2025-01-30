@@ -388,7 +388,143 @@
 
             <TabItem Header="Tiles"
                      Style="{StaticResource MaterialDesignTabItem}">
-                <DataGrid x:Name="TilesControl"
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBox Grid.Row="0"
+                             materialDesign:HintAssist.Hint="Search (NOT IMPLEMENTED)"
+                             TextChanged="TextBoxBase_OnTextChanged" />
+
+                    <DataGrid Grid.Row="1"
+                              x:Name="TilesControl"
+                              SelectionMode="Single"
+                              SelectionUnit="Cell"
+                              HeadersVisibility="None"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              SelectedCellsChanged="TilesControl_OnSelectedCellsChanged">
+                        <DataGrid.ItemsSource>
+                            <MultiBinding Converter="{StaticResource TilesLayerFlagsConverter}">
+                                <Binding Path="ViewModel.EditingLayerFlags" />
+                                <Binding Path="ViewModel" />
+                            </MultiBinding>
+                        </DataGrid.ItemsSource>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow"
+                                   BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                <!-- Remove extra spacing from each row -->
+                                <Setter Property="Height"
+                                        Value="Auto" />
+                                <Setter Property="Padding"
+                                        Value="0" />
+                                <Setter Property="Margin"
+                                        Value="0" />
+                                <Setter Property="HorizontalContentAlignment"
+                                        Value="Left" />
+
+                                <Style.Triggers>
+                                    <!-- By default, the entire row highlights on hover.
+                     This trigger sets it transparent when hovered, 
+                     effectively disabling row hover. -->
+                                    <Trigger Property="IsMouseOver"
+                                             Value="True">
+                                        <Setter Property="Background"
+                                                Value="Transparent" />
+                                    </Trigger>
+
+                                    <!-- Similarly, remove row highlight on selection 
+                     (optional; otherwise the row might highlight on selection). -->
+                                    <Trigger Property="IsSelected"
+                                             Value="True">
+                                        <Setter Property="Background"
+                                                Value="Transparent" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell"
+                                   BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                                <!-- Remove default padding and borders -->
+                                <Setter Property="Padding"
+                                        Value="1" />
+                                <Setter Property="Margin"
+                                        Value="0" />
+                                <Setter Property="BorderThickness"
+                                        Value="0" />
+                                <Setter Property="BorderBrush"
+                                        Value="DimGray" />
+                                <Setter Property="HorizontalContentAlignment"
+                                        Value="Left" />
+                                <Setter Property="HorizontalAlignment"
+                                        Value="Left" />
+                                <!-- Remove focus visuals if you don't want a focus rectangle -->
+                                <Setter Property="FocusVisualStyle"
+                                        Value="{x:Null}" />
+
+                                <Style.Triggers>
+                                    <!-- Hover (IsMouseOver = True) on the cell itself -->
+                                    <Trigger Property="IsMouseOver"
+                                             Value="True">
+                                        <Setter Property="Background"
+                                                Value="DimGray" />
+                                    </Trigger>
+
+                                    <!-- If you also want a cell to highlight when 'selected'
+                     (rather than the whole row), do something like: -->
+                                    <Trigger Property="IsSelected"
+                                             Value="True">
+                                        <Setter Property="Background"
+                                                Value="DimGray" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="56">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                        <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile1}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="56">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                        <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile2}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="56">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                        <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile3}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="56">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
+                                        <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile4}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Structures"
+                     Style="{StaticResource MaterialDesignTabItem}"
+                     HorizontalContentAlignment="Stretch"
+                     HorizontalAlignment="Stretch">
+                <DataGrid Grid.Row="1"
+                          x:Name="StructuresControl"
                           SelectionMode="Single"
                           SelectionUnit="Cell"
                           HeadersVisibility="None"
@@ -397,9 +533,12 @@
                           EnableRowVirtualization="True"
                           VirtualizingPanel.IsVirtualizing="True"
                           VirtualizingPanel.VirtualizationMode="Recycling"
-                          SelectedCellsChanged="TilesControl_OnSelectedCellsChanged">
+                          SelectedCellsChanged="StructuresControl_OnSelectedCellsChanged"
+                          HorizontalContentAlignment="Stretch"
+                          HorizontalAlignment="Stretch"
+                          ColumnWidth="SizeToCells">
                     <DataGrid.ItemsSource>
-                        <MultiBinding Converter="{StaticResource TileTypeConverter}">
+                        <MultiBinding Converter="{StaticResource StructuresLayerFlagsConverter}">
                             <Binding Path="ViewModel.EditingLayerFlags" />
                             <Binding Path="ViewModel" />
                         </MultiBinding>
@@ -414,8 +553,6 @@
                                     Value="0" />
                             <Setter Property="Margin"
                                     Value="0" />
-                            <Setter Property="HorizontalContentAlignment"
-                                    Value="Left" />
 
                             <Style.Triggers>
                                 <!-- By default, the entire row highlights on hover.
@@ -449,10 +586,6 @@
                                     Value="0" />
                             <Setter Property="BorderBrush"
                                     Value="DimGray" />
-                            <Setter Property="HorizontalContentAlignment"
-                                    Value="Left" />
-                            <Setter Property="HorizontalAlignment"
-                                    Value="Left" />
                             <!-- Remove focus visuals if you don't want a focus rectangle -->
                             <Setter Property="FocusVisualStyle"
                                     Value="{x:Null}" />
@@ -476,40 +609,15 @@
                         </Style>
                     </DataGrid.CellStyle>
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="56">
+                        <DataGridTemplateColumn Width="SizeToCells">
                             <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
-                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile1}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="56">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
-                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile2}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="56">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
-                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile3}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Width="56">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type viewModel:TileRowViewModel}">
-                                    <mapEditorControls:TilePickerEntryControl DataContext="{Binding Tile4}" />
+                                <DataTemplate DataType="{x:Type viewModel:StructureViewModel}">
+                                    <mapEditorControls:StructurePickerEntry />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-            </TabItem>
-            <TabItem Header="Structures"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <ListView x:Name="StructuresControl" />
             </TabItem>
         </TabControl>
 

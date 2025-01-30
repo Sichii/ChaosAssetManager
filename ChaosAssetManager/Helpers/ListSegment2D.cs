@@ -3,8 +3,8 @@
 public readonly ref struct ListSegment2D<T>
 {
     private readonly IList<T> Origin;
-    private readonly int Width;
-    private readonly int Height;
+    public int Width { get; }
+    public int Height { get; }
 
     public RowEnumerator Rows => new(this);
 

@@ -8,7 +8,6 @@ using Chaos.Geometry;
 using ChaosAssetManager.Controls.PreviewControls;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Helpers;
-using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
@@ -29,9 +28,9 @@ public partial class MapViewerControl
     private SKImage? ForegroundImage;
     private SKImage? TabMapImage;
 
-    private TileGrab? HistoricalTileGrab { get; set; }
+    private TileGrabViewModel? HistoricalTileGrab { get; set; }
 
-    private TileGrab? TileGrab
+    private TileGrabViewModel? TileGrab
     {
         get => MapEditorViewModel.TileGrab;
         set => MapEditorViewModel.TileGrab = value;
@@ -117,7 +116,7 @@ public partial class MapViewerControl
 
         var after = TileGrab.WithTileCoordinates(tileCoordinates);
 
-        var before = TileGrab.CreateFrom(
+        var before = TileGrabViewModel.CreateFrom(
             ViewModel,
             after,
             MapEditorViewModel.EditingLayerFlags,
@@ -134,7 +133,7 @@ public partial class MapViewerControl
     }
 
     private void HandleSelectToolClick(SKPoint tileCoordinates)
-        => TileGrab = TileGrab.Create(
+        => TileGrab = TileGrabViewModel.Create(
             ViewModel,
             tileCoordinates,
             1,
@@ -238,7 +237,7 @@ public partial class MapViewerControl
         var topY = Math.Min((int)TileGrab.SelectionStart!.Value.Y, (int)tileCoordinates.Y);
         tileCoordinates = new SKPoint(topX, topY);
 
-        var before = TileGrab.CreateFrom(
+        var before = TileGrabViewModel.CreateFrom(
             ViewModel,
             TileGrab,
             MapEditorViewModel.EditingLayerFlags,
@@ -252,6 +251,7 @@ public partial class MapViewerControl
             tileCoordinates);
 
         TileGrab?.Erase(ViewModel, MapEditorViewModel.EditingLayerFlags);
+        TileGrab = null;
     }
 
     private void HandleSelectToolDrag(SKPoint tileCoordinates)
@@ -269,7 +269,7 @@ public partial class MapViewerControl
         var topX = Math.Min(startX, tileX);
         var topY = Math.Min(startY, tileY);
 
-        TileGrab = TileGrab.Create(
+        TileGrab = TileGrabViewModel.Create(
             ViewModel,
             new SKPoint(topX, topY),
             selectionWidth,

@@ -5,11 +5,11 @@ using SkiaSharp;
 
 namespace ChaosAssetManager.Model;
 
-public sealed class ActionContext 
+public sealed class ActionContext
 {
     public required ActionType ActionType { get; init; }
-    public required TileGrab After { get; init; }
-    public required TileGrab Before { get; init; }
+    public required TileGrabViewModel After { get; init; }
+    public required TileGrabViewModel Before { get; init; }
     public required LayerFlags LayerFlags { get; init; }
     public required SKPoint TileCoordinates { get; init; }
 

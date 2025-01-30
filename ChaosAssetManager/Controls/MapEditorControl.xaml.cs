@@ -384,6 +384,7 @@ public partial class MapEditorControl
 
         ViewModel.ForegroundTiles.AddRange(foregroundTiles);
         ViewModel.BackgroundTiles.AddRange(backgroundtiles);
+        ViewModel.ForegroundStructures.AddRange(CONSTANTS.FOREGROUND_STRUCTURES);
     }
 
     private void RedoBtn_OnClick(object sender, RoutedEventArgs e) => DoRedo();
@@ -496,6 +497,27 @@ public partial class MapEditorControl
             row.Refresh();
     }
 
+    private void StructuresControl_OnSelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
+    {
+        var added = e.AddedCells;
+
+        if (added.Count == 0)
+            return;
+
+        if (added[0].Item is not StructureViewModel row)
+            return;
+
+        if (ViewModel.EditingLayerFlags is not (LayerFlags.Foreground or LayerFlags.Background))
+            return;
+
+        ViewModel.TileGrab = row.ToTileGrab();
+    }
+
+    private void TextBoxBase_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        //nothing yet
+    }
+
     private void TilesControl_OnSelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
     {
         var added = e.AddedCells;
@@ -526,7 +548,7 @@ public partial class MapEditorControl
 
         ViewModel.SelectedTileIndex = rowItem.TileId;
 
-        var tileGrab = new TileGrab
+        var tileGrab = new TileGrabViewModel
         {
             Bounds = new Rectangle(
                 0,

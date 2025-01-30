@@ -5,7 +5,7 @@ using ChaosAssetManager.ViewModel;
 
 namespace ChaosAssetManager.Converters;
 
-public sealed class EditingTileTypeConverter : IMultiValueConverter
+public sealed class TilesLayerFlagsConverter : IMultiValueConverter
 {
     /// <inheritdoc />
     public object Convert(
@@ -17,10 +17,10 @@ public sealed class EditingTileTypeConverter : IMultiValueConverter
         var editTileType = (LayerFlags)values[0];
         var viewModel = (MapEditorViewModel)values[1];
 
-        if (editTileType == LayerFlags.Background)
-            return viewModel.BackgroundTiles;
+        if (editTileType is LayerFlags.LeftForeground or LayerFlags.RightForeground)
+            return viewModel.ForegroundTiles;
 
-        return viewModel.ForegroundTiles;
+        return viewModel.BackgroundTiles;
     }
 
     /// <inheritdoc />

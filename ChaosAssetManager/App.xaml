@@ -17,7 +17,8 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignExtensions;component/Themes/MaterialDesignDarkTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <converters:EditingTileTypeConverter x:Key="TileTypeConverter" />
+            <converters:TilesLayerFlagsConverter x:Key="TilesLayerFlagsConverter" />
+            <converters:StructuresLayerFlagsConverter x:Key="StructuresLayerFlagsConverter" />
             <converters:RectangleMapBoundsConverter x:Key="RectangleMapBoundsConverter" />
 
             <DataTemplate x:Key="MapViewerDataTemplate"

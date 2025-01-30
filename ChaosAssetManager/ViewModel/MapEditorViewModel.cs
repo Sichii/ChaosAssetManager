@@ -10,12 +10,6 @@ namespace ChaosAssetManager.ViewModel;
 
 public class MapEditorViewModel : NotifyPropertyChangedBase
 {
-    public ObservingCollection<TileRowViewModel> BackgroundTiles
-    {
-        get;
-        set => SetField(ref field, value);
-    } = [];
-
     public MapViewerViewModel CurrentMapViewer
     {
         get;
@@ -27,12 +21,6 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         get;
         set => SetField(ref field, value);
     } = LayerFlags.Background;
-
-    public ObservingCollection<TileRowViewModel> ForegroundTiles
-    {
-        get;
-        set => SetField(ref field, value);
-    } = [];
 
     public SKPoint? MouseHoverTileCoordinates
     {
@@ -111,11 +99,19 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set => SetField(ref field, value);
     }
 
-    public TileGrab? TileGrab
+    public TileGrabViewModel? TileGrab
     {
         get;
         set => SetField(ref field, value);
     } = null;
+
+    public ObservingCollection<StructureViewModel> BackgroundStructures { get; } = [];
+
+    public ObservingCollection<TileRowViewModel> BackgroundTiles { get; } = [];
+
+    public ObservingCollection<StructureViewModel> ForegroundStructures { get; } = [];
+
+    public ObservingCollection<TileRowViewModel> ForegroundTiles { get; } = [];
 
     public ObservableCollection<MapViewerViewModel> Maps { get; } = [];
 
@@ -124,5 +120,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         ForegroundTiles.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ForegroundTiles));
         BackgroundTiles.CollectionChanged += (_, _) => OnPropertyChanged(nameof(BackgroundTiles));
         PossibleBounds.CollectionChanged += (_, _) => OnPropertyChanged(nameof(PossibleBounds));
+        ForegroundStructures.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ForegroundStructures));
+        BackgroundStructures.CollectionChanged += (_, _) => OnPropertyChanged(nameof(BackgroundStructures));
     }
 }
