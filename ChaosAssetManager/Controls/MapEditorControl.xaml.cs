@@ -608,6 +608,9 @@ public partial class MapEditorControl
                 foreach (var row in ViewModel.ForegroundTiles)
                     row.Update(delta);
 
+                foreach (var structure in ViewModel.ForegroundStructures)
+                    structure.Update(delta);
+
                 ViewModel.CurrentMapViewer.Update(delta);
                 ViewModel.TileGrab?.Update(delta);
             } catch

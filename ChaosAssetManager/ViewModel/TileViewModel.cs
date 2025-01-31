@@ -107,7 +107,7 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
             LayerFlags = LayerFlags,
             TileId = TileId,
             CurrentFrameIndex = CurrentFrameIndex,
-            FrameTimer = DeepClone.CreateRequired(FrameTimer)
+            FrameTimer = FrameTimer is not null ? DeepClone.CreateRequired(FrameTimer) : null
         };
 
     public void Initialize()
