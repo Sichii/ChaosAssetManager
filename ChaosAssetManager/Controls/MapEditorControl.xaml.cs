@@ -247,7 +247,11 @@ public partial class MapEditorControl
     {
         var button = (Button)sender;
         var tabItemParent = button.FindVisualParent<TabItem>();
-        var viewer = (MapViewerViewModel)tabItemParent!.DataContext;
+
+        if (tabItemParent!.DataContext is not MapViewerViewModel viewer)
+            return;
+
+        viewer.Control?.Dispose();
 
         ViewModel.Maps.Remove(viewer);
     }

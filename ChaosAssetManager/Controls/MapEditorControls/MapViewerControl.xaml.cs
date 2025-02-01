@@ -21,7 +21,7 @@ using Point = Chaos.Geometry.Point;
 
 namespace ChaosAssetManager.Controls.MapEditorControls;
 
-public partial class MapViewerControl
+public partial class MapViewerControl : IDisposable
 {
     public const int FOREGROUND_PADDING = 512;
     private SKImage? BackgroundImage;
@@ -60,6 +60,23 @@ public partial class MapViewerControl
             HistoricalTileGrab = MapEditorViewModel.TileGrab;
             MapEditorViewModel.TileGrab.PropertyChanged += TileGrabOnPropertyChanged;
         }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        BackgroundImage?.Dispose();
+        ForegroundImage?.Dispose();
+        TabMapImage?.Dispose();
+
+        Element.Paint -= ElementOnPaint;
+        Element.MouseMove -= ElementOnMouseMove;
+        Element.MouseLeftButtonDown -= ElementOnMouseLeftButtonDown;
+        Element.MouseLeftButtonUp -= ElementOnMouseLeftButtonUp;
+
+        Element.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 
     #region Utilities
@@ -345,6 +362,9 @@ public partial class MapViewerControl
             return;
 
         var tileCoordinates = ConvertMouseToTileCoordinates(new SKPoint(mousePosition.Value.X, mousePosition.Value.Y));
+        
+        if(tileCoordinates == new SKPoint(-1, -1))
+            return;
 
         if (MapEditorViewModel.MouseHoverTileCoordinates != tileCoordinates)
         {

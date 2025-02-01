@@ -42,6 +42,8 @@ public static class MapEditorRenderUtil
         if (tileIndex == 0)
             return false;
 
+        tileIndex--;
+
         Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat")["sotp.dat"]
                              .ToSpan()
                              .ToArray()

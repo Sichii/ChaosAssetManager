@@ -137,7 +137,7 @@ public static class CONSTANTS
                 ]));
 
         //                    (1276, 1278),
-        
+
         fgStructures.AddRange(
             CreateFromPattern(
                 lfgPattern: new[,]
@@ -241,7 +241,7 @@ public static class CONSTANTS
                 [
                     (2131, 2138),
                     (2331, 2378),
-                    (2467, 2486),
+                    (2467, 2486)
                 ]));
 
         //left to right horizontal (lllr)
@@ -266,7 +266,22 @@ public static class CONSTANTS
                     (2403, 2406),
                     (2411, 2438),
                     (2487, 2514),
+                    (2744, 2747)
                 ]));
+
+        //left to right horizontal variation (lllr)
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 5 }
+                },
+                discards: 1,
+                ranges: [(2744, 2748)]));
 
         //left to right vertical (lrrr)
         fgStructures.AddRange(
@@ -293,7 +308,58 @@ public static class CONSTANTS
                     (2399, 2402),
                     (2407, 2410),
                     (2439, 2466),
+                    (2755, 2758)
                 ]));
+
+        //left to right vertical variation (lrrr)
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 5 },
+                    { 4 },
+                    { 3 }
+                },
+                discards: 1,
+                ranges: [(2754, 2758)]));
+
+        //horizontal llllr
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3, 4 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 5 }
+                },
+                ranges: [(2520, 2544)]));
+
+        //vertical lrrrr
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 5 },
+                    { 4 },
+                    { 3 },
+                    { 2 }
+                },
+                ranges: [(2550, 2574)]));
 
         //messed up horizontal
         fgStructures.AddRange(
@@ -329,22 +395,135 @@ public static class CONSTANTS
                 },
                 ranges: [(2545, 2549)]));
 
+        //llrrr reverse checkmark
         fgStructures.AddRange(
             CreateFromPattern(
                 lfgPattern: new[,]
                 {
+                    { 0, 0 },
+                    { 0, 0 },
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 5 },
+                    { 0, 4 },
+                    { 0, 3 }
+                },
+                ranges:
+                [
+                    (2575, 2584),
+                    (2595, 2604),
+                    (2749, 2753)
+                ]));
+
+        //lllrr checkmark
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0 },
+                    { 1, 2, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 5 },
+                    { 0, 0, 4 }
+                },
+                ranges:
+                [
+                    (2585, 2594),
+                    (2739, 2743)
+                ]));
+
+        //llllrr checkmark
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0 },
                     { 1, 2, 3, 4 }
                 },
                 rfgPattern: new[,]
                 {
+                    { 0, 0, 0, 6 },
                     { 0, 0, 0, 5 }
                 },
-                ranges: [(2520, 2544)]));
+                ranges: [(2605, 2628)]));
 
+        //llrrrr reverse checkmark
         fgStructures.AddRange(
             CreateFromPattern(
                 lfgPattern: new[,]
                 {
+                    { 0, 0 },
+                    { 0, 0 },
+                    { 0, 0 },
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 6 },
+                    { 0, 5 },
+                    { 0, 4 },
+                    { 0, 3 }
+                },
+                ranges: [(2629, 2652)]));
+
+        //lllrrr vshape
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0 },
+                    { 0, 0, 0 },
+                    { 1, 2, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 6 },
+                    { 0, 0, 5 },
+                    { 0, 0, 4 }
+                },
+                ranges: [(2653, 2670)]));
+
+        //llllllr horizontal
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3, 4, 5, 6 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 7 }
+                },
+                ranges: [(2685, 2698)]));
+
+        //lllllr horizontal
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3, 4, 5 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 6 }
+                },
+                ranges:
+                [
+                    (2725, 2730),
+                    (2732, 2737)
+                ]));
+
+        //lrrrrrr vertical
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 0 },
                     { 0 },
                     { 0 },
                     { 0 },
@@ -352,16 +531,77 @@ public static class CONSTANTS
                 },
                 rfgPattern: new[,]
                 {
+                    { 7 },
+                    { 6 },
                     { 5 },
                     { 4 },
                     { 3 },
                     { 2 }
                 },
-                ranges: [(2550, 2574)]));
+                ranges: [(2671, 2684)]));
+
+        //lrrrrr vertical
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 6 },
+                    { 5 },
+                    { 4 },
+                    { 3 },
+                    { 2 }
+                },
+                ranges:
+                [
+                    (2699, 2710),
+                    (2712, 2717),
+                    (2719, 2724)
+                ]));
 
         // (,),
 
-        FOREGROUND_STRUCTURES = [..fgStructures];
+        FOREGROUND_STRUCTURES =
+        [
+            ..fgStructures.OrderBy(
+                structure =>
+                {
+                    var minTileId = int.MaxValue;
+
+                    if (structure.HasBackgroundTiles)
+                        minTileId = Math.Min(
+                            minTileId,
+                            structure.RawBackgroundTiles
+                                     .Select(tile => tile.TileId)
+                                     .Where(tileId => tileId != 0)
+                                     .Min());
+
+                    if (structure.HasLeftForegroundTiles)
+                        minTileId = Math.Min(
+                            minTileId,
+                            structure.RawLeftForegroundTiles
+                                     .Select(tile => tile.TileId)
+                                     .Where(tileId => tileId != 0)
+                                     .Min());
+
+                    if (structure.HasRightForegroundTiles)
+                        minTileId = Math.Min(
+                            minTileId,
+                            structure.RawRightForegroundTiles
+                                     .Select(tile => tile.TileId)
+                                     .Where(tileId => tileId != 0)
+                                     .Min());
+
+                    return minTileId;
+                })
+        ];
 
         // @formatter:keep_existing_initializer_arrangement restore
         // @formatter:wrap_arguments_style restore
@@ -378,6 +618,9 @@ public static class CONSTANTS
     /// </param>
     /// <param name="rfgPattern">
     ///     The right foreground tile pattern to fill in
+    /// </param>
+    /// <param name="discards">
+    ///     Extra tiles to include in the chunk that are not actually used in the pattern
     /// </param>
     /// <param name="ranges">
     ///     The ranges to fill in the patterns with
@@ -396,6 +639,7 @@ public static class CONSTANTS
         int[,]? bgPattern = null,
         int[,]? lfgPattern = null,
         int[,]? rfgPattern = null,
+        int discards = 0,
         params IEnumerable<(int start, int end)> ranges)
     {
         var bgcount = bgPattern?.Flatten()
@@ -410,7 +654,7 @@ public static class CONSTANTS
                                  .Count(num => num != 0)
                        ?? 0;
 
-        var totalCountPerPattern = bgcount + lfgCount + rfgCount;
+        var totalCountPerPattern = bgcount + lfgCount + rfgCount + discards;
 
         foreach (var range in ranges)
         {
