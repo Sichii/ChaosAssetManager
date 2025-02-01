@@ -408,7 +408,8 @@
                               EnableRowVirtualization="True"
                               VirtualizingPanel.IsVirtualizing="True"
                               VirtualizingPanel.VirtualizationMode="Recycling"
-                              SelectedCellsChanged="TilesControl_OnSelectedCellsChanged">
+                              SelectedCellsChanged="TilesControl_OnSelectedCellsChanged"
+                              PreviewMouseWheel="DataGrid_OnPreviewMouseWheel">
                         <DataGrid.ItemsSource>
                             <MultiBinding Converter="{StaticResource TilesLayerFlagsConverter}">
                                 <Binding Path="ViewModel.EditingLayerFlags" />
@@ -536,7 +537,8 @@
                           SelectedCellsChanged="StructuresControl_OnSelectedCellsChanged"
                           HorizontalContentAlignment="Stretch"
                           HorizontalAlignment="Stretch"
-                          ColumnWidth="SizeToCells">
+                          ColumnWidth="SizeToCells"
+                          PreviewMouseWheel="DataGrid_OnPreviewMouseWheel">
                     <DataGrid.ItemsSource>
                         <MultiBinding Converter="{StaticResource StructuresLayerFlagsConverter}">
                             <Binding Path="ViewModel.EditingLayerFlags" />

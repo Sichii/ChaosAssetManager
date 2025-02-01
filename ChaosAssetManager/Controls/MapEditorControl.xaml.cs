@@ -102,13 +102,13 @@ public partial class MapEditorControl
             ViewModel.EditingLayerFlags = LayerFlags.Background;
         else if (listBoxItem.Name.EqualsI(nameof(EditLeftForegroundBtn)))
         {
-            if (ViewModel.EditingLayerFlags == LayerFlags.RightForeground)
+            if (ViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground) && (ViewModel.TileGrab?.HasRightForegroundTiles ?? false))
                 HandleLeftOrRightSwap();
 
             ViewModel.EditingLayerFlags = LayerFlags.LeftForeground;
         } else if (listBoxItem.Name.EqualsI(nameof(EditRightForegroundBtn)))
         {
-            if (ViewModel.EditingLayerFlags == LayerFlags.LeftForeground)
+            if (ViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground) && (ViewModel.TileGrab?.HasLeftForegroundTiles ?? false))
                 HandleLeftOrRightSwap();
 
             ViewModel.EditingLayerFlags = LayerFlags.RightForeground;
@@ -627,5 +627,23 @@ public partial class MapEditorControl
             {
                 //ignored
             }
+    }
+
+    private void DataGrid_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not DataGrid grid)
+            return;
+        
+        var scrollViewer = grid.FindVisualChild<ScrollViewer>();
+
+        if (scrollViewer == null)
+            return;
+        
+        e.Handled = true;
+        
+        if (e.Delta > 0)
+            scrollViewer.LineUp();
+        else
+            scrollViewer.LineDown();
     }
 }

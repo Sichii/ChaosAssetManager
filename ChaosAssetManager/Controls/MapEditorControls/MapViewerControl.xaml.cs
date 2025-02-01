@@ -128,7 +128,7 @@ public partial class MapViewerControl : IDisposable
 
     private void HandleDrawToolClick(SKPoint tileCoordinates)
     {
-        if (TileGrab is null || (tileCoordinates == new SKPoint(-1, -1)))
+        if (TileGrab is null || TileGrab.IsEmpty || (tileCoordinates == new SKPoint(-1, -1)))
             return;
 
         var after = TileGrab.WithTileCoordinates(tileCoordinates);
@@ -471,6 +471,8 @@ public partial class MapViewerControl : IDisposable
         var tglfgTiles = new ListSegment2D<TileViewModel>();
         var tgrfgTiles = new ListSegment2D<TileViewModel>();
         var tabWallImage = MapEditorRenderUtil.RenderTabWall();
+        var isEditingLeftForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground);
+        var isEditingRightForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground);
 
         if (TileGrab is not null)
         {
@@ -488,7 +490,7 @@ public partial class MapViewerControl : IDisposable
                 SKPaint? leftForegroundPaint = null;
                 SKPaint? rightForegroundPaint = null;
 
-                if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground))
+                if (isEditingLeftForeground)
                     HandleLeftForegroundToolHover(
                         point,
                         mouseCoordinates,
@@ -497,7 +499,7 @@ public partial class MapViewerControl : IDisposable
                         ref leftForegroundPaint,
                         leftButtonPressed);
 
-                if (MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground))
+                if (isEditingRightForeground)
                     HandleRightForegroundToolHover(
                         point,
                         mouseCoordinates,

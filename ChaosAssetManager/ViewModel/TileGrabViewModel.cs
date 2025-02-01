@@ -18,6 +18,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
     public ObservingCollection<TileViewModel> RawBackgroundTiles { get; } = [];
     public ObservingCollection<TileViewModel> RawLeftForegroundTiles { get; } = [];
     public ObservingCollection<TileViewModel> RawRightForegroundTiles { get; } = [];
+    public bool IsEmpty => !HasBackgroundTiles && !HasForegroundTiles;
 
     public ListSegment2D<TileViewModel> BackgroundTilesView => new(RawBackgroundTiles, Bounds.Width);
 
@@ -74,7 +75,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
             Bounds.Width,
             Bounds.Height);
 
-        if (layerFlags.HasFlag(LayerFlags.Background))
+        if (layerFlags.HasFlag(LayerFlags.Background) && HasBackgroundTiles)
             for (var y = bounds.Top; y <= bounds.Bottom; y++)
                 for (var x = bounds.Left; x <= bounds.Right; x++)
                 {
@@ -94,7 +95,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     vmbgTiles[x, y] = tile;
                 }
 
-        if (layerFlags.HasFlag(LayerFlags.LeftForeground))
+        if (layerFlags.HasFlag(LayerFlags.LeftForeground) && HasLeftForegroundTiles)
             for (var y = bounds.Top; y <= bounds.Bottom; y++)
                 for (var x = bounds.Left; x <= bounds.Right; x++)
                 {
@@ -114,7 +115,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     vmlfgTiles[x, y] = tile;
                 }
 
-        if (layerFlags.HasFlag(LayerFlags.RightForeground))
+        if (layerFlags.HasFlag(LayerFlags.RightForeground) && HasRightForegroundTiles)
             for (var y = bounds.Top; y <= bounds.Bottom; y++)
                 for (var x = bounds.Left; x <= bounds.Right; x++)
                 {
