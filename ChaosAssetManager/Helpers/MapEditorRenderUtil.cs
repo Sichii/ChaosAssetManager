@@ -174,7 +174,7 @@ public static class MapEditorRenderUtil
 
                                                      var palette = paletteLookup.GetPaletteForId(localIndex + 1);
 
-                                                     var transparent = Sotp[localIndex]
+                                                     var transparent = (Sotp.Length > localIndex) && Sotp[localIndex]
                                                          .HasFlag(TileFlags.Transparent);
 
                                                      return Graphics.RenderImage(hpfFile, palette, transparency: transparent);

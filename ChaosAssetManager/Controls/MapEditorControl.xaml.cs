@@ -352,7 +352,13 @@ public partial class MapEditorControl
         var tileset = Tileset.FromArchive("tilea.bmp", seoDat);
         var backgroundCount = tileset.Count;
 
-        var foregroundTiles = Enumerable.Range(0, foregroundCount)
+        var foregroundTiles = iaDat.Where(entry => entry.EntryName.StartsWithI("stc"))
+                                   .Select(entry =>
+                                   {
+                                       entry.TryGetNumericIdentifier(out var identifier);
+
+                                       return identifier;
+                                   })
                                         .Select(
                                             i => new TileViewModel
                                             {
