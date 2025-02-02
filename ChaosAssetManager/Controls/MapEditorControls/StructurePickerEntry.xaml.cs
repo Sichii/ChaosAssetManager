@@ -2,6 +2,7 @@
 using System.Windows;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.ViewModel;
+using DALib.Extensions;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using SkiaSharp.Views.WPF;
@@ -56,7 +57,6 @@ public partial class StructurePickerEntry
         var offsetX = (canvasWidth - ImageWidth * scale) / 2f;
         var offsetY = (canvasHeight - ImageHeight * scale) / 2f;
 
-        //canvas.Save();
         canvas.Translate(offsetX, offsetY);
         canvas.Scale(scale);
 
@@ -66,7 +66,6 @@ public partial class StructurePickerEntry
         if (ViewModel.HasForegroundTiles)
             RenderForeground(canvas);
 
-        //canvas.Restore();
         canvas.Flush();
     }
 
@@ -122,7 +121,7 @@ public partial class StructurePickerEntry
                 var leftCurrentFrame = leftTileViewModel.CurrentFrame;
                 var rightCurrentFrame = rightTileViewModel.CurrentFrame;
 
-                if (leftCurrentFrame is not null && (leftTileViewModel.TileId >= 13) && ((leftTileViewModel.TileId % 10000) > 1))
+                if (leftCurrentFrame is not null && leftTileViewModel.TileId.IsRenderedTileIndex())
                     canvas.DrawImage(
                         leftCurrentFrame,
                         fgInitialDrawX + x * DALIB_CONSTANTS.HALF_TILE_WIDTH,
@@ -131,7 +130,7 @@ public partial class StructurePickerEntry
                         - leftCurrentFrame.Height
                         + DALIB_CONSTANTS.HALF_TILE_HEIGHT);
 
-                if (rightCurrentFrame is not null && (rightTileViewModel.TileId >= 13) && ((rightTileViewModel.TileId % 10000) > 1))
+                if (rightCurrentFrame is not null && rightTileViewModel.TileId.IsRenderedTileIndex())
                     canvas.DrawImage(
                         rightCurrentFrame,
                         fgInitialDrawX + (x + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH,
@@ -161,83 +160,15 @@ public partial class StructurePickerEntry
         ViewModel.PropertyChanged += StructureViewModel_OnPropertyChanged;
         ViewModel.Initialize();
 
-        //all this crap is to calculate the size of the image
-        //we basically have to fake render it to get it's size (nothing is actually drawn or rendered)
-        //but we have to do this for all frames of the animations and take the biggest size
-        //so that we can have a consistent scaling to fit the whole animation in
+        //calculate the size of the image
+        var backgroundTilesView = ViewModel.BackgroundTilesView;
+        var leftForegroundTilesView = ViewModel.LeftForegroundTilesView;
+        var rightForegroundTilesView = ViewModel.RightForegroundTilesView;
 
-        //get the max frame count of all animations
-        var maxBgFrames = ViewModel.RawBackgroundTiles
-                                   .Select(tile => tile.Animation?.Frames.Count)
-                                   .Max();
+        var bounds = ImageHelper.CalculateRenderedImageSize(backgroundTilesView, leftForegroundTilesView, rightForegroundTilesView);
 
-        var maxLfgFrames = ViewModel.RawLeftForegroundTiles
-                                    .Select(tile => tile.Animation?.Frames.Count)
-                                    .Max();
-
-        var maxRfgFrames = ViewModel.RawRightForegroundTiles
-                                    .Select(tile => tile.Animation?.Frames.Count)
-                                    .Max();
-
-        var frameCount = Math.Max(maxBgFrames ?? 0, Math.Max(maxLfgFrames ?? 0, maxRfgFrames ?? 0));
-        var width = 0;
-        var height = 0;
-
-        //save the current frame indexes so we can restore them after to calculate the size
-        var currentBgFrameIndexes = ViewModel.RawBackgroundTiles
-                                             .Select(tile => tile.CurrentFrameIndex)
-                                             .ToArray();
-
-        var currentLfgFrameIndexes = ViewModel.RawLeftForegroundTiles
-                                              .Select(tile => tile.CurrentFrameIndex)
-                                              .ToArray();
-
-        var currentRfgFrameIndexes = ViewModel.RawRightForegroundTiles
-                                              .Select(tile => tile.CurrentFrameIndex)
-                                              .ToArray();
-
-        //iterate FrameCount times
-        for (var i = 0; i < frameCount; i++)
-        {
-            //set all current frame indexes to i % animation.framecount
-            foreach (var frame in ViewModel.RawBackgroundTiles)
-                frame.CurrentFrameIndex = i % frame.Animation?.Frames.Count ?? 0;
-
-            foreach (var frame in ViewModel.RawLeftForegroundTiles)
-                frame.CurrentFrameIndex = i % frame.Animation?.Frames.Count ?? 0;
-
-            foreach (var frame in ViewModel.RawRightForegroundTiles)
-                frame.CurrentFrameIndex = i % frame.Animation?.Frames.Count ?? 0;
-
-            //calculate the size of the image
-            var backgroundTilesView = ViewModel.BackgroundTilesView;
-            var leftForegroundTilesView = ViewModel.LeftForegroundTilesView;
-            var rightForegroundTilesView = ViewModel.RightForegroundTilesView;
-
-            var bounds = ImageHelper.CalculateRenderedImageSize(
-                backgroundTilesView,
-                leftForegroundTilesView,
-                rightForegroundTilesView,
-                DALIB_CONSTANTS.HALF_TILE_WIDTH,
-                DALIB_CONSTANTS.HALF_TILE_HEIGHT);
-
-            //take the biggest size
-            width = Math.Max(width, bounds.Width);
-            height = Math.Max(height, bounds.Height);
-        }
-
-        //restore current frame indexes
-        for (var i = 0; i < ViewModel.RawBackgroundTiles.Count; i++)
-            ViewModel.RawBackgroundTiles[i].CurrentFrameIndex = currentBgFrameIndexes[i];
-
-        for (var i = 0; i < ViewModel.RawLeftForegroundTiles.Count; i++)
-            ViewModel.RawLeftForegroundTiles[i].CurrentFrameIndex = currentLfgFrameIndexes[i];
-
-        for (var i = 0; i < ViewModel.RawRightForegroundTiles.Count; i++)
-            ViewModel.RawRightForegroundTiles[i].CurrentFrameIndex = currentRfgFrameIndexes[i];
-
-        ImageWidth = width;
-        ImageHeight = height;
+        ImageWidth = bounds.Width;
+        ImageHeight = bounds.Height;
 
         Element.InvalidateVisual();
     }

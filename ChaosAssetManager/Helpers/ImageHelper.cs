@@ -1,4 +1,5 @@
 ﻿using ChaosAssetManager.ViewModel;
+using DALIB_CONSTANTS = DALib.Definitions.CONSTANTS;
 
 namespace ChaosAssetManager.Helpers;
 
@@ -17,165 +18,67 @@ public static class ImageHelper
     /// <param name="rightForegroundTiles">
     ///     2D array of right-foreground tile view models.
     /// </param>
-    /// <param name="halfTileWidth">
-    ///     Half of the tile width (your isometric "half width").
-    /// </param>
-    /// <param name="halfTileHeight">
-    ///     Half of the tile height (your isometric "half height").
-    /// </param>
     /// <returns>
     ///     A tuple (width, height) representing the bounding-box dimensions.
     /// </returns>
     public static (int Width, int Height) CalculateRenderedImageSize(
         ListSegment2D<TileViewModel> backgroundTiles,
         ListSegment2D<TileViewModel> leftForegroundTiles,
-        ListSegment2D<TileViewModel> rightForegroundTiles,
-        int halfTileWidth,
-        int halfTileHeight)
+        ListSegment2D<TileViewModel> rightForegroundTiles)
     {
-        // Dimensions in tiles (assuming all three arrays have the same size)
         var tilesWide = Math.Max(backgroundTiles.Width, Math.Max(leftForegroundTiles.Width, rightForegroundTiles.Width));
         var tilesHigh = Math.Max(backgroundTiles.Height, Math.Max(leftForegroundTiles.Height, rightForegroundTiles.Height));
 
-        // Track overall min/max in world/pixel coordinates
-        var minX = float.MaxValue;
-        var minY = float.MaxValue;
-        var maxX = float.MinValue;
-        var maxY = float.MinValue;
-
-        //--------------------------------------------------------------------------
-        // 1) BACKGROUND TILES
-        //    Draw logic:
-        //      drawX = bgInitialDrawX + x * halfTileWidth
-        //      drawY = bgInitialDrawY + x * halfTileHeight
-        //--------------------------------------------------------------------------
-
-        float bgDrawX = (tilesHigh - 1) * halfTileWidth;
-        float bgDrawY = 0;
+        var minY = 0;
 
         for (var y = 0; y < tilesHigh; y++)
         {
             for (var x = 0; x < tilesWide; x++)
             {
-                if ((x >= backgroundTiles.Width) || (y >= backgroundTiles.Height))
-                    continue;
-
-                var tileViewModel = backgroundTiles[x, y];
-                var frame = tileViewModel.CurrentFrame;
-
-                if (frame != null)
+                if ((x < backgroundTiles.Width) && (y < backgroundTiles.Height))
                 {
-                    var drawX = bgDrawX + x * halfTileWidth;
-                    var drawY = bgDrawY + x * halfTileHeight;
+                    var animation = backgroundTiles[x, y].Animation;
 
-                    var tileRight = drawX + frame.Width;
-                    var tileBottom = drawY + frame.Height;
+                    if (animation is not null)
+                    {
+                        var tallestFrameHeight = animation.Frames.Max(frame => frame.Height);
 
-                    // Update bounding box
-                    if (drawX < minX)
-                        minX = drawX;
-
-                    if (drawY < minY)
-                        minY = drawY;
-
-                    if (tileRight > maxX)
-                        maxX = tileRight;
-
-                    if (tileBottom > maxY)
-                        maxY = tileBottom;
+                        var bottom = (x + y + 2) * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                        minY = Math.Min(minY, bottom - tallestFrameHeight);
+                    }
                 }
-            }
 
-            // Move to next row in isometric space
-            bgDrawX -= halfTileWidth;
-            bgDrawY += halfTileHeight;
-        }
-
-        //--------------------------------------------------------------------------
-        // 2) FOREGROUND TILES (LEFT + RIGHT)
-        //    Draw logic for left tile:
-        //      drawX = fgInitialDrawX + x * halfTileWidth
-        //      drawY = fgInitialDrawY + (x + 1) * halfTileHeight - frame.Height + halfTileHeight
-        //
-        //    Draw logic for right tile:
-        //      drawX = fgInitialDrawX + (x + 1) * halfTileWidth
-        //      drawY = fgInitialDrawY + (x + 1) * halfTileHeight - frame.Height + halfTileHeight
-        //--------------------------------------------------------------------------
-
-        float fgDrawX = (tilesHigh - 1) * halfTileWidth;
-        float fgDrawY = 0;
-
-        for (var y = 0; y < tilesHigh; y++)
-        {
-            for (var x = 0; x < tilesWide; x++)
-            {
                 if ((x < leftForegroundTiles.Width) && (y < leftForegroundTiles.Height))
                 {
-                    var leftTile = leftForegroundTiles[x, y];
+                    var animation = leftForegroundTiles[x, y].Animation;
 
-                    // LEFT FOREGROUND
-                    if (leftTile is { CurrentFrame: not null, TileId: >= 13 } && ((leftTile.TileId % 10000) > 1))
+                    if (animation is not null)
                     {
-                        var drawX = fgDrawX + x * halfTileWidth;
-                        var drawY = fgDrawY + (x + 1) * halfTileHeight - leftTile.CurrentFrame.Height + halfTileHeight;
+                        var tallestFrameHeight = animation.Frames.Max(frame => frame.Height);
 
-                        var tileRight = drawX + leftTile.CurrentFrame.Width;
-                        var tileBottom = drawY + leftTile.CurrentFrame.Height;
-
-                        if (drawX < minX)
-                            minX = drawX;
-
-                        if (drawY < minY)
-                            minY = drawY;
-
-                        if (tileRight > maxX)
-                            maxX = tileRight;
-
-                        if (tileBottom > maxY)
-                            maxY = tileBottom;
+                        var bottom = (x + y + 2) * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                        minY = Math.Min(minY, bottom - tallestFrameHeight);
                     }
                 }
 
                 if ((x < rightForegroundTiles.Width) && (y < rightForegroundTiles.Height))
                 {
-                    var rightTile = rightForegroundTiles[x, y];
+                    var animation = rightForegroundTiles[x, y].Animation;
 
-                    // RIGHT FOREGROUND
-                    if (rightTile is { CurrentFrame: not null, TileId: >= 13 } && ((rightTile.TileId % 10000) > 1))
+                    if (animation is not null)
                     {
-                        var drawX = fgDrawX + (x + 1) * halfTileWidth;
-                        var drawY = fgDrawY + (x + 1) * halfTileHeight - rightTile.CurrentFrame.Height + halfTileHeight;
+                        var tallestFrameHeight = animation.Frames.Max(frame => frame.Height);
 
-                        var tileRight = drawX + rightTile.CurrentFrame.Width;
-                        var tileBottom = drawY + rightTile.CurrentFrame.Height;
-
-                        if (drawX < minX)
-                            minX = drawX;
-
-                        if (drawY < minY)
-                            minY = drawY;
-
-                        if (tileRight > maxX)
-                            maxX = tileRight;
-
-                        if (tileBottom > maxY)
-                            maxY = tileBottom;
+                        var bottom = (x + y + 2) * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                        minY = Math.Min(minY, bottom - tallestFrameHeight);
                     }
                 }
             }
-
-            // Move to next row in isometric space
-            fgDrawX -= halfTileWidth;
-            fgDrawY += halfTileHeight;
         }
 
-        // If nothing was drawn, return (0, 0)
-        if ((minX > maxX) || (minY > maxY))
-            return (0, 0);
-
-        // Convert bounding box to integer dimensions
-        var finalWidth = (int)Math.Ceiling(maxX - minX);
-        var finalHeight = (int)Math.Ceiling(maxY - minY);
+        var maxY = (tilesHigh + tilesWide) * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+        var finalHeight = Math.Abs(minY - maxY);
+        var finalWidth = (tilesHigh + tilesWide) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
 
         return (finalWidth, finalHeight);
     }

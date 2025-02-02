@@ -86,6 +86,10 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
 
                     var tileGrabX = x - bounds.Left;
                     var tileGrabY = y - bounds.Top;
+                    
+                    //if there are no background tiles for this tile, don't overwrite existing ones
+                    if (tgbgTiles[tileGrabX, tileGrabY].TileId == 0)
+                        continue;
 
                     var tile = tgbgTiles[tileGrabX, tileGrabY]
                         .Clone();
@@ -107,6 +111,10 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabX = x - bounds.Left;
                     var tileGrabY = y - bounds.Top;
 
+                    //if there are no foreground tiles for this tile, don't overwrite existing ones
+                    if ((tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
+                        continue;
+
                     var tile = tglfgTiles[tileGrabX, tileGrabY]
                         .Clone();
                     tile.LayerFlags = LayerFlags.LeftForeground;
@@ -127,6 +135,10 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabX = x - bounds.Left;
                     var tileGrabY = y - bounds.Top;
 
+                    //if there are no foreground tiles for this tile, don't overwrite existing ones
+                    if ((tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
+                        continue;
+                    
                     var tile = tgrfgTiles[tileGrabX, tileGrabY]
                         .Clone();
                     tile.LayerFlags = LayerFlags.RightForeground;

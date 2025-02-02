@@ -537,7 +537,6 @@
                           SelectedCellsChanged="StructuresControl_OnSelectedCellsChanged"
                           HorizontalContentAlignment="Stretch"
                           HorizontalAlignment="Stretch"
-                          ColumnWidth="SizeToCells"
                           PreviewMouseWheel="DataGrid_OnPreviewMouseWheel">
                     <DataGrid.ItemsSource>
                         <MultiBinding Converter="{StaticResource StructuresLayerFlagsConverter}">
