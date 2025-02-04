@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -13,7 +14,6 @@ using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using DALib.Drawing;
 using DALib.Extensions;
-using ArgumentOutOfRangeException = System.ArgumentOutOfRangeException;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using Rectangle = Chaos.Geometry.Rectangle;
@@ -38,7 +38,7 @@ public partial class MapEditorControl
 
         if (PathHelper.Instance.ArchivePathIsValid())
             PopulateTileViewModels();
-
+        
         _ = UpdateLoop();
     }
 
@@ -347,8 +347,7 @@ public partial class MapEditorControl
     {
         var iaDat = ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat");
         var seoDat = ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "seo.dat");
-
-        var foregroundCount = iaDat.Count(entry => entry.EntryName.StartsWithI("stc"));
+        
         var tileset = Tileset.FromArchive("tilea.bmp", seoDat);
         var backgroundCount = tileset.Count;
 
@@ -395,6 +394,7 @@ public partial class MapEditorControl
         ViewModel.ForegroundTiles.AddRange(foregroundTiles);
         ViewModel.BackgroundTiles.AddRange(backgroundtiles);
         ViewModel.ForegroundStructures.AddRange(CONSTANTS.FOREGROUND_STRUCTURES);
+        ViewModel.BackgroundStructures.AddRange(CONSTANTS.BACKGROUND_STRUCTURES);
     }
 
     private void RedoBtn_OnClick(object sender, RoutedEventArgs e) => DoRedo();
@@ -505,6 +505,16 @@ public partial class MapEditorControl
 
         foreach (var row in ViewModel.ForegroundTiles)
             row.Refresh();
+        
+        foreach(var structure in ViewModel.ForegroundStructures)
+            structure.Refresh();
+
+        foreach (var structure in ViewModel.BackgroundStructures)
+            structure.Refresh();
+        
+        ViewModel.TileGrab?.Refresh();
+        
+        ViewModel.CurrentMapViewer.Refresh();
     }
 
     private void StructuresControl_OnSelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
@@ -517,8 +527,8 @@ public partial class MapEditorControl
         if (added[0].Item is not StructureViewModel row)
             return;
 
-        if (ViewModel.EditingLayerFlags is not (LayerFlags.Foreground or LayerFlags.Background))
-            return;
+        /*if (ViewModel.EditingLayerFlags is not (LayerFlags.Foreground or LayerFlags.Background))
+            return;*/
 
         ViewModel.TileGrab = row.ToTileGrab();
     }
@@ -536,9 +546,6 @@ public partial class MapEditorControl
             return;
 
         if (added[0].Item is not TileRowViewModel row)
-            return;
-
-        if (ViewModel.EditingLayerFlags is LayerFlags.All or LayerFlags.Foreground)
             return;
 
         var column = added[0].Column;
@@ -592,7 +599,11 @@ public partial class MapEditorControl
                 break;
             }
             default:
-                throw new ArgumentOutOfRangeException();
+            {
+                tileGrab.RawBackgroundTiles.Add(tile);
+
+                break;
+            }
         }
 
         ViewModel.TileGrab = tileGrab;

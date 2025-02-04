@@ -39,7 +39,7 @@ public sealed class ActionContext
     public void Undo(MapViewerViewModel viewModel)
     {
         MapEditorControl.Instance.ViewModel.TileGrab = Before;
-        Before.Apply(viewModel, LayerFlags, TileCoordinates);
+        Before.Apply(viewModel, LayerFlags, TileCoordinates, true);
         MapEditorControl.Instance.ViewModel.TileGrab = After;
     }
 }

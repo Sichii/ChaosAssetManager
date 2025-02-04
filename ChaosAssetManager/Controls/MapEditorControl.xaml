@@ -318,9 +318,10 @@
                            VerticalAlignment="Center"
                            Margin="0, 0, 5, 0" />
                 <ComboBox x:Name="SizeSelectorCmbx"
+                          MinWidth="150"
                           ItemsSource="{Binding ViewModel.PossibleBounds}"
                           SelectedItem="{Binding ViewModel.CurrentMapViewer.Bounds, Converter={StaticResource RectangleMapBoundsConverter}}"
-                          ToolTip="Possible sizes for the map" />
+                          ToolTip="Possible sizes for the map"/>
             </ToolBar>
         </ToolBarTray>
 

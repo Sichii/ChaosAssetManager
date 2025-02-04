@@ -181,4 +181,16 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         action.Undo(this);
         RedoableActions.AddNewest(action);
     }
+
+    public void Refresh()
+    {
+        foreach (var tile in RawBackgroundTiles)
+            tile.Refresh();
+        
+        foreach (var tile in RawLeftForegroundTiles)
+            tile.Refresh();
+        
+        foreach (var tile in RawRightForegroundTiles)
+            tile.Refresh();
+    }
 }

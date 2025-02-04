@@ -54,7 +54,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
             tile.Update(delta);
     }
 
-    public void Apply(MapViewerViewModel viewer, LayerFlags layerFlags, SKPoint? tileCoordinatesOverride = null)
+    public void Apply(MapViewerViewModel viewer, LayerFlags layerFlags, SKPoint? tileCoordinatesOverride = null, bool overWrite = false)
     {
         var vmbgTiles = viewer.BackgroundTilesView;
         var vmlfgTiles = viewer.LeftForegroundTilesView;
@@ -88,7 +88,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabY = y - bounds.Top;
                     
                     //if there are no background tiles for this tile, don't overwrite existing ones
-                    if (tgbgTiles[tileGrabX, tileGrabY].TileId == 0)
+                    if (!overWrite && (tgbgTiles[tileGrabX, tileGrabY].TileId == 0))
                         continue;
 
                     var tile = tgbgTiles[tileGrabX, tileGrabY]
@@ -112,7 +112,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabY = y - bounds.Top;
 
                     //if there are no foreground tiles for this tile, don't overwrite existing ones
-                    if ((tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
+                    if (!overWrite && (tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
                         continue;
 
                     var tile = tglfgTiles[tileGrabX, tileGrabY]
@@ -136,7 +136,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabY = y - bounds.Top;
 
                     //if there are no foreground tiles for this tile, don't overwrite existing ones
-                    if ((tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
+                    if (!overWrite && (tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
                         continue;
                     
                     var tile = tgrfgTiles[tileGrabX, tileGrabY]
@@ -347,5 +347,17 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
         }
 
         return ret;
+    }
+    
+    public void Refresh()
+    {
+        foreach (var tile in RawBackgroundTiles)
+            tile.Refresh();
+
+        foreach (var tile in RawLeftForegroundTiles)
+            tile.Refresh();
+
+        foreach (var tile in RawRightForegroundTiles)
+            tile.Refresh();
     }
 }

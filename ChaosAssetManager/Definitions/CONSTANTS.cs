@@ -9,9 +9,11 @@ public static class CONSTANTS
     public const string NEW_MAP_NAME = "New";
 
     public static readonly ImmutableArray<StructureViewModel> FOREGROUND_STRUCTURES;
+    public static readonly ImmutableArray<StructureViewModel> BACKGROUND_STRUCTURES;
 
     static CONSTANTS()
     {
+        //FOREGROUND STRUCTURES
         var fgStructures = new List<StructureViewModel>();
 
         // @formatter:wrap_arguments_style chop_always
@@ -892,11 +894,74 @@ public static class CONSTANTS
                     (3146, 3161)
                 ]));
 
+        //BACKGROUND STRUCTURES
+        var bgStructures = new List<StructureViewModel>();
+        
+        bgStructures.AddRange(
+            CreateFromPattern(
+                new[,]
+                {
+                    { 1, 2 },
+                    { 3, 4 }
+                },
+                ranges:
+                [
+                    (269, 276),
+                    (305, 312),
+                ]));
+
+        bgStructures.AddRange(
+            CreateFromPattern(
+                new[,]
+                {
+                    { 1, 2, 3 },
+                    { 4, 5, 6 },
+                    { 7, 8, 9 },
+                },
+                ranges:
+                [
+                    (313, 321),
+                ]));
+        
         // (,),
 
         FOREGROUND_STRUCTURES =
         [
             ..fgStructures.OrderBy(
+                structure =>
+                {
+                    var minTileId = int.MaxValue;
+
+                    if (structure.HasBackgroundTiles)
+                        minTileId = Math.Min(
+                            minTileId,
+                            structure.RawBackgroundTiles
+                                     .Select(tile => tile.TileId)
+                                     .Where(tileId => tileId != 0)
+                                     .Min());
+
+                    if (structure.HasLeftForegroundTiles)
+                        minTileId = Math.Min(
+                            minTileId,
+                            structure.RawLeftForegroundTiles
+                                     .Select(tile => tile.TileId)
+                                     .Where(tileId => tileId != 0)
+                                     .Min());
+
+                    if (structure.HasRightForegroundTiles)
+                        minTileId = Math.Min(
+                            minTileId,
+                            structure.RawRightForegroundTiles
+                                     .Select(tile => tile.TileId)
+                                     .Where(tileId => tileId != 0)
+                                     .Min());
+
+                    return minTileId;
+                })
+        ];
+        BACKGROUND_STRUCTURES =
+        [
+            ..bgStructures.OrderBy(
                 structure =>
                 {
                     var minTileId = int.MaxValue;

@@ -1004,9 +1004,8 @@ public partial class MapViewerControl : IDisposable
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         ViewModel.Control = this;
         Element.Matrix = ViewModel.ViwerTransform;
-
-        ViewModel.BackgroundChangePending = true;
-        ViewModel.ForegroundChangePending = true;
+        
+        ViewModel.Refresh();
     }
     #endregion
 }

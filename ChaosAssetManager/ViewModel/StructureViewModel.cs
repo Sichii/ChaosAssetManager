@@ -155,4 +155,16 @@ public class StructureViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 
         return ret;
     }
+
+    public void Refresh()
+    {
+        foreach (var tile in RawBackgroundTiles)
+            tile.Refresh();
+
+        foreach (var tile in RawLeftForegroundTiles)
+            tile.Refresh();
+
+        foreach (var tile in RawRightForegroundTiles)
+            tile.Refresh();
+    }
 }
