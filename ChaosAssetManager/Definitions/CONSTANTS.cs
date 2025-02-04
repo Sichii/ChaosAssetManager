@@ -15,12 +15,11 @@ public static class CONSTANTS
     {
         // @formatter:wrap_arguments_style chop_always
         // @formatter:keep_existing_initializer_arrangement true
-        
+
         #region Foreground Structures
         var fgStructures = new List<StructureViewModel>();
 
         // (,),
-
 
         //    *
         // * l r *
@@ -43,28 +42,25 @@ public static class CONSTANTS
                     (409, 676),
                     (678, 725),
                     (727, 740),
-                    (745, 786)
+                    (745, 786),
+                    (3242, 3249),
+                    (3307, 3370),
+                    (3372, 3427),
+                    (3429, 3578),
+                    (3580, 3715),
+                    (3722, 3723),
+                    (3781, 3788),
+                    (3801, 3808),
+                    (3825, 3836),
+                    (3838, 3911),
+                    (3927, 4000),
+                    (4003, 4042),
+                    (4083, 4124),
+                    (4229, 4236),
+                    (4253, 4260),
+                    (4269, 4270),
+                    (4320, 4339)
                 ]));
-
-        //      *
-        //   * l r *
-        // *  0 , 0  *
-        //   * l r *
-        //      *
-        // NAME: PURE VERTICAL
-        fgStructures.AddRange(
-            CreateFromPattern(
-                lfgPattern: new[,]
-                {
-                    { 1, 0 },
-                    { 0, 3 }
-                },
-                rfgPattern: new[,]
-                {
-                    { 2, 0 },
-                    { 0, 4 }
-                },
-                ranges: [(741, 744)]));
 
         //    *
         // *  l  *
@@ -153,7 +149,18 @@ public static class CONSTANTS
                     (2056, 2058),
                     (2062, 2067),
                     (2119, 2121),
-                    (2128, 2130)
+                    (2128, 2130),
+                    (3277, 3279),
+                    (3798, 3800),
+                    (3816, 3824),
+                    (3912, 3926),
+                    (4047, 4049),
+                    (4053, 4055),
+                    (4068, 4070),
+                    (4249, 4251),
+                    (4265, 4267),
+                    (4271, 4273),
+                    (4277, 4279)
                 ]));
 
         //       *
@@ -244,8 +251,36 @@ public static class CONSTANTS
                     (2044, 2055),
                     (2059, 2061),
                     (2068, 2118),
-                    (2122, 2127)
+                    (2122, 2127),
+                    (3268, 3276),
+                    (3280, 3282),
+                    (4043, 4045),
+                    (4056, 4067),
+                    (4071, 4082),
+                    (4245, 4247),
+                    (4261, 4263),
+                    (4274, 4276)
                 ]));
+
+        //      *
+        //   * l r *
+        // *  0 , 0  *
+        //   * l r *
+        //      *
+        // NAME: PURE VERTICAL
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 0 },
+                    { 0, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 2, 0 },
+                    { 0, 4 }
+                },
+                ranges: [(741, 744)]));
 
         //      *
         //   *  0  *
@@ -277,8 +312,28 @@ public static class CONSTANTS
                     (2958, 2961),
                     (2964, 2967),
                     (2980, 2983),
-                    (2986, 2989)
+                    (2986, 2989),
+                    (3283, 3290),
+                    (4300, 4319)
                 ]));
+
+        //    *
+        // *  l  *
+        //    *  l  *
+        //       *  l  *
+        //          *
+        // NAME: lll 3x1
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0 }
+                },
+                ranges: [(3813, 3815)]));
 
         //    *
         // *  l  *
@@ -313,7 +368,12 @@ public static class CONSTANTS
                     (2818, 2821),
                     (2828, 2831),
                     (2839, 2842),
-                    (2844, 2847)
+                    (2844, 2847),
+                    (3724, 3731),
+                    (3794, 3797),
+                    (4149, 4172),
+                    (4207, 4210),
+                    (4215, 4218)
                 ]));
 
         //    *
@@ -372,7 +432,12 @@ public static class CONSTANTS
                     (2503, 2514),
                     (2755, 2758),
                     (2824, 2827),
-                    (2834, 2837)
+                    (2834, 2837),
+                    (3732, 3747),
+                    (4125, 4148),
+                    (4203, 4206),
+                    (4211, 4214),
+                    (4340, 4347)
                 ]));
 
         //          *
@@ -397,6 +462,122 @@ public static class CONSTANTS
                 },
                 discards: 1,
                 ranges: [(2754, 2758)]));
+
+        //       *
+        //    *  0  *
+        // *  l  ,  0  *
+        //    *  l  ,  r  *
+        //       * l r  *
+        //          *
+        // NAME: lllrr 3x2 (CHECKMARK)
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0 },
+                    { 1, 2, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 5 },
+                    { 0, 0, 4 }
+                },
+                ranges:
+                [
+                    (2585, 2594),
+                    (2739, 2743),
+                    (2787, 2791),
+                    (3134, 3138),
+                    (3141, 3145),
+                    (3193, 3197),
+                    (3200, 3204),
+                    (4219, 4228),
+                    (4280, 4284),
+                    (4290, 4294)
+                ]));
+
+        //          *
+        //       *  0  *
+        //    *  0  ,  r  *
+        // *  l  ,  r  *
+        //    * l r *
+        //       *
+        // NAME: llrrr 2x3 (REVERSE CHECKMARK)
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0 },
+                    { 0, 0 },
+                    { 1, 2 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 5 },
+                    { 0, 4 },
+                    { 0, 3 }
+                },
+                ranges:
+                [
+                    (2575, 2584),
+                    (2595, 2604),
+                    (2749, 2753),
+                    (2797, 2801),
+                    (3162, 3166),
+                    (3169, 3173),
+                    (3222, 3226),
+                    (3229, 3233),
+                    (4285, 4289),
+                    (4295, 4299)
+                ]));
+
+        //          *
+        //       *  0  *
+        //    *  0  ,  0  *
+        // *  l  ,  0  ,  r  *
+        //    *  l  ,  r  *
+        //       * l r *
+        //          *
+        // NAME: lllrrr 3x3 (VSHAPE+)
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0 },
+                    { 0, 0, 0 },
+                    { 1, 2, 3 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 6 },
+                    { 0, 0, 5 },
+                    { 0, 0, 4 }
+                },
+                ranges:
+                [
+                    (2653, 2670),
+                    (3041, 3046),
+                    (3236, 3241)
+                ]));
+
+        //    *
+        // *  l  *
+        //    *  l  *
+        //       *  l  *
+        //          *  l  *
+        //             *
+        // NAME: llll 4x1
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3, 4 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0 }
+                },
+                ranges: [(3809, 3812)]));
 
         //    *
         // *  l  *
@@ -423,7 +604,11 @@ public static class CONSTANTS
                     (2944, 2948),
                     (2950, 2954),
                     (2992, 2996),
-                    (2998, 3002)
+                    (2998, 3002),
+                    (3748, 3752),
+                    (3759, 3763),
+                    (3789, 3793),
+                    (4173, 4202)
                 ]));
 
         //             *
@@ -536,65 +721,6 @@ public static class CONSTANTS
                 },
                 ranges: [(2545, 2549)]));
 
-        //          *
-        //       *  0  *
-        //    *  0  ,  r  *
-        // *  l  ,  r  *
-        //    * l r *
-        //       *
-        // NAME: llrrr 2x3 (REVERSE CHECKMARK)
-        fgStructures.AddRange(
-            CreateFromPattern(
-                lfgPattern: new[,]
-                {
-                    { 0, 0 },
-                    { 0, 0 },
-                    { 1, 2 }
-                },
-                rfgPattern: new[,]
-                {
-                    { 0, 5 },
-                    { 0, 4 },
-                    { 0, 3 }
-                },
-                ranges:
-                [
-                    (2575, 2584),
-                    (2595, 2604),
-                    (2749, 2753),
-                    (2797, 2801),
-                    (3162, 3166),
-                    (3169, 3173),
-                ]));
-
-        //       *
-        //    *  0  *
-        // *  l  ,  0  *
-        //    *  l  ,  r  *
-        //       * l r  *
-        //          *
-        // NAME: lllrr 3x2 (CHECKMARK)
-        fgStructures.AddRange(
-            CreateFromPattern(
-                lfgPattern: new[,]
-                {
-                    { 0, 0, 0 },
-                    { 1, 2, 3 }
-                },
-                rfgPattern: new[,]
-                {
-                    { 0, 0, 5 },
-                    { 0, 0, 4 }
-                },
-                ranges:
-                [
-                    (2585, 2594),
-                    (2739, 2743),
-                    (2787, 2791),
-                    (3134, 3138),
-                    (3141, 3145)
-                ]));
-
         //       *
         //    *  0  *
         // *  l  ,  0  *
@@ -652,36 +778,84 @@ public static class CONSTANTS
                     (2629, 2652),
                     (3028, 3039),
                     (3102, 3107),
-                    (3109, 3114),
+                    (3109, 3114)
                 ]));
 
-        //          *
-        //       *  0  *
-        //    *  0  ,  0  *
-        // *  l  ,  0  ,  r  *
-        //    *  l  ,  r  *
-        //       * l r *
-        //          *
-        // NAME: lllrrr 3x3 (VSHAPE+)
+        //             *
+        //          *  0  *
+        //       *  0  ,  0  *
+        //    *  0  ,  0  ,  0  *
+        // *  l  ,  0  ,  0  ,  r  *
+        //    *  l  ,  0  ,  r  *
+        //       *  l  ,  r  *
+        //          * l r *
+        //             *
+        // NAME: llllrrrr 4x4 (VSHAPE++)
         fgStructures.AddRange(
             CreateFromPattern(
                 lfgPattern: new[,]
                 {
-                    { 0, 0, 0 },
-                    { 0, 0, 0 },
-                    { 1, 2, 3 }
+                    { 0, 0, 0, 0 },
+                    { 0, 0, 0, 0 },
+                    { 0, 0, 0, 0 },
+                    { 1, 2, 3, 4 }
                 },
                 rfgPattern: new[,]
                 {
-                    { 0, 0, 6 },
-                    { 0, 0, 5 },
-                    { 0, 0, 4 }
+                    { 0, 0, 0, 8 },
+                    { 0, 0, 0, 7 },
+                    { 0, 0, 0, 6 },
+                    { 0, 0, 0, 5 }
                 },
-                ranges:
-                [
-                    (2653, 2670),
-                    (3041, 3046)
-                ]));
+                ranges: [(3048, 3055)]));
+
+        //             *
+        //          *  0  *
+        //       *  0  ,  0  *
+        //    *  0  ,  0  ,  0  *
+        // *  r  ,  0  ,  0  ,  0  *
+        //    *  r  ,  0  , l r *
+        //       *  r  ,  l  *
+        //          *  0  *
+        //             *
+        // NAME: rrr ll r 4x4
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0 },
+                    { 0, 0, 0, 4 },
+                    { 0, 0, 0, 3 },
+                    { 0, 0, 0, 0 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0 },
+                    { 0, 0, 0, 5 },
+                    { 0, 0, 0, 0 },
+                    { 6, 1, 2, 0 }
+                },
+                ranges: [(3716, 3721)]));
+
+        //    *
+        // *  l  *
+        //    *  l  *
+        //       *  l  *
+        //          *  l  *
+        //             *  l  *
+        //                *
+        // NAME: lllllr 5x1
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3, 4, 5 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0 }
+                },
+                ranges: [(3770, 3774)]));
 
         //    *
         // *  l  *
@@ -706,7 +880,9 @@ public static class CONSTANTS
                     (2725, 2730),
                     (2732, 2737),
                     (2759, 2764),
-                    (2766, 2771)
+                    (2766, 2771),
+                    (3291, 3302),
+                    (3753, 3758)
                 ]));
 
         //                *
@@ -745,33 +921,30 @@ public static class CONSTANTS
                     (2812, 2817)
                 ]));
 
-        //             *
-        //          *  0  *
-        //       *  0  ,  0  *
-        //    *  0  ,  0  ,  0  *
-        // *  l  ,  0  ,  0  ,  r  *
-        //    *  l  ,  0  ,  r  *
-        //       *  l  ,  r  *
-        //          * l r *
-        //             *
-        // NAME: llllrrrr 4x4 (VSHAPE++)
+        //    *
+        // *  l  *
+        //    *  l  *
+        //       *  l  *
+        //          *  l  *
+        //             *  l  *
+        //                *  l  *
+        //                   *
+        // NAME: llllll 6x1
         fgStructures.AddRange(
             CreateFromPattern(
                 lfgPattern: new[,]
                 {
-                    { 0, 0, 0, 0 },
-                    { 0, 0, 0, 0 },
-                    { 0, 0, 0, 0 },
-                    { 1, 2, 3, 4 }
+                    { 1, 2, 3, 4, 5, 6 }
                 },
                 rfgPattern: new[,]
                 {
-                    { 0, 0, 0, 8 },
-                    { 0, 0, 0, 7 },
-                    { 0, 0, 0, 6 },
-                    { 0, 0, 0, 5 }
+                    { 0, 0, 0, 0, 0, 0 }
                 },
-                ranges: [(3048, 3055)]));
+                ranges:
+                [
+                    (3764, 3769),
+                    (3775, 3780)
+                ]));
 
         //    *
         // *  l  *
@@ -858,7 +1031,8 @@ public static class CONSTANTS
                 ranges:
                 [
                     (3056, 3071),
-                    (3116, 3131)
+                    (3116, 3131),
+                    (3176, 3191)
                 ]));
 
         //                   *
@@ -894,16 +1068,15 @@ public static class CONSTANTS
                 ranges:
                 [
                     (3086, 3101),
-                    (3146, 3161)
+                    (3146, 3161),
+                    (3206, 3221)
                 ]));
-        
         #endregion
-        
-        #region Background Structures
 
+        #region Background Structures
         //BACKGROUND STRUCTURES
         var bgStructures = new List<StructureViewModel>();
-        
+
         bgStructures.AddRange(
             CreateFromPattern(
                 new[,]
@@ -914,7 +1087,7 @@ public static class CONSTANTS
                 ranges:
                 [
                     (269, 276),
-                    (305, 312),
+                    (305, 312)
                 ]));
 
         bgStructures.AddRange(
@@ -923,15 +1096,11 @@ public static class CONSTANTS
                 {
                     { 1, 2, 3 },
                     { 4, 5, 6 },
-                    { 7, 8, 9 },
+                    { 7, 8, 9 }
                 },
-                ranges:
-                [
-                    (313, 321),
-                ]));
-        
+                ranges: [(313, 321)]));
         #endregion
-        
+
         // (,),
 
         FOREGROUND_STRUCTURES =
@@ -942,32 +1111,48 @@ public static class CONSTANTS
                     var minTileId = int.MaxValue;
 
                     if (structure.HasBackgroundTiles)
-                        minTileId = Math.Min(
-                            minTileId,
-                            structure.RawBackgroundTiles
-                                     .Select(tile => tile.TileId)
-                                     .Where(tileId => tileId != 0)
-                                     .Min());
+                    {
+                        var tileIds = structure.RawBackgroundTiles
+                                               .Select(tile => tile.TileId)
+                                               .Where(tileId => tileId != 0)
+                                               .ToList();
+
+                        if (tileIds.Count > 0)
+                            minTileId = Math.Min(
+                                minTileId,
+                                tileIds.Min());
+                    }
 
                     if (structure.HasLeftForegroundTiles)
-                        minTileId = Math.Min(
-                            minTileId,
-                            structure.RawLeftForegroundTiles
-                                     .Select(tile => tile.TileId)
-                                     .Where(tileId => tileId != 0)
-                                     .Min());
+                    {
+                        var tileIds = structure.RawLeftForegroundTiles
+                                               .Select(tile => tile.TileId)
+                                               .Where(tileId => tileId != 0)
+                                               .ToList();
+
+                        if (tileIds.Count > 0)
+                            minTileId = Math.Min(
+                                minTileId,
+                                tileIds.Min());
+                    }
 
                     if (structure.HasRightForegroundTiles)
-                        minTileId = Math.Min(
-                            minTileId,
-                            structure.RawRightForegroundTiles
-                                     .Select(tile => tile.TileId)
-                                     .Where(tileId => tileId != 0)
-                                     .Min());
+                    {
+                        var tileIds = structure.RawRightForegroundTiles
+                                               .Select(tile => tile.TileId)
+                                               .Where(tileId => tileId != 0)
+                                               .ToList();
+
+                        if (tileIds.Count > 0)
+                            minTileId = Math.Min(
+                                minTileId,
+                                tileIds.Min());
+                    }
 
                     return minTileId;
                 })
         ];
+
         BACKGROUND_STRUCTURES =
         [
             ..bgStructures.OrderBy(
@@ -976,28 +1161,43 @@ public static class CONSTANTS
                     var minTileId = int.MaxValue;
 
                     if (structure.HasBackgroundTiles)
-                        minTileId = Math.Min(
-                            minTileId,
-                            structure.RawBackgroundTiles
-                                     .Select(tile => tile.TileId)
-                                     .Where(tileId => tileId != 0)
-                                     .Min());
+                    {
+                        var tileIds = structure.RawBackgroundTiles
+                                               .Select(tile => tile.TileId)
+                                               .Where(tileId => tileId != 0)
+                                               .ToList();
+
+                        if (tileIds.Count > 0)
+                            minTileId = Math.Min(
+                                minTileId,
+                                tileIds.Min());
+                    }
 
                     if (structure.HasLeftForegroundTiles)
-                        minTileId = Math.Min(
-                            minTileId,
-                            structure.RawLeftForegroundTiles
-                                     .Select(tile => tile.TileId)
-                                     .Where(tileId => tileId != 0)
-                                     .Min());
+                    {
+                        var tileIds = structure.RawLeftForegroundTiles
+                                               .Select(tile => tile.TileId)
+                                               .Where(tileId => tileId != 0)
+                                               .ToList();
+
+                        if (tileIds.Count > 0)
+                            minTileId = Math.Min(
+                                minTileId,
+                                tileIds.Min());
+                    }
 
                     if (structure.HasRightForegroundTiles)
-                        minTileId = Math.Min(
-                            minTileId,
-                            structure.RawRightForegroundTiles
-                                     .Select(tile => tile.TileId)
-                                     .Where(tileId => tileId != 0)
-                                     .Min());
+                    {
+                        var tileIds = structure.RawRightForegroundTiles
+                                               .Select(tile => tile.TileId)
+                                               .Where(tileId => tileId != 0)
+                                               .ToList();
+
+                        if (tileIds.Count > 0)
+                            minTileId = Math.Min(
+                                minTileId,
+                                tileIds.Min());
+                    }
 
                     return minTileId;
                 })
