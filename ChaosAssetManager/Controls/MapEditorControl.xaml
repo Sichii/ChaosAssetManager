@@ -16,7 +16,7 @@
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             KeyDown="MapEditorControl_OnKeyDown">
+             PreviewKeyDown="MapEditorControl_PreviewKeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -75,10 +75,12 @@
                       Click="LoadBtn_OnClick" />
             <MenuItem x:Name="SaveBtn"
                       Header="Save"
-                      Click="SaveBtn_OnClick" />
+                      Click="SaveBtn_OnClick"
+                      ToolTip="Saves the currently selected map (CTRL + S)"/>
             <MenuItem x:Name="SaveAsBtn"
                       Header="SaveAs"
-                      Click="SaveAsBtn_OnClick" />
+                      Click="SaveAsBtn_OnClick"
+                      ToolTip="Saves the currently selected map to a specified location (CTRL + SHIFT + S)"/>
             <MenuItem x:Name="ArchivePathBtn"
                       Header="Archive Path"
                       Click="ArchivePathBtn_OnClick" />
@@ -182,6 +184,7 @@
                            VerticalAlignment="Center"
                            Margin="0, 0, 5, 0" />
                 <ListBox SelectedIndex="0"
+                         x:Name="EditLayersLbx"
                          materialDesign:ListBoxAssist.IsToggle="False"
                          materialDesign:ListBoxAssist.CanUserToggleSelectedItem="False"
                          SelectionChanged="EditTileType_OnSelectionChanged">
@@ -190,7 +193,7 @@
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Edit background tiles">
+                                 ToolTip="Edit background tiles (CTRL + DOWN)">
                         <Path Width="40"
                               Height="30"
                               Fill="Green"
@@ -201,7 +204,7 @@
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Edit left foreground tiles">
+                                 ToolTip="Edit left foreground tiles (CTRL + LEFT)">
                         <Path Width="30"
                               Height="30"
                               Fill="Green"
@@ -212,7 +215,7 @@
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Edit right foreground tiles">
+                                 ToolTip="Edit right foreground tiles (CTRL + RIGHT)">
                         <Path Width="30"
                               Height="30"
                               Fill="Green"
@@ -223,7 +226,7 @@
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Edit foreground tiles">
+                                 ToolTip="Edit foreground tiles (CTRL + UP)">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -247,7 +250,7 @@
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Edit all tile layers">
+                                 ToolTip="Edit all tile layers (CTRL + A)">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -277,6 +280,7 @@
                            VerticalAlignment="Center"
                            Margin="0, 0, 5, 0" />
                 <ListBox SelectedIndex="0"
+                         x:Name="EditToolsLbx"
                          materialDesign:ListBoxAssist.IsToggle="True"
                          materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True"
                          SelectionChanged="EditingToolType_OnSelectionChanged">
@@ -285,31 +289,31 @@
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Draw tool (paste whatever tiles(s) are selected)">
+                                 ToolTip="Draw tool (paste whatever tiles(s) are selected) (CTRL + D)">
                         <materialDesign:PackIcon Kind="Pencil" />
-                    </ListBoxItem>
-                    <ListBoxItem x:Name="SelectToolBtn"
-                                 HorizontalContentAlignment="Center"
-                                 VerticalContentAlignment="Center"
-                                 Padding="0,5"
-                                 BorderThickness="1"
-                                 ToolTip="Select tool (click and drag to copy selected tiles)">
-                        <materialDesign:PackIcon Kind="Select" />
                     </ListBoxItem>
                     <ListBoxItem x:Name="SampleToolBtn"
                                  HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Sample tool (click a tile to find it in the tile browser)">
+                                 ToolTip="Find tool (click a tile to find it in the tile browser) (CTRL + F)">
                         <materialDesign:PackIcon Kind="Eyedropper" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="SelectToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Grab tool (click and drag to grab selected tiles) (CTRL + G)">
+                        <materialDesign:PackIcon Kind="Select" />
                     </ListBoxItem>
                     <ListBoxItem x:Name="EraseToolBtn"
                                  HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center"
                                  Padding="0,5"
                                  BorderThickness="1"
-                                 ToolTip="Erase tool (click and drag to erase selected tiles)">
+                                 ToolTip="Erase tool (click and drag to erase selected tiles) (CTRL + E)">
                         <materialDesign:PackIcon Kind="Eraser" />
                     </ListBoxItem>
                 </ListBox>
@@ -321,7 +325,7 @@
                           MinWidth="150"
                           ItemsSource="{Binding ViewModel.PossibleBounds}"
                           SelectedItem="{Binding ViewModel.CurrentMapViewer.Bounds, Converter={StaticResource RectangleMapBoundsConverter}}"
-                          ToolTip="Possible sizes for the map"/>
+                          ToolTip="Possible sizes for the map" />
             </ToolBar>
         </ToolBarTray>
 

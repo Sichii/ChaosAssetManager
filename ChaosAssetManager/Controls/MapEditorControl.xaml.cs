@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -38,7 +37,7 @@ public partial class MapEditorControl
 
         if (PathHelper.Instance.ArchivePathIsValid())
             PopulateTileViewModels();
-        
+
         _ = UpdateLoop();
     }
 
@@ -58,6 +57,24 @@ public partial class MapEditorControl
             MapEditorRenderUtil.Clear();
             PopulateTileViewModels();
         }
+    }
+
+    private void DataGrid_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not DataGrid grid)
+            return;
+
+        var scrollViewer = grid.FindVisualChild<ScrollViewer>();
+
+        if (scrollViewer == null)
+            return;
+
+        e.Handled = true;
+
+        if (e.Delta > 0)
+            scrollViewer.LineUp();
+        else
+            scrollViewer.LineDown();
     }
 
     private void DoRedo()
@@ -256,19 +273,77 @@ public partial class MapEditorControl
         ViewModel.Maps.Remove(viewer);
     }
 
-    private void MapEditorControl_OnKeyDown(object sender, KeyEventArgs e)
+    private void MapEditorControl_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
         switch (e.Key)
         {
             case Key.Z when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
                 DoUndo();
+                e.Handled = true;
 
                 break;
             case Key.Y when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
                 DoRedo();
+                e.Handled = true;
 
                 break;
+            case Key.Left when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditLayersLbx.SelectedIndex = 1;
+                e.Handled = true;
+
+                break;
+            case Key.Right when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditLayersLbx.SelectedIndex = 2;
+                e.Handled = true;
+
+                break;
+            case Key.Down when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditLayersLbx.SelectedIndex = 0;
+                e.Handled = true;
+
+                break;
+            case Key.Up when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditLayersLbx.SelectedIndex = 3;
+                e.Handled = true;
+
+                break;
+            case Key.A when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditLayersLbx.SelectedIndex = 4;
+                e.Handled = true;
+
+                break;
+            case Key.D when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditToolsLbx.SelectedIndex = 0;
+                e.Handled = true;
+
+                break;
+            case Key.F when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditToolsLbx.SelectedIndex = 1;
+                e.Handled = true;
+
+                break;
+            case Key.G when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditToolsLbx.SelectedIndex = 2;
+                e.Handled = true;
+
+                break;
+            case Key.E when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                EditToolsLbx.SelectedIndex = 3;
+                e.Handled = true;
+
+                break;
+            case Key.S when Keyboard.Modifiers.HasFlag(ModifierKeys.Control | ModifierKeys.Shift):
+                SaveAsBtn.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                e.Handled = true;
+
+                break;
+            case Key.S when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                SaveBtn.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                e.Handled = true;
+
+                break;
+
         }
     }
 
@@ -347,32 +422,33 @@ public partial class MapEditorControl
     {
         var iaDat = ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat");
         var seoDat = ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "seo.dat");
-        
+
         var tileset = Tileset.FromArchive("tilea.bmp", seoDat);
         var backgroundCount = tileset.Count;
 
         var foregroundTiles = iaDat.Where(entry => entry.EntryName.StartsWithI("stc"))
-                                   .Select(entry =>
-                                   {
-                                       entry.TryGetNumericIdentifier(out var identifier);
+                                   .Select(
+                                       entry =>
+                                       {
+                                           entry.TryGetNumericIdentifier(out var identifier);
 
-                                       return identifier;
-                                   })
-                                        .Select(
-                                            i => new TileViewModel
-                                            {
-                                                TileId = i,
-                                                LayerFlags = LayerFlags.Foreground
-                                            })
-                                        .Chunk(4)
-                                        .Select(
-                                            chunk => new TileRowViewModel
-                                            {
-                                                Tile1 = chunk.ElementAtOrDefault(0),
-                                                Tile2 = chunk.ElementAtOrDefault(1),
-                                                Tile3 = chunk.ElementAtOrDefault(2),
-                                                Tile4 = chunk.ElementAtOrDefault(3)
-                                            });
+                                           return identifier;
+                                       })
+                                   .Select(
+                                       i => new TileViewModel
+                                       {
+                                           TileId = i,
+                                           LayerFlags = LayerFlags.Foreground
+                                       })
+                                   .Chunk(4)
+                                   .Select(
+                                       chunk => new TileRowViewModel
+                                       {
+                                           Tile1 = chunk.ElementAtOrDefault(0),
+                                           Tile2 = chunk.ElementAtOrDefault(1),
+                                           Tile3 = chunk.ElementAtOrDefault(2),
+                                           Tile4 = chunk.ElementAtOrDefault(3)
+                                       });
 
         var backgroundtiles = Enumerable.Range(0, backgroundCount)
                                         .Select(
@@ -505,15 +581,15 @@ public partial class MapEditorControl
 
         foreach (var row in ViewModel.ForegroundTiles)
             row.Refresh();
-        
-        foreach(var structure in ViewModel.ForegroundStructures)
+
+        foreach (var structure in ViewModel.ForegroundStructures)
             structure.Refresh();
 
         foreach (var structure in ViewModel.BackgroundStructures)
             structure.Refresh();
-        
+
         ViewModel.TileGrab?.Refresh();
-        
+
         ViewModel.CurrentMapViewer.Refresh();
     }
 
@@ -638,23 +714,5 @@ public partial class MapEditorControl
             {
                 //ignored
             }
-    }
-
-    private void DataGrid_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
-    {
-        if (sender is not DataGrid grid)
-            return;
-        
-        var scrollViewer = grid.FindVisualChild<ScrollViewer>();
-
-        if (scrollViewer == null)
-            return;
-        
-        e.Handled = true;
-        
-        if (e.Delta > 0)
-            scrollViewer.LineUp();
-        else
-            scrollViewer.LineDown();
     }
 }
