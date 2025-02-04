@@ -496,7 +496,6 @@ public partial class MapViewerControl : IDisposable
                         point,
                         mouseCoordinates,
                         tglfgTiles,
-                        tgrfgTiles,
                         ref leftTileViewModel,
                         ref leftForegroundPaint,
                         leftButtonPressed);
@@ -506,7 +505,6 @@ public partial class MapViewerControl : IDisposable
                         point,
                         mouseCoordinates,
                         tgrfgTiles,
-                        tglfgTiles,
                         ref rightTileViewModel,
                         ref rightForegroundPaint,
                         leftButtonPressed);
@@ -713,7 +711,6 @@ public partial class MapViewerControl : IDisposable
                         point,
                         mouseCoordinates,
                         tglfgTiles,
-                        tgrfgTiles,
                         ref leftTileViewModel,
                         ref leftForegroundPaint,
                         leftButtonPressed);
@@ -723,7 +720,6 @@ public partial class MapViewerControl : IDisposable
                         point,
                         mouseCoordinates,
                         tgrfgTiles,
-                        tglfgTiles,
                         ref rightTileViewModel,
                         ref rightForegroundPaint,
                         leftButtonPressed);
@@ -766,9 +762,7 @@ public partial class MapViewerControl : IDisposable
         Point currentPoint,
         SKPoint mouseCoordinates,
         ListSegment2D<TileViewModel> leftForegroundTiles,
-        ListSegment2D<TileViewModel> rightForegroundTiles,
-
-    ref TileViewModel currentFrame,
+        ref TileViewModel currentFrame,
         ref SKPaint? paint,
         bool leftButtonPressed)
     {
@@ -799,9 +793,9 @@ public partial class MapViewerControl : IDisposable
                 {
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
-                    
+
                     // if the tilegrab is empty, dont overwrite what's already there
-                    if ((leftForegroundTiles[tileGrabX, tileGrabY].TileId == 0) && (rightForegroundTiles[tileGrabX, tileGrabY].TileId == 0))
+                    if (leftForegroundTiles[tileGrabX, tileGrabY].TileId == 0)
                         return;
 
                     currentFrame = leftForegroundTiles[tileGrabX, tileGrabY];
@@ -851,9 +845,7 @@ public partial class MapViewerControl : IDisposable
         Point currentPoint,
         SKPoint mouseCoordinates,
         ListSegment2D<TileViewModel> rightForegroundTiles,
-        ListSegment2D<TileViewModel> leftForegroundTiles,
-
-    ref TileViewModel currentFrame,
+        ref TileViewModel currentFrame,
         ref SKPaint? paint,
         bool leftButtonPressed)
     {
@@ -886,9 +878,9 @@ public partial class MapViewerControl : IDisposable
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
 
                     // if the tilegrab is empty, dont overwrite what's already there
-                    if ((leftForegroundTiles[tileGrabX, tileGrabY].TileId == 0) && (rightForegroundTiles[tileGrabX, tileGrabY].TileId == 0))
+                    if (rightForegroundTiles[tileGrabX, tileGrabY].TileId == 0)
                         return;
-                    
+
                     currentFrame = rightForegroundTiles[tileGrabX, tileGrabY];
                 }
 

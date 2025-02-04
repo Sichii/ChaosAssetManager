@@ -13,11 +13,14 @@ public static class CONSTANTS
 
     static CONSTANTS()
     {
-        //FOREGROUND STRUCTURES
-        var fgStructures = new List<StructureViewModel>();
-
         // @formatter:wrap_arguments_style chop_always
         // @formatter:keep_existing_initializer_arrangement true
+        
+        #region Foreground Structures
+        var fgStructures = new List<StructureViewModel>();
+
+        // (,),
+
 
         //    *
         // * l r *
@@ -893,6 +896,10 @@ public static class CONSTANTS
                     (3086, 3101),
                     (3146, 3161)
                 ]));
+        
+        #endregion
+        
+        #region Background Structures
 
         //BACKGROUND STRUCTURES
         var bgStructures = new List<StructureViewModel>();
@@ -922,6 +929,8 @@ public static class CONSTANTS
                 [
                     (313, 321),
                 ]));
+        
+        #endregion
         
         // (,),
 

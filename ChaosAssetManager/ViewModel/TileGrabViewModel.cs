@@ -112,7 +112,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabY = y - bounds.Top;
 
                     //if there are no foreground tiles for this tile, don't overwrite existing ones
-                    if (!overWrite && (tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
+                    if (!overWrite && (tglfgTiles[tileGrabX, tileGrabY].TileId == 0))
                         continue;
 
                     var tile = tglfgTiles[tileGrabX, tileGrabY]
@@ -136,7 +136,7 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
                     var tileGrabY = y - bounds.Top;
 
                     //if there are no foreground tiles for this tile, don't overwrite existing ones
-                    if (!overWrite && (tglfgTiles[tileGrabX, tileGrabY].TileId == 0) && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
+                    if (!overWrite && (tgrfgTiles[tileGrabX, tileGrabY].TileId == 0))
                         continue;
                     
                     var tile = tgrfgTiles[tileGrabX, tileGrabY]
