@@ -426,7 +426,7 @@ public partial class MapEditorControl
         var tileset = Tileset.FromArchive("tilea.bmp", seoDat);
         var backgroundCount = tileset.Count;
 
-        var foregroundTiles = iaDat.Where(entry => entry.EntryName.StartsWithI("stc"))
+        var foregroundTiles = iaDat.Where(entry => entry.EntryName.StartsWithI("stc") && entry.EntryName.EndsWithI(".hpf"))
                                    .Select(
                                        entry =>
                                        {

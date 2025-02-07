@@ -56,6 +56,26 @@ public static class MapEditorRenderUtil
         return Sotp[tileIndex]
             .HasFlag(TileFlags.Wall);
     }
+    
+    public static bool IsTransparent(int tileIndex)
+    {
+        if (tileIndex == 0)
+            return false;
+
+        tileIndex--;
+
+        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat")["sotp.dat"]
+                             .ToSpan()
+                             .ToArray()
+                             .Select(value => (TileFlags)value)
+                             .ToArray();
+
+        if (tileIndex >= Sotp.Length)
+            return false;
+
+        return Sotp[tileIndex]
+            .HasFlag(TileFlags.Transparent);
+    }
 
     public static Animation? RenderAnimatedBackground(int tileIndex, bool snowTileSet = false)
     {
@@ -174,8 +194,7 @@ public static class MapEditorRenderUtil
 
                                                      var palette = paletteLookup.GetPaletteForId(localIndex + 1);
 
-                                                     var transparent = (Sotp.Length > localIndex) && Sotp[localIndex]
-                                                         .HasFlag(TileFlags.Transparent);
+                                                     var transparent = IsTransparent(localIndex);
 
                                                      return Graphics.RenderImage(hpfFile, palette, transparency: transparent);
                                                  }))
