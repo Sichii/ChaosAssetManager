@@ -80,6 +80,38 @@ public partial class MapViewerControl : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    private void MapViewerControl_OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (SetViewerTransform())
+        {
+            Element.Matrix = ViewModel.ViewerTransform!.Value;
+            Element.Redraw();
+        }
+    }
+
+    private bool SetViewerTransform()
+    {
+        if (ViewModel.ViewerTransform is not null)
+            return true;
+
+        if ((Element.ActualWidth == 0) || (Element.ActualHeight == 0))
+            return false;
+
+        var dimensions = ImageHelper.CalculateRenderedImageSize(
+            ViewModel.BackgroundTilesView,
+            ViewModel.LeftForegroundTilesView,
+            ViewModel.RightForegroundTilesView);
+        
+        var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
+        
+        var x = (float)((Element.ActualWidth * dpiScale - dimensions.Width) / 2f);
+        var y = (float)((Element.ActualHeight * dpiScale - dimensions.Height) / 2f - FOREGROUND_PADDING / 1.33f);
+
+        ViewModel.ViewerTransform = SKMatrix.CreateTranslation(x, y);
+
+        return true;
+    }
+
     #region Utilities
     private SKPaint GetBrightenPaint()
     {
@@ -624,7 +656,7 @@ public partial class MapViewerControl : IDisposable
                 {
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
-                    
+
                     // if the tilegrab is empty, dont overwrite what's already there
                     if (backgroundTiles[tileGrabX, tileGrabY].TileId == 0)
                         return;
@@ -976,7 +1008,7 @@ public partial class MapViewerControl : IDisposable
         {
             oldViewModel.PropertyChanged -= ViewModelOnPropertyChanged;
             oldViewModel.Control = null;
-            oldViewModel.ViwerTransform = Element.Matrix;
+            oldViewModel.ViewerTransform = Element.Matrix;
         }
 
         if (DataContext is null)
@@ -995,8 +1027,13 @@ public partial class MapViewerControl : IDisposable
 
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
         ViewModel.Control = this;
-        Element.Matrix = ViewModel.ViwerTransform;
-        
+
+        if (SetViewerTransform())
+        {
+            Element.Matrix = ViewModel.ViewerTransform!.Value;
+            Element.Redraw();
+        }
+
         ViewModel.Refresh();
     }
     #endregion

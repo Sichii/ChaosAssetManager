@@ -13,6 +13,7 @@
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContextChanged="MapViewerControl_OnDataContextChanged"
+             Loaded="MapViewerControl_OnLoaded"
              Padding="0"
              Margin="0">
     <Grid>

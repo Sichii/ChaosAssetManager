@@ -76,11 +76,11 @@
             <MenuItem x:Name="SaveBtn"
                       Header="Save"
                       Click="SaveBtn_OnClick"
-                      ToolTip="Saves the currently selected map (CTRL + S)"/>
+                      ToolTip="Saves the currently selected map (CTRL + S)" />
             <MenuItem x:Name="SaveAsBtn"
                       Header="SaveAs"
                       Click="SaveAsBtn_OnClick"
-                      ToolTip="Saves the currently selected map to a specified location (CTRL + SHIFT + S)"/>
+                      ToolTip="Saves the currently selected map to a specified location (CTRL + SHIFT + S)" />
             <MenuItem x:Name="ArchivePathBtn"
                       Header="Archive Path"
                       Click="ArchivePathBtn_OnClick" />
@@ -338,7 +338,37 @@
                     Style="{StaticResource MaterialDesignTabControl}"
                     materialDesign:TabAssist.HasFilledTab="True"
                     ContentTemplate="{StaticResource MapViewerDataTemplate}"
+                    HorizontalContentAlignment="Stretch"
+                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
                     SelectionChanged="MapViewerTabControl_OnSelectionChanged">
+            <TabControl.Template>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Hidden">
+                            <TabPanel x:Name="HeaderPanel"
+                                      Panel.ZIndex="1"
+                                      KeyboardNavigation.TabIndex="1"
+                                      Margin="2,2,2,0"
+                                      IsItemsHost="true" />
+                        </ScrollViewer>
+                        <ContentPresenter x:Name="PART_SelectedContentHost"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                          Margin="{TemplateBinding Padding}"
+                                          ContentSource="SelectedContent"
+                                          Grid.Row="1" />
+                    </Grid>
+                </ControlTemplate>
+            </TabControl.Template>
+            <TabControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </TabControl.ItemsPanel>
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem"
                        BasedOn="{StaticResource MaterialDesignTabItem}">
@@ -352,6 +382,9 @@
 
                     <Setter Property="Header"
                             Value="{Binding FileName}" />
+
+                    <Setter Property="MinWidth"
+                            Value="150" />
 
                     <Setter Property="HeaderTemplate">
                         <Setter.Value>

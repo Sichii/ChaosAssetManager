@@ -78,7 +78,7 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         set => SetField(ref field, value);
     }
 
-    public SKMatrix ViwerTransform { get; set; } = SKMatrix.Identity;
+    public SKMatrix? ViewerTransform { get; set; }
 
     public static MapViewerViewModel Empty { get; } = new()
     {
@@ -172,6 +172,18 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         UndoableActions.AddNewest(action);
     }
 
+    public void Refresh()
+    {
+        foreach (var tile in RawBackgroundTiles)
+            tile.Refresh();
+
+        foreach (var tile in RawLeftForegroundTiles)
+            tile.Refresh();
+
+        foreach (var tile in RawRightForegroundTiles)
+            tile.Refresh();
+    }
+
     public void UndoAction()
     {
         if (UndoableActions.Count == 0)
@@ -180,17 +192,5 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         var action = UndoableActions.PopNewest();
         action.Undo(this);
         RedoableActions.AddNewest(action);
-    }
-
-    public void Refresh()
-    {
-        foreach (var tile in RawBackgroundTiles)
-            tile.Refresh();
-        
-        foreach (var tile in RawLeftForegroundTiles)
-            tile.Refresh();
-        
-        foreach (var tile in RawRightForegroundTiles)
-            tile.Refresh();
     }
 }
