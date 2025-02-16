@@ -81,10 +81,6 @@
                       Header="SaveAs"
                       Click="SaveAsBtn_OnClick"
                       ToolTip="Saves the currently selected map to a specified location (CTRL + SHIFT + S)" />
-            <MenuItem x:Name="ArchivePathBtn"
-                      Header="Archive Path"
-                      Click="ArchivePathBtn_OnClick" />
-
         </Menu>
 
         <ToolBarTray Grid.Row="1"
@@ -349,7 +345,20 @@
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Hidden">
+                                      VerticalScrollBarVisibility="Hidden"
+                                      materialDesign:ScrollViewerAssist.IgnorePadding="True"
+                                      materialDesign:ScrollViewerAssist.CornerRectangleVisibility="Hidden">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="ScrollBar"
+                                       BasedOn="{StaticResource MaterialDesignScrollBar}">
+                                    <Setter Property="materialDesign:ScrollBarAssist.ThumbCornerRadius"
+                                            Value="4" />
+                                    <Setter Property="materialDesign:ScrollBarAssist.ThumbHeight"
+                                            Value="8" />
+                                    <Setter Property="materialDesign:ScrollBarAssist.ButtonsVisibility"
+                                            Value="Hidden" />
+                                </Style>
+                            </ScrollViewer.Resources>
                             <TabPanel x:Name="HeaderPanel"
                                       Panel.ZIndex="1"
                                       KeyboardNavigation.TabIndex="1"

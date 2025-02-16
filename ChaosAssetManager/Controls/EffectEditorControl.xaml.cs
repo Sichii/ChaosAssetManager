@@ -9,13 +9,13 @@ using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public partial class EditorControl
+public partial class EffectEditorControl
 {
     private List<SKPoint>? CenterPoints;
     private ISavable? CurrentItem;
     private string? CurrentPath;
 
-    public EditorControl() => InitializeComponent();
+    public EffectEditorControl() => InitializeComponent();
 
     private void Load_OnClick(object sender, RoutedEventArgs e)
     {
@@ -50,7 +50,7 @@ public partial class EditorControl
                 var efaFile = EfaFile.FromFile(CurrentPath);
                 CurrentItem = efaFile;
 
-                ContentPanel.Content = new EfaEditor(efaFile);
+                ContentPanel.Content = new EfaEffectEditorControl(efaFile);
 
                 break;
             }
@@ -100,7 +100,7 @@ public partial class EditorControl
 
                 CurrentItem = epfFile;
                 CenterPoints = tblPoints;
-                ContentPanel.Content = new EpfEditor(epfFile, palette, tblPoints);
+                ContentPanel.Content = new EpfEffectEditorControl(epfFile, palette, tblPoints);
 
                 break;
             }

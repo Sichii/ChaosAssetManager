@@ -1,24 +1,26 @@
-﻿using DALib.Utility;
+﻿using SkiaSharp;
 
 namespace ChaosAssetManager.Model;
 
 public sealed class Animation : IDisposable
 {
     public int FrameIntervalMs { get; init; }
-    public SKImageCollection Frames { get; init; }
+    public List<SKImage> Frames { get; init; }
 
-    public Animation(SKImageCollection frames, int? frameIntervalMs = 100)
+    public Animation(IEnumerable<SKImage> frames, int? frameIntervalMs = 100)
     {
         frameIntervalMs ??= 100;
 
-        Frames = frames;
+        Frames = frames.ToList();
         FrameIntervalMs = frameIntervalMs.Value;
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Frames.Dispose();
+        foreach (var frame in Frames.ToList())
+            frame.Dispose();
+
         Frames.Clear();
     }
 }

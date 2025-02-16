@@ -31,6 +31,7 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
+        <Resource Include="Resources\chaosAssetManager.ico"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -62,7 +63,7 @@
             <XamlRuntime>Wpf</XamlRuntime>
             <SubType>Designer</SubType>
         </Page>
-        <Page Update="Controls\EfaEditor.xaml">
+        <Page Update="Controls\EfaEffectEditorControl.xaml">
             <Generator>MSBuild:Compile</Generator>
             <XamlRuntime>Wpf</XamlRuntime>
             <SubType>Designer</SubType>
@@ -74,7 +75,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Resources\" />
+        <Folder Include="Resources\"/>
     </ItemGroup>
 
 </Project>

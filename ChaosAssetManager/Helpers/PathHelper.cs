@@ -27,17 +27,17 @@ public sealed class PathHelper
             }
     }
 
-    public bool ArchivePathIsValid()
+    public static bool ArchivePathIsValid(string? str)
     {
-        if (string.IsNullOrEmpty(MapEditorArchivePath))
+        if (string.IsNullOrEmpty(str))
             return false;
 
-        var iaPath = Path.Combine(MapEditorArchivePath!, "ia.dat");
+        var iaPath = Path.Combine(str!, "ia.dat");
 
         if (!File.Exists(iaPath))
             return false;
 
-        var seoPath = Path.Combine(MapEditorArchivePath!, "seo.dat");
+        var seoPath = Path.Combine(str!, "seo.dat");
 
         if (!File.Exists(seoPath))
             return false;
@@ -64,7 +64,7 @@ public sealed class PathHelper
     public string? PaletteRemapperImageFromPath { get; set; }
     public string? PaletteRemapperPalFromPath { get; set; }
     public string? ArchiveExtractFromPath { get; set; }
-    public string? MapEditorArchivePath { get; set; }
+    public string? ArchivesPath { get; set; }
     #endregion
 
     #region To

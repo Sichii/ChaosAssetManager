@@ -23,6 +23,7 @@ namespace ChaosAssetManager.Controls;
 
 public partial class MapEditorControl
 {
+    private bool IsPopulated;
     public static MapEditorControl Instance { get; private set; } = null!;
 
     public MapEditorViewModel ViewModel { get; set; } = new();
@@ -35,28 +36,10 @@ public partial class MapEditorControl
 
         Instance = this;
 
-        if (PathHelper.Instance.ArchivePathIsValid())
+        if (PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
             PopulateTileViewModels();
 
         _ = UpdateLoop();
-    }
-
-    private void ArchivePathBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        using var openFolderDialog = new FolderBrowserDialog();
-        openFolderDialog.InitialDirectory = PathHelper.Instance.MapEditorArchivePath!;
-
-        if (openFolderDialog.ShowDialog() == DialogResult.OK)
-        {
-            PathHelper.Instance.MapEditorArchivePath = openFolderDialog.SelectedPath;
-            PathHelper.Instance.Save();
-        }
-
-        if (PathHelper.Instance.ArchivePathIsValid())
-        {
-            MapEditorRenderUtil.Clear();
-            PopulateTileViewModels();
-        }
     }
 
     private void DataGrid_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -158,7 +141,7 @@ public partial class MapEditorControl
 
     private void LoadBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(PathHelper.Instance.MapEditorArchivePath))
+        if (string.IsNullOrEmpty(PathHelper.Instance.ArchivesPath))
         {
             ShowMessage("Fix the archive path first");
 
@@ -343,7 +326,6 @@ public partial class MapEditorControl
                 e.Handled = true;
 
                 break;
-
         }
     }
 
@@ -357,7 +339,7 @@ public partial class MapEditorControl
 
     private void NewMapCreateBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(PathHelper.Instance.MapEditorArchivePath))
+        if (string.IsNullOrEmpty(PathHelper.Instance.ArchivesPath))
         {
             ShowMessage("Fix the archive path first");
 
@@ -420,8 +402,11 @@ public partial class MapEditorControl
 
     private void PopulateTileViewModels()
     {
-        var iaDat = ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat");
-        var seoDat = ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "seo.dat");
+        if (Interlocked.CompareExchange(ref IsPopulated, true, false))
+            return;
+
+        var iaDat = ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "ia.dat");
+        var seoDat = ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "seo.dat");
 
         var tileset = Tileset.FromArchive("tilea.bmp", seoDat);
         var backgroundCount = tileset.Count;
@@ -691,11 +676,30 @@ public partial class MapEditorControl
     {
         var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(1000d / 30d));
         var deltaTime = new DeltaTime();
+        var waitingForArchivesDirectory = true;
+
+        Snackbar.MessageQueue!.Enqueue(
+            "Set Archives Directory in options (Gear icon)",
+            null,
+            null,
+            null,
+            false,
+            true,
+            TimeSpan.FromHours(24));
 
         while (true)
             try
             {
                 await timer.WaitForNextTickAsync();
+
+                if (!string.IsNullOrEmpty(PathHelper.Instance.ArchivesPath)
+                    && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath)
+                    && waitingForArchivesDirectory)
+                {
+                    Snackbar.MessageQueue.Clear();
+                    waitingForArchivesDirectory = false;
+                    PopulateTileViewModels();
+                }
 
                 var delta = deltaTime.GetDelta;
 

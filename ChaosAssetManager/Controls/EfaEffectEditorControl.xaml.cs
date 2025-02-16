@@ -15,7 +15,7 @@ using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
+public sealed partial class EfaEffectEditorControl : IDisposable, INotifyPropertyChanged
 {
     private readonly SKImage BgImage;
     private readonly Lock Sync;
@@ -60,7 +60,7 @@ public sealed partial class EfaEditor : IDisposable, INotifyPropertyChanged
         }
     }
 
-    public EfaEditor(EfaFile efaFile)
+    public EfaEffectEditorControl(EfaFile efaFile)
     {
         Sync = new Lock();
 

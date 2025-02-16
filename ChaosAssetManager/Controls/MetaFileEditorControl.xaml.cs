@@ -12,11 +12,11 @@ using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class MetaFileEditor
+public sealed partial class MetaFileEditorControl
 {
     public MetaFileViewModel? MetaFileViewModel { get; set; }
 
-    public MetaFileEditor() => InitializeComponent();
+    public MetaFileEditorControl() => InitializeComponent();
 
     private void AddEntryBtn_OnClick(object sender, RoutedEventArgs e)
     {

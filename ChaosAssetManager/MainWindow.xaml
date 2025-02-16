@@ -12,9 +12,86 @@
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
-        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        StateChanged="MainWindow_OnStateChanged"
+        WindowStyle="None">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      CornerRadius="30"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="4"
+                      UseAeroCaptionButtons="True" />
+    </WindowChrome.WindowChrome>
+
     <Grid>
-        <TabControl HorizontalContentAlignment="Left"
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Left">
+            <Image Source="pack://application:,,,/ChaosAssetManager;component/Resources/chaosAssetManager.ico"
+                   Margin="5"
+                   HorizontalAlignment="Left"
+                   MaxWidth="25" />
+
+            <TextBlock VerticalAlignment="Center"
+                       Margin="5"
+                       Text="Chaos Asset Manager" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="{materialDesign:PackIcon Kind=Settings, Size=18}"
+                    x:Name="SettingsBtn"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    VerticalContentAlignment="Center"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="SettingsBtn_OnClick"
+                    ToolTip="Settings" />
+
+            <Button Content="{materialDesign:PackIcon Kind=WindowMinimize, Size=18}"
+                    x:Name="MinimizeBtn"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    VerticalContentAlignment="Center"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="MinimizeBtn_OnClick"
+                    ToolTip="Minimize" />
+
+            <Button Content="{materialDesign:PackIcon Kind=WindowMaximize, Size=18}"
+                    x:Name="MaximizeBtn"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    VerticalContentAlignment="Center"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="MaximizeBtn_OnClick"
+                    ToolTip="Maximize" />
+
+            <Button Content="{materialDesign:PackIcon Kind=WindowClose, Size=18}"
+                    x:Name="CloseBtn"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    VerticalContentAlignment="Center"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="CloseBtn_OnClick"
+                    ToolTip="Close" />
+        </StackPanel>
+
+        <TabControl Grid.Row="1"
+                    HorizontalContentAlignment="Left"
                     TabStripPlacement="Left"
                     Style="{StaticResource MaterialDesignTabControl}">
             <TabItem Header="Archives"
@@ -33,7 +110,13 @@
             <TabItem Header="Effect Editor"
                      Name="EffectEditorTab"
                      Style="{StaticResource MaterialDesignTabItem}">
-                <controls:EditorControl x:Name="EffectEditorView" />
+                <controls:EffectEditorControl x:Name="EffectEditorView" />
+            </TabItem>
+
+            <TabItem Header="Equipment Editor"
+                     Name="EquipmentEditorTab"
+                     Style="{StaticResource MaterialDesignTabItem}">
+                <controls:EffectEditorControl x:Name="EquipmentEditorView" />
             </TabItem>
 
             <TabItem Header="Palette Remapper"
@@ -45,7 +128,7 @@
             <TabItem Header="MetaFile Editor"
                      Name="MetaFileEditorTab"
                      Style="{StaticResource MaterialDesignTabItem}">
-                <controls:MetaFileEditor x:Name="MetaFileEditorView" />
+                <controls:MetaFileEditorControl x:Name="MetaFileEditorView" />
             </TabItem>
 
             <TabItem Header="Mpf Creator"
@@ -63,5 +146,13 @@
             </TabItem>
 
         </TabControl>
+
+        <Border Grid.Row="0"
+                Grid.Column="0"
+                Grid.RowSpan="99"
+                Grid.ColumnSpan="99"
+                CornerRadius="15"
+                BorderThickness="2"
+                BorderBrush="Silver" />
     </Grid>
 </Window>

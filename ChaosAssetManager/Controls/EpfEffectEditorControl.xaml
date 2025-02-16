@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ChaosAssetManager.Controls.EfaEditor"
+﻿<UserControl x:Class="ChaosAssetManager.Controls.EpfEffectEditorControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -26,8 +26,8 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto"
-                                          MinWidth="150" />
-                        <ColumnDefinition Width="25" />
+                                          MinWidth="125" />
+                        <ColumnDefinition Width="50" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -36,40 +36,24 @@
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Bottom"
                                Margin="5"
-                               Content="Blending Type:" />
+                               Content="PixelWidth:" />
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Top"
                                Margin="5"
-                               Content="Frame Interval (ms):" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="Center X:" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="Center Y:" />
+                               Content="PixekHeight:" />
                     </StackPanel>
                     <StackPanel Grid.Column="1"
                                 VerticalAlignment="Center">
-                        <ComboBox x:Name="BlendingTypeCmbx"
-                                  VerticalAlignment="Bottom"
-                                  Margin="5"
-                                  TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-                                  Text="{Binding EfaFileViewModel.BlendingType}" />
-                        <TextBox x:Name="FrameInvervalMsTbox"
+                        <TextBox x:Name="PixelWidthTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFileViewModel.FrameIntervalMs}" />
-                        <TextBox x:Name="AllCenterXTbox"
+                                 Text="{Binding EpfFileViewModel.PixelWidth}" />
+                        <TextBox x:Name="PixelHeightTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}" />
-                        <TextBox x:Name="AllCenterYTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}" />
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 Text="{Binding EpfFileViewModel.PixelHeight}" />
                     </StackPanel>
 
                     <Button Grid.Column="1"
@@ -120,49 +104,37 @@
                                Margin="5"
                                Content="Left:"
                                Foreground="Yellow"
-                               ToolTip="The 'Left' of the TopLeft most point within the ImageFrame to begin drawing pixels" />
+                               ToolTip="The lowest X coordinate of the frame" />
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Top"
                                Margin="5"
                                Content="Top:"
                                Foreground="Yellow"
-                               ToolTip="The 'Top' of the TopLeft most point within the ImageFrame to begin drawing pixels" />
+                               ToolTip="The lowest Y coordinate of the frame" />
                         <Label HorizontalAlignment="Right"
                                VerticalAlignment="Top"
                                Margin="5"
-                               Content="ImageCenterX:"
+                               Content="Right:"
+                               Foreground="Yellow"
+                               ToolTip="The highest X coordinate of the frame" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Top"
+                               Margin="5"
+                               Content="Bottom:"
+                               Foreground="Yellow"
+                               ToolTip="The highest Y coordinate of the frame" />
+                        <Label HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom"
+                               Margin="5"
+                               Content="CenterX:"
                                Foreground="Fuchsia"
                                ToolTip="The 'X' of the point within the ImageFrame to align with the center of the screen" />
                         <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
+                               VerticalAlignment="Bottom"
                                Margin="5"
-                               Content="ImageCenterY:"
+                               Content="CenterY:"
                                Foreground="Fuchsia"
                                ToolTip="The 'Y' of the point within the ImageFrame to align with the center of the screen" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="FramePixelWidth:"
-                               Foreground="Red"
-                               ToolTip="The maximum X value in which pixels are drawn." />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="FramePixelHeight:"
-                               Foreground="Red"
-                               ToolTip="The maximum Y value in which pixels are drawn." />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="ImagePixelWidth:"
-                               Foreground="Blue"
-                               ToolTip="The width of the image. The frame is drawn within this image, and the center must lie within the bounds of this image." />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="ImagePixelHeight:"
-                               Foreground="Blue"
-                               ToolTip="The height of the image. The frame is drawn within this image, and the center must lie within the bounds of this image." />
                     </StackPanel>
 
                     <StackPanel Grid.Column="2"
@@ -171,42 +143,32 @@
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.Left, FallbackValue=''}" />
+                                 Text="{Binding EpfFrameViewModel.Left, FallbackValue=''}" />
                         <TextBox x:Name="TopTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.Top, FallbackValue=''}" />
+                                 Text="{Binding EpfFrameViewModel.Top, FallbackValue=''}" />
+                        <TextBox x:Name="RightTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 Text="{Binding EpfFrameViewModel.Right, FallbackValue=''}" />
+                        <TextBox x:Name="BottomTbox"
+                                 VerticalAlignment="Top"
+                                 Margin="5"
+                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                 Text="{Binding EpfFrameViewModel.Bottom, FallbackValue=''}" />
                         <TextBox x:Name="CenterXTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.CenterX, FallbackValue=''}" />
+                                 Text="{Binding CurrentCenterX, FallbackValue=''}" />
                         <TextBox x:Name="CenterYTbox"
                                  VerticalAlignment="Top"
                                  Margin="5"
                                  Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.CenterY, FallbackValue=''}" />
-                        <TextBox x:Name="FramePixelWidthTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.FramePixelWidth, FallbackValue=''}" />
-                        <TextBox x:Name="FramePixelHeightTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.FramePixelHeight, FallbackValue=''}" />
-                        <TextBox x:Name="ImagePixelWidthTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.ImagePixelWidth, FallbackValue=''}" />
-                        <TextBox x:Name="ImagePixelHeightTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EfaFrameViewModel.ImagePixelHeight, FallbackValue=''}" />
+                                 Text="{Binding CurrentCenterY, FallbackValue=''}" />
                     </StackPanel>
 
                     <Button Grid.Column="2"

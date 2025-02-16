@@ -16,21 +16,15 @@ using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
+public sealed partial class EpfEffectEditorControl : IDisposable, INotifyPropertyChanged
 {
     private readonly SKImage BgImage;
     private readonly List<SKPoint> CenterPoints;
     private readonly Palette Palette;
     private readonly Lock Sync;
-    private EpfFileViewModel _epfFileViewModel = null!;
-    private EpfFrameViewModel? _epfFrameViewModel;
-    private int _selectedFrameIndex;
-
     private Animation? Animation;
     private int CurrentFrameIndex;
     private bool Disposed;
-
-    // ReSharper disable once NotAccessedField.Local
     private Task? ImageAnimationTask;
     private PeriodicTimer? ImageAnimationTimer;
 
@@ -38,7 +32,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
     {
         get
         {
-            if (_epfFrameViewModel is null)
+            if (EpfFrameViewModel is null)
                 return null;
 
             return (int)CenterPoints[SelectedFrameIndex].X;
@@ -46,7 +40,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
         set
         {
-            if (value is null || _epfFrameViewModel is null)
+            if (value is null || EpfFrameViewModel is null)
                 return;
 
             var currentCenterPoint = CenterPoints[SelectedFrameIndex];
@@ -61,7 +55,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
     {
         get
         {
-            if (_epfFrameViewModel is null)
+            if (EpfFrameViewModel is null)
                 return null;
 
             return (int)CenterPoints[SelectedFrameIndex].Y;
@@ -69,7 +63,7 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
         set
         {
-            if (value is null || _epfFrameViewModel is null)
+            if (value is null || EpfFrameViewModel is null)
                 return;
 
             var currentCenterPoint = CenterPoints[SelectedFrameIndex];
@@ -82,37 +76,37 @@ public sealed partial class EpfEditor : IDisposable, INotifyPropertyChanged
 
     public EpfFileViewModel EpfFileViewModel
     {
-        get => _epfFileViewModel;
-        set => SetField(ref _epfFileViewModel, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     public EpfFrameViewModel? EpfFrameViewModel
     {
-        get => _epfFrameViewModel;
+        get;
 
         set
         {
-            SetField(ref _epfFrameViewModel, value);
+            SetField(ref field, value);
 
-            if (_epfFrameViewModel is not null)
+            if (field is not null)
                 RenderFramePreview();
         }
     }
 
     public int SelectedFrameIndex
     {
-        get => _selectedFrameIndex;
+        get;
 
         set
         {
-            SetField(ref _selectedFrameIndex, value);
+            SetField(ref field, value);
             EpfFrameViewModel = value >= 0 ? EpfFileViewModel[value] : null;
             OnPropertyChanged(nameof(CurrentCenterX));
             OnPropertyChanged(nameof(CurrentCenterY));
         }
     }
 
-    public EpfEditor(EpfFile epfImage, Palette palette, List<SKPoint>? centerPoints = null)
+    public EpfEffectEditorControl(EpfFile epfImage, Palette palette, List<SKPoint>? centerPoints = null)
     {
         Sync = new Lock();
 

@@ -37,26 +37,6 @@ public static class MapEditorRenderUtil
         ArchiveCache.Clear();
     }
 
-    public static bool IsWall(int tileIndex)
-    {
-        if (tileIndex == 0)
-            return false;
-
-        tileIndex--;
-
-        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat")["sotp.dat"]
-                             .ToSpan()
-                             .ToArray()
-                             .Select(value => (TileFlags)value)
-                             .ToArray();
-
-        if (tileIndex >= Sotp.Length)
-            return false;
-
-        return Sotp[tileIndex]
-            .HasFlag(TileFlags.Wall);
-    }
-    
     public static bool IsTransparent(int tileIndex)
     {
         if (tileIndex == 0)
@@ -64,7 +44,7 @@ public static class MapEditorRenderUtil
 
         tileIndex--;
 
-        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.MapEditorArchivePath!, "ia.dat")["sotp.dat"]
+        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "ia.dat")["sotp.dat"]
                              .ToSpan()
                              .ToArray()
                              .Select(value => (TileFlags)value)
@@ -77,13 +57,33 @@ public static class MapEditorRenderUtil
             .HasFlag(TileFlags.Transparent);
     }
 
+    public static bool IsWall(int tileIndex)
+    {
+        if (tileIndex == 0)
+            return false;
+
+        tileIndex--;
+
+        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "ia.dat")["sotp.dat"]
+                             .ToSpan()
+                             .ToArray()
+                             .Select(value => (TileFlags)value)
+                             .ToArray();
+
+        if (tileIndex >= Sotp.Length)
+            return false;
+
+        return Sotp[tileIndex]
+            .HasFlag(TileFlags.Wall);
+    }
+
     public static Animation? RenderAnimatedBackground(int tileIndex, bool snowTileSet = false)
     {
         using var @lock = Sync.EnterScope();
 
         try
         {
-            var archiveRoot = PathHelper.Instance.MapEditorArchivePath!;
+            var archiveRoot = PathHelper.Instance.ArchivesPath!;
             var archive = ArchiveCache.GetArchive(archiveRoot, "seo.dat");
             var mapImageCache = snowTileSet ? SnowMapImageCache : MapImageCache;
 
@@ -147,7 +147,7 @@ public static class MapEditorRenderUtil
 
         try
         {
-            var archiveRoot = PathHelper.Instance.MapEditorArchivePath!;
+            var archiveRoot = PathHelper.Instance.ArchivesPath!;
             var archive = ArchiveCache.GetArchive(archiveRoot, "ia.dat");
             var prefix = snowTileSet ? "sts" : "stc";
             var mapImageCache = snowTileSet ? SnowMapImageCache : MapImageCache;
