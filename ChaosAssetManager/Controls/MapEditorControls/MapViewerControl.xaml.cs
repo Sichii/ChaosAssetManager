@@ -94,16 +94,16 @@ public partial class MapViewerControl : IDisposable
         if (ViewModel.ViewerTransform is not null)
             return true;
 
-        if ((Element.ActualWidth == 0) || (Element.ActualHeight == 0))
+        if ((ViewModel == MapViewerViewModel.Empty) || (Element.ActualWidth == 0) || (Element.ActualHeight == 0))
             return false;
 
         var dimensions = ImageHelper.CalculateRenderedImageSize(
             ViewModel.BackgroundTilesView,
             ViewModel.LeftForegroundTilesView,
             ViewModel.RightForegroundTilesView);
-        
+
         var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
-        
+
         var x = (float)((Element.ActualWidth * dpiScale - dimensions.Width) / 2f);
         var y = (float)((Element.ActualHeight * dpiScale - dimensions.Height) / 2f - FOREGROUND_PADDING / 1.33f);
 

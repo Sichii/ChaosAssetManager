@@ -64,19 +64,24 @@ public sealed partial class MetaFileEditorControl
             InitialDirectory = PathHelper.Instance.MetaFileEditorFromPath
         };
 
-        if (fileDialog.ShowDialog() == false)
+        if ((fileDialog.ShowDialog() == false) || (fileDialog.FileNames.Length > 1))
             return;
 
-        if (string.IsNullOrEmpty(fileDialog.FileName) || (fileDialog.FileNames.Length > 1))
+        LoadMetaData(fileDialog.FileName);
+    }
+
+    public void LoadMetaData(string path)
+    {
+        if (string.IsNullOrEmpty(path))
             return;
 
-        var metaFile = MetaFile.FromFile(fileDialog.FileName, true);
+        var metaFile = MetaFile.FromFile(path, true);
 
         MetaFileTreeView.ItemsSource = null;
         MetaFileViewModel = new MetaFileViewModel(metaFile);
         MetaFileTreeView.ItemsSource = MetaFileViewModel.Entries;
 
-        PathHelper.Instance.MetaFileEditorFromPath = Path.GetDirectoryName(fileDialog.FileName);
+        PathHelper.Instance.MetaFileEditorFromPath = Path.GetDirectoryName(path);
         PathHelper.Instance.Save();
     }
 

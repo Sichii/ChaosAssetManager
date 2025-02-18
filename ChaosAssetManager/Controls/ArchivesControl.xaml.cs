@@ -308,7 +308,7 @@ public sealed partial class ArchivesControl : IDisposable
             true,
             time ?? TimeSpan.FromMilliseconds(500));
 
-    private void LoadArchive(string path)
+    public void LoadArchive(string path)
     {
         Archive?.Dispose();
         RenderUtil.Reset();

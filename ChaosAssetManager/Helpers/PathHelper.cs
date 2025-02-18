@@ -8,13 +8,15 @@ namespace ChaosAssetManager.Helpers;
 public sealed class PathHelper
 {
     [JsonIgnore]
-    private const string PATH = $"{nameof(PathHelper)}.json";
+    private static readonly string PATH = $"{nameof(PathHelper)}.json";
 
     [JsonIgnore]
     public static PathHelper Instance { get; }
 
     static PathHelper()
     {
+        PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PATH);
+        
         if (!File.Exists(PATH))
             Instance = new PathHelper();
         else

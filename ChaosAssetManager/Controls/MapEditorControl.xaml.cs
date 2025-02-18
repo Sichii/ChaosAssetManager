@@ -155,92 +155,100 @@ public partial class MapEditorControl
         {
             var path = openFileDialog.FileName;
 
-            using var stream = File.Open(
-                path.WithExtension(".map"),
-                new FileStreamOptions
+            LoadMap(path);
+        }
+    }
+
+    public void LoadMap(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return;
+        
+        using var stream = File.Open(
+            path.WithExtension(".map"),
+            new FileStreamOptions
+            {
+                Access = FileAccess.Read,
+                Mode = FileMode.Open,
+                Options = FileOptions.SequentialScan,
+                Share = FileShare.ReadWrite
+            });
+
+        using var reader = new BinaryReader(stream, Encoding.Default, true);
+
+        var backgroundTiles = new List<TileViewModel>();
+        var leftForegroundTiles = new List<TileViewModel>();
+        var rightForegroundTiles = new List<TileViewModel>();
+
+        while (reader.BaseStream.Position < reader.BaseStream.Length)
+        {
+            var background = reader.ReadInt16();
+            var leftForeground = reader.ReadInt16();
+            var rightForeground = reader.ReadInt16();
+
+            if (background > 0)
+                --background;
+
+            backgroundTiles.Add(
+                new TileViewModel
                 {
-                    Access = FileAccess.Read,
-                    Mode = FileMode.Open,
-                    Options = FileOptions.SequentialScan,
-                    Share = FileShare.ReadWrite
+                    TileId = background,
+                    LayerFlags = LayerFlags.Background
                 });
 
-            using var reader = new BinaryReader(stream, Encoding.Default, true);
+            leftForegroundTiles.Add(
+                new TileViewModel
+                {
+                    TileId = leftForeground,
+                    LayerFlags = LayerFlags.LeftForeground
+                });
 
-            var backgroundTiles = new List<TileViewModel>();
-            var leftForegroundTiles = new List<TileViewModel>();
-            var rightForegroundTiles = new List<TileViewModel>();
-
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                var background = reader.ReadInt16();
-                var leftForeground = reader.ReadInt16();
-                var rightForeground = reader.ReadInt16();
-
-                if (background > 0)
-                    --background;
-
-                backgroundTiles.Add(
-                    new TileViewModel
-                    {
-                        TileId = background,
-                        LayerFlags = LayerFlags.Background
-                    });
-
-                leftForegroundTiles.Add(
-                    new TileViewModel
-                    {
-                        TileId = leftForeground,
-                        LayerFlags = LayerFlags.LeftForeground
-                    });
-
-                rightForegroundTiles.Add(
-                    new TileViewModel
-                    {
-                        TileId = rightForeground,
-                        LayerFlags = LayerFlags.RightForeground
-                    });
-            }
-
-            var possibleBounds = BoundsHelper.GetFactorPairs(backgroundTiles.Count);
-
-            foreach (var pair in possibleBounds.ToList())
-                if ((pair.Item1 > 255) || (pair.Item2 > 255))
-                    possibleBounds.Remove(pair);
-
-            possibleBounds = BoundsHelper.OrderByMostSquare(possibleBounds)
-                                         .ToList();
-
-            var mostSquareBounds = BoundsHelper.FindMostSquarePair(possibleBounds);
-
-            var bounds = new Rectangle(
-                0,
-                0,
-                mostSquareBounds.Item1,
-                mostSquareBounds.Item2);
-
-            var viewer = new MapViewerViewModel
-            {
-                PossibleBounds = possibleBounds.Select(
-                                                   pair => new MapBounds
-                                                   {
-                                                       Width = pair.Item1,
-                                                       Height = pair.Item2
-                                                   })
-                                               .ToList(),
-                Bounds = bounds,
-                FromPath = path
-            };
-
-            viewer.RawBackgroundTiles.AddRange(backgroundTiles);
-            viewer.RawLeftForegroundTiles.AddRange(leftForegroundTiles);
-            viewer.RawRightForegroundTiles.AddRange(rightForegroundTiles);
-
-            viewer.Initialize();
-            ViewModel.Maps.Add(viewer);
-
-            MapViewerTabControl.SelectedItem = viewer;
+            rightForegroundTiles.Add(
+                new TileViewModel
+                {
+                    TileId = rightForeground,
+                    LayerFlags = LayerFlags.RightForeground
+                });
         }
+
+        var possibleBounds = BoundsHelper.GetFactorPairs(backgroundTiles.Count);
+
+        foreach (var pair in possibleBounds.ToList())
+            if ((pair.Item1 > 255) || (pair.Item2 > 255))
+                possibleBounds.Remove(pair);
+
+        possibleBounds = BoundsHelper.OrderByMostSquare(possibleBounds)
+                                     .ToList();
+
+        var mostSquareBounds = BoundsHelper.FindMostSquarePair(possibleBounds);
+
+        var bounds = new Rectangle(
+            0,
+            0,
+            mostSquareBounds.Item1,
+            mostSquareBounds.Item2);
+
+        var viewer = new MapViewerViewModel
+        {
+            PossibleBounds = possibleBounds.Select(
+                                               pair => new MapBounds
+                                               {
+                                                   Width = pair.Item1,
+                                                   Height = pair.Item2
+                                               })
+                                           .ToList(),
+            Bounds = bounds,
+            FromPath = path
+        };
+
+        viewer.RawBackgroundTiles.AddRange(backgroundTiles);
+        viewer.RawLeftForegroundTiles.AddRange(leftForegroundTiles);
+        viewer.RawRightForegroundTiles.AddRange(rightForegroundTiles);
+
+        viewer.Initialize();
+        ViewModel.Maps.Add(viewer);
+
+        MapViewerTabControl.SelectedItem = viewer;
     }
 
     private void MapCloseBtn_OnClick(object sender, RoutedEventArgs e)

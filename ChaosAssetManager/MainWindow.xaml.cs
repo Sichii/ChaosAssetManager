@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
+using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls;
 using MaterialDesignThemes.Wpf;
 
@@ -60,5 +62,40 @@ public partial class MainWindow : Window
         };
 
         options.Show();
+    }
+
+    private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+    {
+        var args = Environment.GetCommandLineArgs()
+                              .Skip(1)
+                              .ToArray();
+
+        //if we're given a single arg and it's a dat file
+        //open it up in the archive viewer
+        if (args.Length == 1)
+        {
+            var extension = Path.GetExtension(args[0]);
+
+            if (extension.EqualsI(".dat"))
+            {
+                MainTabControl.SelectedItem = ArchivesTab;
+                ArchivesView.LoadArchive(args[0]);
+            } else if (extension.EqualsI(".map"))
+            {
+                MainTabControl.SelectedItem = MapEditorTab;
+                MapEditorView.LoadMap(args[0]);
+            } else if (string.IsNullOrEmpty(extension))
+            {
+                MainTabControl.SelectedItem = MetaFileEditorTab;
+                MetaFileEditorView.LoadMetaData(args[0]);
+            }
+        } else if (args.All(
+                       arg => Path.GetExtension(arg)
+                                  .EqualsI(".map")))
+            foreach (var arg in args)
+            {
+                MainTabControl.SelectedItem = MapEditorTab;
+                MapEditorView.LoadMap(arg);
+            }
     }
 }

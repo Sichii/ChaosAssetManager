@@ -14,6 +14,7 @@
         FontFamily="{materialDesign:MaterialDesignFont}"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         StateChanged="MainWindow_OnStateChanged"
+        Loaded="MainWindow_OnLoaded"
         WindowStyle="None">
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="32"
@@ -91,6 +92,7 @@
         </StackPanel>
 
         <TabControl Grid.Row="1"
+                    x:Name="MainTabControl"
                     HorizontalContentAlignment="Left"
                     TabStripPlacement="Left"
                     Style="{StaticResource MaterialDesignTabControl}">
