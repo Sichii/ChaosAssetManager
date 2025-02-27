@@ -16,7 +16,7 @@ public sealed class PathHelper
     static PathHelper()
     {
         PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PATH);
-        
+
         if (!File.Exists(PATH))
             Instance = new PathHelper();
         else
@@ -46,6 +46,8 @@ public sealed class PathHelper
 
         return true;
     }
+
+    public bool ArchivePathIsValid() => ArchivePathIsValid(ArchivesPath);
 
     public void Save()
         => JsonSerializerEx.Serialize(

@@ -15,6 +15,7 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         WindowStartupLocation="CenterOwner"
         WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
         Title="Options">
     <Grid Margin="10">
         <Grid.ColumnDefinitions>

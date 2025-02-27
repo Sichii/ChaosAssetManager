@@ -20,7 +20,7 @@
         <WindowChrome CaptionHeight="32"
                       CornerRadius="30"
                       GlassFrameThickness="0"
-                      ResizeBorderThickness="4"
+                      ResizeBorderThickness="8"
                       UseAeroCaptionButtons="True" />
     </WindowChrome.WindowChrome>
 

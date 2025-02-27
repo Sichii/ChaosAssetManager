@@ -41,17 +41,33 @@
                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                 Click="SelectFromPaletteBtn_OnClick" />
 
-        <Button x:Name="SelectToPaletteBtn"
-                Grid.Row="2"
-                Grid.Column="0"
-                HorizontalAlignment="Center"
-                Content="Select ToPalette"
-                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                Click="SelectToPaletteBtn_OnClick" />
+        <StackPanel Grid.Column="0"
+                    Grid.Row="2"
+                    Orientation="Horizontal">
+            <Button x:Name="SelectToPaletteBtn"
+                    HorizontalAlignment="Center"
+                    Content="Select ToPalette"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                    Click="SelectToPaletteBtn_OnClick" />
+
+            <Label Content="OR"
+                   VerticalAlignment="Center"
+                   Padding="20"/>
+            
+            <StackPanel VerticalAlignment="Center">
+                <Label Content="Rearrange dye colors"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+                <ToggleButton x:Name="RearrangeDyeColorsToggle"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" 
+                              Checked="RearrangeDyeColorsToggle_OnChecked"/>
+            </StackPanel>
+        </StackPanel>
 
         <Button x:Name="RemapImagePaletteBtn"
                 Grid.Row="1"
-                Grid.Column="1"
+                Grid.Column="2"
                 HorizontalAlignment="Center"
                 Content="Remap Image Palette"
                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"

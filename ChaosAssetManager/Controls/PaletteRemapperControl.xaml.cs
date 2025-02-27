@@ -2,10 +2,12 @@
 using System.Windows;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Helpers;
+using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Extensions;
 using DALib.Utility;
 using Microsoft.Win32;
+using Graphics = DALib.Drawing.Graphics;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
@@ -47,7 +49,25 @@ public partial class PaletteRemapperControl
 
         var output = new List<(string Path, EpfFile File)>();
         var fromPalette = Palette.FromFile(FromPalettePath);
-        var toPalette = Palette.FromFile(ToPalettePath);
+        Palette toPalette;
+
+        if (RearrangeDyeColorsToggle.IsChecked ?? false)
+        {
+            if (!PathHelper.Instance.ArchivePathIsValid())
+            {
+                Snackbar.MessageQueue!.Enqueue("Please set the archives path in the settings");
+
+                return;
+            }
+
+            var legendDat = ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "legend.dat");
+            var entry = legendDat["color0.tbl"];
+            var colorTable = ColorTable.FromEntry(entry);
+            var defaultColorEntry = colorTable[0];
+            
+            toPalette = ArrangeColorsForDyeableType(fromPalette, defaultColorEntry);
+        } else
+            toPalette = Palette.FromFile(ToPalettePath);
 
         foreach (var file in SelectedFiles)
         {
@@ -73,6 +93,37 @@ public partial class PaletteRemapperControl
         PathHelper.Instance.Save();
 
         Snackbar.MessageQueue!.Enqueue("Palette remapping complete");
+    }
+
+    public static Palette ArrangeColorsForDyeableType(
+        Palette palette,
+        ColorTableEntry? defaultDyeColors = null)
+    {
+        defaultDyeColors ??= ColorTableEntry.Empty;
+
+        var paletteWithoutDyeColors = palette.Distinct()
+                                             .ToList();
+
+        paletteWithoutDyeColors = paletteWithoutDyeColors.Except(defaultDyeColors.Colors)
+                                                         .ToList();
+
+        if ((paletteWithoutDyeColors.Count + 6) > CONSTANTS.COLORS_PER_PALETTE)
+            throw new InvalidOperationException("Palette does not have enough space for dye colors.");
+
+        //take colors up to the dye index start
+        var newPalette = new Palette(paletteWithoutDyeColors.Take(CONSTANTS.PALETTE_DYE_INDEX_START));
+
+        //copy dye colors into dyeable indexes
+        for (var i = 0; i < defaultDyeColors.Colors.Length; i++)
+            newPalette[CONSTANTS.PALETTE_DYE_INDEX_START + i] = defaultDyeColors.Colors[i];
+
+        //take remaining colors and insert after dye index end
+        var index = CONSTANTS.PALETTE_DYE_INDEX_START + 6;
+
+        foreach (var color in paletteWithoutDyeColors.Skip(CONSTANTS.PALETTE_DYE_INDEX_START))
+            newPalette[index++] = color;
+
+        return newPalette;
     }
 
     private void SelectFromPaletteBtn_OnClick(object sender, RoutedEventArgs e)
@@ -155,5 +206,9 @@ public partial class PaletteRemapperControl
 
         PathHelper.Instance.PaletteRemapperPalToPath = Path.GetDirectoryName(ToPalettePath);
         PathHelper.Instance.Save();
+
+        RearrangeDyeColorsToggle.IsChecked = false;
     }
+
+    private void RearrangeDyeColorsToggle_OnChecked(object sender, RoutedEventArgs e) => ToPalettePath = null;
 }
