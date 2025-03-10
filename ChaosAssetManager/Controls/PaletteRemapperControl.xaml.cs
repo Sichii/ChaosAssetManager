@@ -22,7 +22,9 @@ public partial class PaletteRemapperControl
 
     private void RemapImagePaletteBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        if (SelectedFiles.IsNullOrEmpty() || string.IsNullOrEmpty(FromPalettePath) || string.IsNullOrEmpty(ToPalettePath))
+        if (SelectedFiles.IsNullOrEmpty()
+            || string.IsNullOrEmpty(FromPalettePath)
+            || (string.IsNullOrEmpty(ToPalettePath) && !RearrangeDyeColorsToggle.IsChecked!.Value))
         {
             Snackbar.MessageQueue!.Enqueue("Please select all required files");
 
