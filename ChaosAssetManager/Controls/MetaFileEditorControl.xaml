@@ -50,7 +50,7 @@
                                 Content="{materialDesign:PackIcon Kind=PlusBold}"
                                 MaxWidth="20"
                                 MaxHeight="20"
-                                Margin="5, 10, 5, 0"
+                                Margin="5, 5, 5, 0"
                                 Click="AddEntryBtn_OnClick"
                                 Style="{StaticResource MaterialDesignFloatingActionMiniSecondaryButton}" />
 
@@ -58,7 +58,7 @@
                                 Content="{materialDesign:PackIcon Kind=RemoveBold}"
                                 MaxWidth="20"
                                 MaxHeight="20"
-                                Margin="5, 10, 5, 0"
+                                Margin="5, 5, 5, 0"
                                 Click="RemoveEntryBtn_OnClick"
                                 Style="{StaticResource MaterialDesignFloatingActionMiniSecondaryButton}" />
                     </StackPanel>
@@ -75,7 +75,7 @@
                                 Content="{materialDesign:PackIcon Kind=PlusBold}"
                                 MaxWidth="20"
                                 MaxHeight="20"
-                                Margin="5, 10, 5, 0"
+                                Margin="5, 5, 5, 0"
                                 Click="AddPropertyBtn_OnClick"
                                 Style="{StaticResource MaterialDesignFloatingActionMiniSecondaryButton}" />
 
@@ -83,7 +83,7 @@
                                 Content="{materialDesign:PackIcon Kind=RemoveBold}"
                                 MaxWidth="20"
                                 MaxHeight="20"
-                                Margin="5, 10, 5, 0"
+                                Margin="5, 5, 5, 0"
                                 Click="RemovePropertyBtn_OnClick"
                                 Style="{StaticResource MaterialDesignFloatingActionMiniSecondaryButton}" />
                     </StackPanel>

@@ -7,11 +7,15 @@ using ChaosAssetManager.Controls.PreviewControls;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
+using MaterialDesignThemes.Wpf;
+using Application = System.Windows.Application;
+using Button = System.Windows.Controls.Button;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
+using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
@@ -346,9 +350,77 @@ public sealed partial class ArchivesControl : IDisposable
     private void SetViewSource()
     {
         if (Archive is not null)
+        {
+            Archive.Sort();
+
             ArchivesView.ItemsSource = new CollectionView(
-                Archive.GroupBy(entry => Path.GetExtension(entry.EntryName))
+                Archive.OrderBy(entry => Path.GetExtension(entry.EntryName), StringComparer.OrdinalIgnoreCase)
+                       .GroupBy(entry => Path.GetExtension(entry.EntryName))
                        .Select(group => new EntryGrouping(group.Key, group)));
+        }
     }
     #endregion
+
+    private void CloseEntryBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        var btn = (Button)sender;
+        var context = btn.DataContext;
+
+        if(Archive is null || context is not DataArchiveEntry entry)
+            return;
+
+        var result = MessageBox.Show(
+            Application.Current.MainWindow!,
+            $"Are you sure you want to remove the entry \"{entry.EntryName}\"?",
+            "Are you sure?",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Exclamation);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            var currentIndex = ArchivesView.SelectedIndex;
+
+            //save expanded nodes
+            var currentlyExpandedGroupings = ArchivesView.Items
+                                                         .OfType<EntryGrouping>()
+                                                         .Where(
+                                                             grouping =>
+                                                             {
+                                                                 if (ArchivesView.ItemContainerGenerator.ContainerFromItem(grouping)
+                                                                     is TreeListViewItem { IsExpanded: true })
+                                                                     return true;
+
+                                                                 return false;
+                                                             })
+                                                         .ToList();
+
+            Archive.Remove(entry);
+
+            if (currentIndex >= Archive.Count)
+                currentIndex--;
+
+            SetViewSource();
+
+            var newExpandedGroupings = ArchivesView.Items
+                                                   .OfType<EntryGrouping>()
+                                                   .Where(group => currentlyExpandedGroupings.Contains(group))
+                                                   .ToList();
+
+            //force UI redraw
+            ArchivesView.UpdateLayout();
+            
+            //deferred action to allow UI thread to redraw before attempting to find containers generated during redraw
+            Dispatcher.BeginInvoke(
+                () =>
+                {
+                    //re-expand nodes
+                    foreach (var grouping in newExpandedGroupings)
+                        if (ArchivesView.ItemContainerGenerator.ContainerFromItem(grouping) is TreeListViewItem tvi)
+                            tvi.IsExpanded = true;
+
+                    //restore selection
+                    ArchivesView.SelectedIndex = currentIndex;
+                });
+        }
+    }
 }

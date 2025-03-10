@@ -676,11 +676,11 @@
             <Grid>
                 <TextBlock Text="{Binding ViewModel.MouseHoverTileCoordinates, StringFormat='Tile Coords: {0}'}"
                            HorizontalAlignment="Left"
-                           Margin="5, 0" />
+                           Margin="20, 0" />
 
                 <TextBlock Text="{Binding ViewModel.SelectedTileIndex, StringFormat='Tile Id: {0}'}"
                            HorizontalAlignment="Right"
-                           Margin="5, 0"
+                           Margin="20, 0"
                            ToolTip="This is the actual tile id. When background tiles are saved to a map file, they are +1'd" />
             </Grid>
         </materialDesign:ColorZone>

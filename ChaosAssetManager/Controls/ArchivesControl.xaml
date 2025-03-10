@@ -70,7 +70,8 @@
                                          x:Name="ArchivesView"
                                          materialDesign:TreeViewAssist.ShowSelection="True"
                                          SelectionMode="Extended"
-                                         SelectionChanged="ArchivesView_OnSelectionChanged">
+                                         SelectionChanged="ArchivesView_OnSelectionChanged"
+                                         HorizontalContentAlignment="Stretch">
                 <materialDesign:TreeListView.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type model:EntryGrouping}"
                                               ItemsSource="{Binding Entries, Mode=OneTime}">
@@ -78,7 +79,25 @@
                     </HierarchicalDataTemplate>
 
                     <DataTemplate DataType="{x:Type data:DataArchiveEntry}">
-                        <TextBlock Text="{Binding EntryName, Mode=OneTime}" />
+                        <Grid HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding EntryName, Mode=OneTime}"
+                                       HorizontalAlignment="Stretch" />
+
+                            <Button Grid.Column="1"
+                                    Content="{materialDesign:PackIcon Kind=Close, Size=12}"
+                                    HorizontalAlignment="Right"
+                                    MaxWidth="20"
+                                    MaxHeight="20"
+                                    Margin="5, 0, 5, 0"
+                                    Style="{StaticResource MaterialDesignFloatingActionMiniSecondaryButton}"
+                                    Click="CloseEntryBtn_OnClick"/>
+                        </Grid>
                     </DataTemplate>
                 </materialDesign:TreeListView.Resources>
             </materialDesign:TreeListView>
