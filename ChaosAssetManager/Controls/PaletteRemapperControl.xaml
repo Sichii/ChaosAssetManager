@@ -43,7 +43,8 @@
 
         <StackPanel Grid.Column="0"
                     Grid.Row="2"
-                    Orientation="Horizontal">
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center">
             <Button x:Name="SelectToPaletteBtn"
                     HorizontalAlignment="Center"
                     Content="Select ToPalette"
