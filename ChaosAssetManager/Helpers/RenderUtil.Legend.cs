@@ -75,7 +75,7 @@ public static partial class RenderUtil
         try
         {
             var epfFile = EpfFile.FromEntry(entry);
-            var palette = LegendPalette ??= Palette.FromEntry(archive["staff.pal"]);
+            var palette = LegendPalette ??= Palette.FromEntry(archive["legend.pal"]);
             var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
             var frames = new SKImageCollection(transformer);
 

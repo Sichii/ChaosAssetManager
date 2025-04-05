@@ -21,6 +21,18 @@ public sealed class ArchiveCache
     {
         archiveName = archiveName.WithExtension(".dat");
 
-        return Cache.GetOrAdd(archiveName, static (fileName, rootDir) => DataArchive.FromFile(Path.Combine(rootDir, fileName)), root);
+        return Cache.GetOrAdd(
+            archiveName,
+            static (fileName, rootDir) =>
+            {
+                try
+                {
+                    return DataArchive.FromFile(Path.Combine(rootDir, fileName));
+                } catch
+                {
+                    return DataArchive.FromFile(Path.Combine(rootDir, fileName), newformat: true);
+                }
+            },
+            root);
     }
 }

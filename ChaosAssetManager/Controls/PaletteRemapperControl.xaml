@@ -19,6 +19,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -29,22 +30,40 @@
                 Grid.Row="0"
                 Grid.Column="0"
                 HorizontalAlignment="Center"
+                VerticalAlignment="Center"
                 Content="Select images"
                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                 Click="SelectImagesBtn_OnClick" />
 
-        <Button x:Name="SelectFromPaletteBtn"
-                Grid.Row="1"
-                Grid.Column="0"
-                HorizontalAlignment="Center"
-                Content="Select FromPalette"
-                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                Click="SelectFromPaletteBtn_OnClick" />
+        <StackPanel Grid.Row="1"
+                    Grid.Column="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <Label Content="single palette with any name"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Padding="0" />
+            <Label Content="OR"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Padding="0" />
+            <Label Content="multiple palettes that match image names"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Padding="0" />
+
+            <Button x:Name="SelectPalettesBtn"
+                    HorizontalAlignment="Center"
+                    Content="Select Palettes"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                    Click="SelectPalettesBtn_OnClick" />
+        </StackPanel>
 
         <StackPanel Grid.Column="0"
                     Grid.Row="2"
                     Orientation="Horizontal"
-                    HorizontalAlignment="Center">
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
             <Button x:Name="SelectToPaletteBtn"
                     HorizontalAlignment="Center"
                     Content="Select ToPalette"
@@ -53,23 +72,38 @@
 
             <Label Content="OR"
                    VerticalAlignment="Center"
-                   Padding="20"/>
-            
+                   Padding="20" />
+
             <StackPanel VerticalAlignment="Center">
-                <Label Content="Rearrange dye colors"
+                <Label Content="Merge selected palettes"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center" />
-                <ToggleButton x:Name="RearrangeDyeColorsToggle"
+                <ToggleButton x:Name="MergePalettesToggle"
                               HorizontalAlignment="Center"
-                              VerticalAlignment="Center" 
-                              Checked="RearrangeDyeColorsToggle_OnChecked"/>
+                              VerticalAlignment="Center"
+                              Checked="MergePalettesToggle_OnChecked" />
             </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3"
+                    Grid.Column="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <Label Content="Rearrange dye colors"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+            <ToggleButton x:Name="RearrangeDyeColorsToggle"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Checked="RearrangeDyeColorsToggle_OnChecked" />
         </StackPanel>
 
         <Button x:Name="RemapImagePaletteBtn"
                 Grid.Row="1"
                 Grid.Column="2"
+                Grid.RowSpan="2"
                 HorizontalAlignment="Center"
+                VerticalAlignment="Center"
                 Content="Remap Image Palette"
                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
                 Click="RemapImagePaletteBtn_OnClick" />

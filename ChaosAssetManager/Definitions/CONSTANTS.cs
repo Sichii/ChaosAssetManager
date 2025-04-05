@@ -45,7 +45,8 @@ public static class CONSTANTS
                     //10k+
                     (10269, 10269),
                     (10310, 10310),
-                    (10335, 10335)
+                    (10335, 10335),
+                    (10619, 10619)
                 ]));
 
         //    *
@@ -72,7 +73,8 @@ public static class CONSTANTS
                     //10k+
                     (10269, 10269),
                     (10310, 10310),
-                    (10335, 10335)
+                    (10335, 10335),
+                    (10619, 10619)
                 ]));
 
         //    *
@@ -153,7 +155,9 @@ public static class CONSTANTS
                     (10270, 10309),
                     (10311, 10334),
                     (10336, 10399),
-                    (10421, 10482)
+                    (10421, 10482),
+                    (10605, 10618),
+                    (10670, 10687)
                 ]));
 
         //    *
@@ -299,7 +303,8 @@ public static class CONSTANTS
                     (10140, 10142),
                     (10400, 10405),
                     (10412, 10414),
-                    (10418, 10420)
+                    (10418, 10420),
+                    (10568, 10570)
                 ]));
 
         //       *
@@ -444,7 +449,9 @@ public static class CONSTANTS
                     //10k+
                     (10143, 10145),
                     (10406, 10411),
-                    (10415, 10417)
+                    (10415, 10417),
+                    (10553, 10558),
+                    (10571, 10573)
                 ]));
 
         //      *
@@ -472,7 +479,7 @@ public static class CONSTANTS
         // * l r , l r *
         //    *  0  *
         //       *
-        // NAME: PURE VERTICAL
+        // NAME: PURE HORIZONTAL
         fgStructures.AddRange(
             CreateFromPattern(
                 lfgPattern: new[,]
@@ -485,7 +492,11 @@ public static class CONSTANTS
                     { 0, 4 },
                     { 2, 0 }
                 },
-                ranges: [(5346, 5349)]));
+                ranges:
+                [
+                    (5346, 5349),
+                    (10662, 10669)
+                ]));
 
         //      *
         //   *  0  *
@@ -527,7 +538,11 @@ public static class CONSTANTS
                     (5058, 5065),
                     (5237, 5240),
                     (5247, 5254),
-                    (5303, 5306)
+                    (5303, 5306),
+
+                    //10k+
+                    (10545, 10548),
+                    (10559, 10562)
                 ]));
 
         //    *
@@ -755,7 +770,10 @@ public static class CONSTANTS
                     (4219, 4228),
                     (4280, 4284),
                     (4290, 4294),
-                    (5282, 5291)
+                    (5282, 5291),
+
+                    //10k+
+                    (10540, 10544)
                 ]));
 
         //          *
@@ -792,8 +810,34 @@ public static class CONSTANTS
                     (4285, 4289),
                     (4295, 4299),
                     (5277, 5281),
-                    (5292, 5296)
+                    (5292, 5296),
+
+                    //10k+
+                    (10563, 10567)
                 ]));
+
+        //          *
+        //       *  0  *
+        //    * l r ,  l  *
+        // *  l  ,  0  *
+        //    *  0  *
+        //       *
+        // NAME: l^lrr 2x3
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 4 },
+                    { 2, 0 },
+                    { 1, 0 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0 },
+                    { 3, 0 },
+                    { 0, 0 }
+                },
+                ranges: [(10549, 10552)]));
 
         //          *
         //       *  0  *
@@ -828,7 +872,10 @@ public static class CONSTANTS
                     (5297, 5302),
 
                     //10k+
-                    (10231, 10236)
+                    (10231, 10236),
+                    (10483, 10488),
+                    (10496, 10501),
+                    (10574, 10579)
                 ]));
 
         //    *
@@ -885,7 +932,11 @@ public static class CONSTANTS
                     (3759, 3763),
                     (3789, 3793),
                     (4173, 4202),
-                    (4731, 4740)
+                    (4731, 4740),
+                    
+                    //10k+
+                    (10632, 10641),
+                    (10657, 10661)
                 ]));
 
         //             *
@@ -921,7 +972,10 @@ public static class CONSTANTS
                     (2969, 2973),
                     (2975, 2979),
                     (3017, 3021),
-                    (3023, 3027)
+                    (3023, 3027),
+                    
+                    //10k+
+                    (10642, 10656)
                 ]));
 
         //             *
@@ -1000,6 +1054,28 @@ public static class CONSTANTS
                     { 0, 0, 3, 0 }
                 },
                 ranges: [(2515, 2519)]));
+        
+        //       *
+        //    *  0  *
+        // * l r ,  0  *
+        //    *  0  ,  0  *
+        //       * l r , l r *
+        //          *  0  *
+        //             *
+        // NAME: lr lr lr 4x2
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 5 },
+                    { 1, 0, 3, 0 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 6 },
+                    { 2, 0, 4, 0 }
+                },
+                ranges: [(10696, 10701)]));
 
         //             *
         //          *  r  *
@@ -1026,6 +1102,32 @@ public static class CONSTANTS
                     { 2, 0 }
                 },
                 ranges: [(2545, 2549)]));
+
+        //             *
+        //          *  r  *
+        //       *  r  ,  0  *
+        //    *  0  ,  0  *
+        // * l r ,  l  *
+        //    *  0  *
+        //       *
+        // NAME: lr lrrr 2x4
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0 },
+                    { 0, 0 },
+                    { 0, 3 },
+                    { 1, 0 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 6 },
+                    { 0, 5 },
+                    { 0, 4 },
+                    { 2, 0 }
+                },
+                ranges: [(10580, 10585)]));
 
         //       *
         //    *  0  *
@@ -1144,7 +1246,10 @@ public static class CONSTANTS
                 ranges:
                 [
                     (5108, 5114),
-                    (5122, 5177)
+                    (5122, 5177),
+
+                    //10k+
+                    (10489, 10495)
                 ]));
 
         //             *
@@ -1257,6 +1362,32 @@ public static class CONSTANTS
                     (3291, 3302),
                     (3753, 3758)
                 ]));
+
+        //          *
+        //       *  0  *
+        //    *  l  ,  0  *
+        // *  0  ,  0  ,  0  *
+        //    *  0  ,  0  ,  0  *
+        //       *  l  ,  0  ,  l  *
+        //          *  l  ,  0  *
+        //             * l r *
+        //                *
+        // NAME: lllllr 5x1
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 6 },
+                    { 1, 0, 0, 0, 0 },
+                    { 0, 0, 2, 3, 4 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 5 }
+                },
+                ranges: [(10586, 10591)]));
 
         //                *
         //             *  r  *
@@ -1391,7 +1522,8 @@ public static class CONSTANTS
                 [
                     //10k+
                     (10076, 10084),
-                    (10094, 10102)
+                    (10094, 10102),
+                    (10531, 10539)
                 ]));
 
         //             *
@@ -1427,7 +1559,8 @@ public static class CONSTANTS
 
                     //10k+
                     (10067, 10075),
-                    (10085, 10093)
+                    (10085, 10093),
+                    (10620, 10628)
                 ]));
 
         //                *
@@ -1460,7 +1593,13 @@ public static class CONSTANTS
                     { 0, 0, 0, 0, 7 },
                     { 0, 0, 0, 0, 6 }
                 },
-                ranges: [(4443, 4452)]));
+                ranges:
+                [
+                    (4443, 4452),
+
+                    //10k+
+                    (10521, 10530)
+                ]));
 
         //    *
         // *  l  *
@@ -1653,6 +1792,99 @@ public static class CONSTANTS
                     (10222, 10230)
                 ]));
 
+        //       *
+        //    *  0  *
+        // *  l  ,  0  *
+        //    *  l  ,  0  *
+        //       *  l  ,  0  *
+        //          *  l  ,  0  *
+        //             *  l  ,  0  *
+        //                *  l  *  l  *
+        //                   *  l  *
+        //                      *
+        // NAME: lllllll l 7x2
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 8 },
+                    { 1, 2, 3, 4, 5, 6, 7 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 }
+                },
+                ranges:
+                [
+                    (10688, 10695),
+
+                    //more
+                ]));
+        
+        //    * 
+        // *  l  *
+        //    *  l  *
+        //       *  l  *
+        //          *  l  *
+        //             *  l  *
+        //                *  l  *
+        //                   *  l  *
+        //                      * l r *
+        //                         *
+        // NAME: llllllllr 8x1
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 1, 2, 3, 4, 5, 6, 7, 8 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 0, 9 }
+                },
+                ranges: [(10502, 10510)]));
+
+        //                            *
+        //                         *  r  *
+        //                      *  r  *
+        //                   *  r  *
+        //                *  r  *
+        //             *  r  *
+        //          *  r  *
+        //       *  r  *
+        //    *  r  *
+        // * l r *
+        //    *
+        // NAME: lrrrrrrrrr 1x9
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 0 },
+                    { 1 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 10 },
+                    { 9 },
+                    { 8 },
+                    { 7 },
+                    { 6 },
+                    { 5 },
+                    { 4 },
+                    { 3 },
+                    { 2 }
+                },
+                ranges: [(10511, 10520)]));
+
         //                *
         //             *  0  *
         //          *  0  ,  0  *
@@ -1688,6 +1920,45 @@ public static class CONSTANTS
                     { 0, 0, 0, 0, 0, 0, 0, 0, 10 }
                 },
                 ranges: [(4453, 4466)]));
+
+        //                      *
+        //                   *  0  *
+        //                *  0  ,  0  *
+        //             *  0  ,  0  ,  0  *
+        //          *  0  ,  0  ,  0  ,  0  *
+        //       *  0  ,  0  ,  0  ,  0  ,  0  *
+        //    *  l  ,  0  ,  0  ,  0  ,  0  ,  0  *
+        // *  0  ,  l  ,  0  ,  0  ,  0  , l r , l r *
+        //    *  0  ,  0  ,  0  ,  0  ,  0  ,  0  *
+        //       *  0  ,  0  ,  0  ,  r  ,  0  *
+        //          *  l  ,  0  ,  r  ,  0  *
+        //             *  l  ,  0  ,  0  *
+        //                *  l  ,  0  *
+        //                   * l r *
+        //                      *  
+        fgStructures.AddRange(
+            CreateFromPattern(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 12 },
+                    { 0, 0, 0, 0, 0, 10, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 1, 2, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 3, 4, 5, 6 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 13 },
+                    { 0, 0, 0, 0, 0, 11, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 9, 0 },
+                    { 0, 0, 0, 0, 0, 8, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 7 }
+                },
+                ranges: [(10592, 10604)]));
 
         //                *
         //             *  0  *
@@ -1756,6 +2027,65 @@ public static class CONSTANTS
                     { 7, 8, 9 }
                 },
                 ranges: [(313, 321)]));
+
+        //                      *
+        //                   *  0  *
+        //                *  0  ,  0  *
+        //             *  0  ,  0  ,  0  *
+        //          *  0  ,  0  ,  0  ,  0  *
+        //       *  0  ,  0  ,  0  ,  0  ,  0  *
+        //    *  l  ,  0  ,  0  ,  0  ,  0  ,  0  *
+        // *  0  ,  l  ,  0  ,  0  ,  0  , l r , l r *
+        //    *  0  ,  0  ,  0  ,  0  ,  0  ,  0  *
+        //       *  0  ,  0  ,  0  ,  r  ,  0  *
+        //          *  l  ,  0  ,  r  ,  0  *
+        //             *  l  ,  0  ,  0  *
+        //                *  l  ,  0  *
+        //                   * l r *
+        //                      *  
+        fgStructures.AddRange(
+            CreateFromPatternCustom(
+                lfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 12 },
+                    { 0, 0, 0, 0, 0, 10, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 1, 2, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 3, 4, 5, 6 }
+                },
+                rfgPattern: new[,]
+                {
+                    { 0, 0, 0, 0, 0, 0, 13 },
+                    { 0, 0, 0, 0, 0, 11, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 9, 0 },
+                    { 0, 0, 0, 0, 0, 8, 0 },
+                    { 0, 0, 0, 0, 0, 0, 0 },
+                    { 0, 0, 0, 0, 0, 0, 7 }
+                },
+                indexes:
+                [
+                    10592,
+                    10593,
+                    10594,
+                    10595,
+                    10596,
+                    10597,
+                    10598,
+
+                    //begin custom
+                    10629,
+                    10630,
+                    10631,
+
+                    //end custom
+
+                    10602,
+                    10603,
+                    10604
+                ]));
         #endregion
 
         // (,),
@@ -1968,5 +2298,99 @@ public static class CONSTANTS
                     rfgPattern is not null ? rfgData : null);
             }
         }
+    }
+
+    /// <summary>
+    ///     Creates a collection of <see cref="StructureViewModel" /> instances from the specified pattern.
+    /// </summary>
+    /// <param name="bgPattern">
+    ///     The background tile pattern to fill in
+    /// </param>
+    /// <param name="lfgPattern">
+    ///     The left foreground tile pattern to fill in
+    /// </param>
+    /// <param name="rfgPattern">
+    ///     The right foreground tile pattern to fill in
+    /// </param>
+    /// <param name="indexes">
+    ///     Tile indexes to use in the pattern
+    /// </param>
+    /// <remarks>
+    ///     The patterns are 2D array where each element contains a number that corresponds to the order the tiles should be
+    ///     placed in
+    ///     <br />
+    ///     <br />
+    ///     The number zero means there is no tile at that position
+    ///     <br />
+    ///     Rows are rows, Columns are columns [y, x]... the array will be rotated when it is interpreted into data so that it
+    ///     matches up with [x, y]
+    /// </remarks>
+    private static IEnumerable<StructureViewModel> CreateFromPatternCustom(
+        int[,]? bgPattern = null,
+        int[,]? lfgPattern = null,
+        int[,]? rfgPattern = null,
+        params IEnumerable<int> indexes)
+    {
+        var bgcount = bgPattern?.Flatten()
+                               .Count(num => num != 0)
+                      ?? 0;
+
+        var lfgCount = lfgPattern?.Flatten()
+                                 .Count(num => num != 0)
+                       ?? 0;
+
+        var rfgCount = rfgPattern?.Flatten()
+                                 .Count(num => num != 0)
+                       ?? 0;
+
+        var totalCountPerPattern = bgcount + lfgCount + rfgCount;
+        var width = Math.Max(bgPattern?.GetLength(1) ?? 0, Math.Max(lfgPattern?.GetLength(1) ?? 0, rfgPattern?.GetLength(1) ?? 0));
+        var height = Math.Max(bgPattern?.GetLength(0) ?? 0, Math.Max(lfgPattern?.GetLength(0) ?? 0, rfgPattern?.GetLength(0) ?? 0));
+
+        var bgData = new int[width, height];
+        var lfgData = new int[width, height];
+        var rfgData = new int[width, height];
+        var chunk = indexes.ToList();
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                if (bgPattern is not null)
+                {
+                    var num = bgPattern[y, x];
+
+                    if (num != 0)
+
+                        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                        bgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                }
+
+                if (lfgPattern is not null)
+                {
+                    var num = lfgPattern[y, x];
+
+                    if (num != 0)
+
+                        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                        lfgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                }
+
+                if (rfgPattern is not null)
+                {
+                    var num = rfgPattern[y, x];
+
+                    if (num != 0)
+
+                        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                        rfgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                }
+            }
+        }
+
+        yield return StructureViewModel.Create(
+            bgPattern is not null ? bgData : null,
+            lfgPattern is not null ? lfgData : null,
+            rfgPattern is not null ? rfgData : null);
     }
 }
