@@ -111,9 +111,11 @@ public static partial class RenderUtil
                 if (entry.EntryName.StartsWithI("line"))
                     return RenderLegend01Epf(archive, entry);
 
+                if (entry.EntryName.StartsWithI("f0"))
+                    return RenderLegendEpf(archive, entry);
+
                 if (entry.EntryName.StartsWithI("clock01")
                     || entry.EntryName.StartsWithI("emo")
-                    || entry.EntryName.StartsWithI("f0")
                     || entry.EntryName.StartsWithI("line")
                     || entry.EntryName.StartsWithI("mask")
                     || entry.EntryName.StartsWithI("ms")
