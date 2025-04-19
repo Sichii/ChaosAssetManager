@@ -81,6 +81,10 @@
                       Header="SaveAs"
                       Click="SaveAsBtn_OnClick"
                       ToolTip="Saves the currently selected map to a specified location (CTRL + SHIFT + S)" />
+            <MenuItem x:Name="SaveRenderBtn"
+                      Header="SaveRender"
+                      Click="SaveRenderBtn_OnClick"
+                      ToolTip="Renders the current map and saves it to file" />
         </Menu>
 
         <ToolBarTray Grid.Row="1"

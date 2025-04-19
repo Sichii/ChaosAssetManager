@@ -27,10 +27,10 @@ public sealed class ArchiveCache
             {
                 try
                 {
-                    return DataArchive.FromFile(Path.Combine(rootDir, fileName));
+                    return DataArchive.FromFile(Path.Combine(rootDir, fileName), false);
                 } catch
                 {
-                    return DataArchive.FromFile(Path.Combine(rootDir, fileName), newformat: true);
+                    return DataArchive.FromFile(Path.Combine(rootDir, fileName), false, true);
                 }
             },
             root);

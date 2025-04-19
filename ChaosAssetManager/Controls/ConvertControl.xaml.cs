@@ -141,6 +141,17 @@ public partial class ConvertControl
 
                 break;
             }
+            case ".mpf":
+            {
+                var mpfFile = MpfFile.FromImages(QuantizerOptions.Default, MpfFormatType.SingleAttack, skImages);
+                var mpfPath = Path.Combine(targetDirectory, $"{fileName}.mpf");
+                var palPath = Path.Combine(targetDirectory, $"{fileName}.pal");
+
+                mpfFile.Entity.Save(mpfPath);
+                mpfFile.Palette.Save(palPath);
+
+                break;
+            }
         }
 
         PathHelper.Instance.ConvertImageToPath = targetDirectory;

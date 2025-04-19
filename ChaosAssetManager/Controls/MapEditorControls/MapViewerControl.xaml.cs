@@ -621,6 +621,24 @@ public partial class MapViewerControl : IDisposable
         BackgroundImage = SKImage.FromBitmap(bitmap);
     }
 
+    public SKImage RenderMapImage()
+    {
+        var dimensions = ImageHelper.CalculateRenderedImageSize(
+            ViewModel.BackgroundTilesView,
+            ViewModel.LeftForegroundTilesView,
+            ViewModel.RightForegroundTilesView);
+        using var bitmap = new SKBitmap(dimensions.Width, dimensions.Height + FOREGROUND_PADDING);
+        using var canvas = new SKCanvas(bitmap);
+
+        canvas.DrawImage(BackgroundImage, SKPoint.Empty);
+        canvas.DrawImage(ForegroundImage, SKPoint.Empty);
+        canvas.DrawImage(TabMapImage, SKPoint.Empty);
+
+        canvas.Flush();
+
+        return SKImage.FromBitmap(bitmap);
+    }
+
     private void HandleBackgroundToolHover(
         Point currentPoint,
         SKPoint mouseCoordinates,

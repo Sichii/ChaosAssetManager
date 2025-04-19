@@ -80,8 +80,7 @@
                        VerticalAlignment="Center" />
                 <ToggleButton x:Name="MergePalettesToggle"
                               HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              Checked="MergePalettesToggle_OnChecked" />
+                              VerticalAlignment="Center" />
             </StackPanel>
         </StackPanel>
 

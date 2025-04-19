@@ -61,8 +61,6 @@ public partial class PaletteRemapperControl
         return new Palette(uniqueColors);
     }
 
-    private void MergePalettesToggle_OnChecked(object sender, RoutedEventArgs e) => throw new NotImplementedException();
-
     private IEnumerable<Palettized<EpfFile>> RearrangeDyeColors(IEnumerable<Palettized<EpfFile>> palettizedImages)
     {
         var palettized = palettizedImages.ToList();
@@ -82,39 +80,9 @@ public partial class PaletteRemapperControl
 
     private void RearrangeDyeColorsToggle_OnChecked(object sender, RoutedEventArgs e) => ToPalettePath = null;
 
-    private void RemapImagePaletteBtn_OnClick(object sender, RoutedEventArgs e)
+    private void RemapEpfImages(List<(string First, string Second)> palettizedPaths, string toFolderName)
     {
-        if (SelectedFiles.IsNullOrEmpty()
-            || SelectedPalettes.IsNullOrEmpty()
-            || (string.IsNullOrEmpty(ToPalettePath) && !MergePalettesToggle.IsChecked!.Value))
-        {
-            Snackbar.MessageQueue!.Enqueue("Please select all required files or options");
-
-            return;
-        }
-
-        var openFolderDialog = new OpenFolderDialog
-        {
-            InitialDirectory = PathHelper.Instance.PaletteRemapperImageToPath
-        };
-
-        if (openFolderDialog.ShowDialog() == false)
-            return;
-
-        if (openFolderDialog.FolderNames.Length != 1)
-        {
-            Snackbar.MessageQueue!.Enqueue("Please select a single folder to save to");
-
-            return;
-        }
-
-        if (string.IsNullOrEmpty(openFolderDialog.FolderName))
-            return;
-
         Palette toPalette;
-
-        var palettizedPaths = SelectedFiles.Zip(SelectedPalettes)
-                                           .ToList();
 
         var palettizedImages = palettizedPaths.Select(
                                                   x => new Palettized<EpfFile>
@@ -158,12 +126,95 @@ public partial class PaletteRemapperControl
         {
             var epfFileName = Path.GetFileName(oldEpfPath);
             var paletteFileName = Path.GetFileName(oldPalettePath);
-            var epfPath = Path.Combine(openFolderDialog.FolderName, epfFileName);
-            var palettePath = Path.Combine(openFolderDialog.FolderName, paletteFileName);
+            var epfPath = Path.Combine(toFolderName, epfFileName);
+            var palettePath = Path.Combine(toFolderName, paletteFileName);
 
             palettizedImage.Entity.Save(epfPath);
             palettizedImage.Palette.Save(palettePath);
         }
+    }
+
+    private void RemapHpfImages(List<(string First, string Second)> palettizedPaths, string toFolderName)
+    {
+        Palette toPalette;
+
+        var palettizedImages = palettizedPaths.Select(
+                                                  x => new Palettized<HpfFile>
+                                                  {
+                                                      Entity = HpfFile.FromFile(x.First),
+                                                      Palette = Palette.FromFile(x.Second)
+                                                  })
+                                              .ToList();
+
+        //set toPalette to the merged palette if the toggle is checked
+        if (MergePalettesToggle.IsChecked ?? false)
+            try
+            {
+                toPalette = MergePalettes(palettizedImages.Select(p => p.Palette));
+            } catch (InvalidOperationException ex)
+            {
+                Snackbar.MessageQueue!.Enqueue(ex.Message);
+
+                return;
+            }
+        else //otherwise, set toPalette to the selected palette
+            toPalette = Palette.FromFile(ToPalettePath!);
+
+        //normal remapping operation
+        palettizedImages = palettizedImages.Select(p => p.RemapPalette(toPalette))
+                                           .ToList();
+
+        foreach ((var palettizedImage, (var oldEpfPath, var oldPalettePath)) in palettizedImages.Zip(palettizedPaths))
+        {
+            var epfFileName = Path.GetFileName(oldEpfPath);
+            var paletteFileName = Path.GetFileName(oldPalettePath);
+            var epfPath = Path.Combine(toFolderName, epfFileName);
+            var palettePath = Path.Combine(toFolderName, paletteFileName);
+
+            palettizedImage.Entity.Save(epfPath);
+            palettizedImage.Palette.Save(palettePath);
+        }
+    }
+
+    private void RemapImagePaletteBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (SelectedFiles.IsNullOrEmpty()
+            || SelectedPalettes.IsNullOrEmpty()
+            || (string.IsNullOrEmpty(ToPalettePath) && !MergePalettesToggle.IsChecked!.Value))
+        {
+            Snackbar.MessageQueue!.Enqueue("Please select all required files or options");
+
+            return;
+        }
+
+        var openFolderDialog = new OpenFolderDialog
+        {
+            InitialDirectory = PathHelper.Instance.PaletteRemapperImageToPath
+        };
+
+        if (openFolderDialog.ShowDialog() == false)
+            return;
+
+        if (openFolderDialog.FolderNames.Length != 1)
+        {
+            Snackbar.MessageQueue!.Enqueue("Please select a single folder to save to");
+
+            return;
+        }
+
+        if (string.IsNullOrEmpty(openFolderDialog.FolderName))
+            return;
+
+        var isEpf = SelectedFiles.First()
+                                 .EndsWithI(".epf");
+
+        var palettizedPaths = SelectedFiles.Zip(SelectedPalettes)
+                                           .ToList();
+
+        if (isEpf)
+            RemapEpfImages(palettizedPaths, openFolderDialog.FolderName);
+        else
+            RemapHpfImages(palettizedPaths, openFolderDialog.FolderName);
 
         PathHelper.Instance.PaletteRemapperImageToPath = openFolderDialog.FolderName;
         PathHelper.Instance.Save();
@@ -176,7 +227,7 @@ public partial class PaletteRemapperControl
         var fileDialog = new OpenFileDialog
         {
             Multiselect = true,
-            Filter = "Images|*.epf",
+            Filter = "Images|*.epf;*.hpf",
             InitialDirectory = PathHelper.Instance.PaletteRemapperImageFromPath
         };
 
@@ -232,7 +283,7 @@ public partial class PaletteRemapperControl
             {
                 var fileName = Path.GetFileNameWithoutExtension(imagePath);
 
-                if (!fileNames.ContainsI(fileName))
+                if (fileNames.All(fn => Path.GetFileNameWithoutExtension(fn) != fileName))
                 {
                     Snackbar.MessageQueue!.Enqueue($"{fileName} does not have a corresponding palette");
 

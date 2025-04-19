@@ -13,6 +13,7 @@ using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using DALib.Drawing;
 using DALib.Extensions;
+using SkiaSharp;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using Rectangle = Chaos.Geometry.Rectangle;
@@ -163,7 +164,7 @@ public partial class MapEditorControl
     {
         if (string.IsNullOrEmpty(path))
             return;
-        
+
         using var stream = File.Open(
             path.WithExtension(".map"),
             new FileStreamOptions
@@ -549,8 +550,48 @@ public partial class MapEditorControl
                     writer.Write((short)rightForegroundTiles[x, y].TileId);
                 }
         }
-
+        
         ShowMessage("Map saved successfully");
+    }
+
+    private void SaveRenderBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (MapViewerTabControl.SelectedItem is not MapViewerViewModel viewer)
+            return;
+
+        using var saveFileDialog = new SaveFileDialog();
+        saveFileDialog.Filter = "PNG files (*.png)|*.png";
+
+        if (saveFileDialog.ShowDialog() == DialogResult.OK)
+        {
+            if (string.IsNullOrEmpty(saveFileDialog.FileName))
+            {
+                ShowMessage("Invalid file name");
+
+                return;
+            }
+
+            var path = saveFileDialog.FileName.WithExtension(".png");
+
+            viewer.Refresh();
+
+            using var image = viewer.Control!.RenderMapImage();
+
+            using var stream = File.Open(
+                path,
+                new FileStreamOptions
+                {
+                    Access = FileAccess.Write,
+                    Mode = FileMode.Create,
+                    Options = FileOptions.SequentialScan,
+                    Share = FileShare.ReadWrite
+                });
+
+            stream.SetLength(0);
+
+            image.Encode(SKEncodedImageFormat.Png, 100)
+                 .SaveTo(stream);
+        }
     }
 
     private void ShowMessage(string message, TimeSpan? time = null)
