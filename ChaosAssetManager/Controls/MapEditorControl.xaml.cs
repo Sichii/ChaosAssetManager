@@ -231,12 +231,11 @@ public partial class MapEditorControl
 
         var viewer = new MapViewerViewModel
         {
-            PossibleBounds = possibleBounds.Select(
-                                               pair => new MapBounds
-                                               {
-                                                   Width = pair.Item1,
-                                                   Height = pair.Item2
-                                               })
+            PossibleBounds = possibleBounds.Select(pair => new MapBounds
+                                           {
+                                               Width = pair.Item1,
+                                               Height = pair.Item2
+                                           })
                                            .ToList(),
             Bounds = bounds,
             FromPath = path
@@ -382,12 +381,11 @@ public partial class MapEditorControl
                 width,
                 height),
             FromPath = CONSTANTS.NEW_MAP_NAME,
-            PossibleBounds = possibleBounds.Select(
-                                               pair => new MapBounds
-                                               {
-                                                   Width = pair.Item1,
-                                                   Height = pair.Item2
-                                               })
+            PossibleBounds = possibleBounds.Select(pair => new MapBounds
+                                           {
+                                               Width = pair.Item1,
+                                               Height = pair.Item2
+                                           })
                                            .ToList()
         };
 
@@ -421,45 +419,40 @@ public partial class MapEditorControl
         var backgroundCount = tileset.Count;
 
         var foregroundTiles = iaDat.Where(entry => entry.EntryName.StartsWithI("stc") && entry.EntryName.EndsWithI(".hpf"))
-                                   .Select(
-                                       entry =>
-                                       {
-                                           entry.TryGetNumericIdentifier(out var identifier);
+                                   .Select(entry =>
+                                   {
+                                       entry.TryGetNumericIdentifier(out var identifier);
 
-                                           return identifier;
-                                       })
-                                   .Select(
-                                       i => new TileViewModel
-                                       {
-                                           TileId = i,
-                                           LayerFlags = LayerFlags.Foreground
-                                       })
+                                       return identifier;
+                                   })
+                                   .Select(i => new TileViewModel
+                                   {
+                                       TileId = i,
+                                       LayerFlags = LayerFlags.Foreground
+                                   })
                                    .Chunk(4)
-                                   .Select(
-                                       chunk => new TileRowViewModel
-                                       {
-                                           Tile1 = chunk.ElementAtOrDefault(0),
-                                           Tile2 = chunk.ElementAtOrDefault(1),
-                                           Tile3 = chunk.ElementAtOrDefault(2),
-                                           Tile4 = chunk.ElementAtOrDefault(3)
-                                       });
+                                   .Select(chunk => new TileRowViewModel
+                                   {
+                                       Tile1 = chunk.ElementAtOrDefault(0),
+                                       Tile2 = chunk.ElementAtOrDefault(1),
+                                       Tile3 = chunk.ElementAtOrDefault(2),
+                                       Tile4 = chunk.ElementAtOrDefault(3)
+                                   });
 
         var backgroundtiles = Enumerable.Range(0, backgroundCount)
-                                        .Select(
-                                            i => new TileViewModel
-                                            {
-                                                TileId = i,
-                                                LayerFlags = LayerFlags.Background
-                                            })
+                                        .Select(i => new TileViewModel
+                                        {
+                                            TileId = i,
+                                            LayerFlags = LayerFlags.Background
+                                        })
                                         .Chunk(4)
-                                        .Select(
-                                            chunk => new TileRowViewModel
-                                            {
-                                                Tile1 = chunk.ElementAtOrDefault(0),
-                                                Tile2 = chunk.ElementAtOrDefault(1),
-                                                Tile3 = chunk.ElementAtOrDefault(2),
-                                                Tile4 = chunk.ElementAtOrDefault(3)
-                                            });
+                                        .Select(chunk => new TileRowViewModel
+                                        {
+                                            Tile1 = chunk.ElementAtOrDefault(0),
+                                            Tile2 = chunk.ElementAtOrDefault(1),
+                                            Tile3 = chunk.ElementAtOrDefault(2),
+                                            Tile4 = chunk.ElementAtOrDefault(3)
+                                        });
 
         ViewModel.ForegroundTiles.AddRange(foregroundTiles);
         ViewModel.BackgroundTiles.AddRange(backgroundtiles);
@@ -550,7 +543,7 @@ public partial class MapEditorControl
                     writer.Write((short)rightForegroundTiles[x, y].TileId);
                 }
         }
-        
+
         ShowMessage("Map saved successfully");
     }
 
@@ -610,20 +603,21 @@ public partial class MapEditorControl
 
         ViewModel.SnowTileset = listBoxItem.IsSelected;
 
-        foreach (var row in ViewModel.BackgroundTiles)
-            row.Refresh();
+        if (TilesControl.IsVisible)
+        {
+            var viewableTileRows = TilesControl.GetVisibleItems<TileRowViewModel>();
 
-        foreach (var row in ViewModel.ForegroundTiles)
-            row.Refresh();
+            foreach (var row in viewableTileRows)
+                row.Refresh();
+        } else if (StructuresControl.IsVisible)
+        {
+            var viewableStructures = StructuresControl.GetVisibleItems<StructureViewModel>();
 
-        foreach (var structure in ViewModel.ForegroundStructures)
-            structure.Refresh();
-
-        foreach (var structure in ViewModel.BackgroundStructures)
-            structure.Refresh();
+            foreach (var structure in viewableStructures)
+                structure.Refresh();
+        }
 
         ViewModel.TileGrab?.Refresh();
-
         ViewModel.CurrentMapViewer.Refresh();
     }
 

@@ -128,11 +128,5 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
         OnPropertyChanged(nameof(CurrentFrameIndex));
     }
 
-    public void Refresh()
-    {
-        if (Animation is null)
-            return;
-
-        Initialize();
-    }
+    public void Refresh() => Initialize();
 }

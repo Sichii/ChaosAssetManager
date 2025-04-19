@@ -107,6 +107,25 @@ internal static class ControlExtensions
             yield return localValueEnumerator.Current.Property;
     }
 
+    internal static List<T> GetVisibleItems<T>(this DataGrid dataGrid)
+    {
+        var visibleItems = new List<T>();
+
+        // Try to get the ScrollViewer inside the DataGrid
+        var scrollViewer = FindVisualChild<ScrollViewer>(dataGrid);
+
+        if (scrollViewer == null)
+            return visibleItems;
+
+        var generator = dataGrid.ItemContainerGenerator;
+
+        for (var i = 0; i < dataGrid.Items.Count; i++)
+            if (generator.ContainerFromIndex(i) is DataGridRow)
+                visibleItems.Add((T)dataGrid.Items[i]);
+
+        return visibleItems;
+    }
+
     internal static void RefreshBindings(this DependencyObject obj)
     {
         foreach (var dp in GetDependencyProperties(obj))
