@@ -38,7 +38,7 @@ public static partial class RenderUtil
             "g" => "c",
             "j" => "c",
             "o" => "m",
-            "s" => "u",
+            "s" => "p",
             _   => letter
         };
 
@@ -75,18 +75,17 @@ public static partial class RenderUtil
         var maxWidth = epfFile.Max(frame => frame.PixelWidth + frame.Left);
         var maxHeight = epfFile.Max(frame => frame.PixelHeight + frame.Left);
 
-        var transformer = epfFile.Select(
-            frame =>
-            {
-                //so we add padding to each frame so that all frames line up in the grid during the animation
-                var paddingX = maxWidth - (frame.PixelWidth + frame.Left) + 2;
-                var paddingY = maxHeight - (frame.PixelHeight + frame.Left) + 2;
+        var transformer = epfFile.Select(frame =>
+        {
+            //so we add padding to each frame so that all frames line up in the grid during the animation
+            var paddingX = maxWidth - (frame.PixelWidth + frame.Left) + 2;
+            var paddingY = maxHeight - (frame.PixelHeight + frame.Left) + 2;
 
-                var transformer2 = palettes.Select(palette => Graphics.RenderImage(frame, palette));
-                using var images = new SKImageCollection(transformer2);
+            var transformer2 = palettes.Select(palette => Graphics.RenderImage(frame, palette));
+            using var images = new SKImageCollection(transformer2);
 
-                return CreateGrid(images, paddingX, paddingY);
-            });
+            return CreateGrid(images, paddingX, paddingY);
+        });
         var images = new SKImageCollection(transformer);
 
         return new Animation(images, 200);
@@ -103,29 +102,27 @@ public static partial class RenderUtil
         var maxWidth = epfFile.Max(frame => frame.PixelWidth + frame.Left);
         var maxHeight = epfFile.Max(frame => frame.PixelHeight + frame.Left);
 
-        var transformer = epfFile.Select(
-            frame =>
-            {
-                //so we add padding to each frame so that all frames line up in the grid during the animation
-                var paddingX = maxWidth - (frame.PixelWidth + frame.Left) + 2;
-                var paddingY = maxHeight - (frame.PixelHeight + frame.Left) + 2;
+        var transformer = epfFile.Select(frame =>
+        {
+            //so we add padding to each frame so that all frames line up in the grid during the animation
+            var paddingX = maxWidth - (frame.PixelWidth + frame.Left) + 2;
+            var paddingY = maxHeight - (frame.PixelHeight + frame.Left) + 2;
 
-                //pants use dye colors, but only 0-15
-                //after 15, the color would interfere with the body shape, so it's impossible
-                var transformer2 = Enumerable.Range(0, 16)
-                                             .Select(
-                                                 dyeIndex =>
-                                                 {
-                                                     //we want to create 1 image in the grid per dye color
-                                                     var palette = lookup[dyeIndex];
+            //pants use dye colors, but only 0-15
+            //after 15, the color would interfere with the body shape, so it's impossible
+            var transformer2 = Enumerable.Range(0, 16)
+                                         .Select(dyeIndex =>
+                                         {
+                                             //we want to create 1 image in the grid per dye color
+                                             var palette = lookup[dyeIndex];
 
-                                                     return Graphics.RenderImage(frame, palette);
-                                                 });
+                                             return Graphics.RenderImage(frame, palette);
+                                         });
 
-                using var images = new SKImageCollection(transformer2);
+            using var images = new SKImageCollection(transformer2);
 
-                return CreateGrid(images, paddingX, paddingY);
-            });
+            return CreateGrid(images, paddingX, paddingY);
+        });
 
         var images = new SKImageCollection(transformer);
 
