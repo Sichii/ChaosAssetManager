@@ -17,8 +17,9 @@
         Loaded="MainWindow_OnLoaded"
         WindowStyle="None">
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32"
-                      CornerRadius="30"
+        <WindowChrome x:Name="CustomChrome"
+                      CaptionHeight="32"
+                      CornerRadius="15"
                       GlassFrameThickness="0"
                       ResizeBorderThickness="8"
                       UseAeroCaptionButtons="True" />
@@ -149,7 +150,8 @@
 
         </TabControl>
 
-        <Border Grid.Row="0"
+        <Border x:Name="WindowBorder"
+                Grid.Row="0"
                 Grid.Column="0"
                 Grid.RowSpan="99"
                 Grid.ColumnSpan="99"

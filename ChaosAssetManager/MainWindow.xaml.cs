@@ -3,6 +3,7 @@ using System.Windows;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls;
 using MaterialDesignThemes.Wpf;
+using WindowState = System.Windows.WindowState;
 
 namespace ChaosAssetManager;
 
@@ -11,6 +12,8 @@ namespace ChaosAssetManager;
 /// </summary>
 public partial class MainWindow : Window
 {
+    private Rectangle? RestoreBounds;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -20,49 +23,6 @@ public partial class MainWindow : Window
     }
 
     private void CloseBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
-
-    private void MainWindow_OnStateChanged(object? sender, EventArgs e)
-    {
-        if (WindowState == WindowState.Maximized)
-        {
-            BorderThickness = new Thickness(7);
-
-            MaximizeBtn.Content = new PackIcon
-            {
-                Kind = PackIconKind.WindowRestore,
-                FontSize = 18
-            };
-        } else
-        {
-            BorderThickness = new Thickness(0);
-
-            MaximizeBtn.Content = new PackIcon
-            {
-                Kind = PackIconKind.WindowMaximize,
-                FontSize = 18
-            };
-        }
-    }
-
-    private void MaximizeBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        if (WindowState == WindowState.Maximized)
-            SystemCommands.RestoreWindow(this);
-        else
-            SystemCommands.MaximizeWindow(this);
-    }
-
-    private void MinimizeBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);
-
-    private void SettingsBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        var options = new OptionsWindow
-        {
-            Owner = this
-        };
-
-        options.Show();
-    }
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -89,13 +49,82 @@ public partial class MainWindow : Window
                 MainTabControl.SelectedItem = MetaFileEditorTab;
                 MetaFileEditorView.LoadMetaData(args[0]);
             }
-        } else if (args.All(
-                       arg => Path.GetExtension(arg)
-                                  .EqualsI(".map")))
+        } else if (args.All(arg => Path.GetExtension(arg)
+                                       .EqualsI(".map")))
             foreach (var arg in args)
             {
                 MainTabControl.SelectedItem = MapEditorTab;
                 MapEditorView.LoadMap(arg);
             }
+    }
+
+    private void MainWindow_OnStateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Maximized)
+        {
+            //BorderThickness = new Thickness(0);
+
+            MaximizeBtn.Content = new PackIcon
+            {
+                Kind = PackIconKind.WindowRestore,
+                FontSize = 18
+            };
+
+            var workingArea = SystemParameters.WorkArea;
+            CustomChrome.CornerRadius = new CornerRadius(0);
+            WindowBorder.CornerRadius = new CornerRadius(0);
+            WindowBorder.BorderThickness = new Thickness(0);
+            Height = workingArea.Height;
+            Width = workingArea.Width;
+        } else
+        {
+            //BorderThickness = new Thickness(0);
+            MaximizeBtn.Content = new PackIcon
+            {
+                Kind = PackIconKind.WindowMaximize,
+                FontSize = 18
+            };
+
+            CustomChrome.CornerRadius = new CornerRadius(15);
+            WindowBorder.CornerRadius = new CornerRadius(15);
+            WindowBorder.BorderThickness = new Thickness(2);
+        }
+    }
+
+    private void MaximizeBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (WindowState == WindowState.Maximized)
+        {
+            SystemCommands.RestoreWindow(this);
+
+            if (RestoreBounds.HasValue)
+            {
+                Left = RestoreBounds.Value.Left;
+                Top = RestoreBounds.Value.Top;
+                Width = RestoreBounds.Value.Width;
+                Height = RestoreBounds.Value.Height;
+            }
+        } else
+        {
+            RestoreBounds = new Rectangle(
+                (int)Left,
+                (int)Top,
+                (int)Width,
+                (int)Height);
+
+            SystemCommands.MaximizeWindow(this);
+        }
+    }
+
+    private void MinimizeBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);
+
+    private void SettingsBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        var options = new OptionsWindow
+        {
+            Owner = this
+        };
+
+        options.Show();
     }
 }
