@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:ChaosAssetManager.Controls"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="Chaos Asset Manager"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -15,15 +16,18 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         StateChanged="MainWindow_OnStateChanged"
         Loaded="MainWindow_OnLoaded"
-        WindowStyle="None">
-    <WindowChrome.WindowChrome>
+        WindowStyle="None"
+        AllowsTransparency="false"
+        ResizeMode="CanResize"
+        WindowState="Normal">
+    <shell:WindowChrome.WindowChrome>
         <WindowChrome x:Name="CustomChrome"
                       CaptionHeight="32"
                       CornerRadius="15"
                       GlassFrameThickness="0"
-                      ResizeBorderThickness="8"
-                      UseAeroCaptionButtons="True" />
-    </WindowChrome.WindowChrome>
+                      ResizeBorderThickness="5"
+                      UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
 
     <Grid>
         <Grid.RowDefinitions>

@@ -70,12 +70,16 @@ public partial class MainWindow : Window
                 FontSize = 18
             };
 
-            var workingArea = SystemParameters.WorkArea;
             CustomChrome.CornerRadius = new CornerRadius(0);
             WindowBorder.CornerRadius = new CornerRadius(0);
             WindowBorder.BorderThickness = new Thickness(0);
-            Height = workingArea.Height;
-            Width = workingArea.Width;
+
+            var workingArea = SystemParameters.WorkArea;
+
+            Top = workingArea.Top;
+            Left = workingArea.Left;
+            MaxHeight = workingArea.Height + 6;
+            MaxWidth = workingArea.Width + 6;
         } else
         {
             //BorderThickness = new Thickness(0);
@@ -111,7 +115,6 @@ public partial class MainWindow : Window
                 (int)Top,
                 (int)Width,
                 (int)Height);
-
             SystemCommands.MaximizeWindow(this);
         }
     }
