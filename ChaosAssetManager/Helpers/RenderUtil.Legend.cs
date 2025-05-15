@@ -13,6 +13,22 @@ public static partial class RenderUtil
     private static Palette? LegendPalette;
     private static Palette? Legend01Palette;
 
+    private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
+    {
+        try
+        {
+            var epfFile = EpfFile.FromEntry(entry);
+            var palette = Legend01Palette ??= Palette.FromEntry(archive["legend01.pal"]);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var images = new SKImageCollection(transformer);
+
+            return new Animation(new SKImageCollection(images));
+        } catch
+        {
+            return null;
+        }
+    }
+
     private static Animation? RenderLegend01GridEpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
@@ -24,22 +40,6 @@ public static partial class RenderUtil
             var grid = CreateGrid(images);
 
             return new Animation(new SKImageCollection([grid]));
-        } catch
-        {
-            return null;
-        }
-    }
-    
-    private static Animation? RenderLegend01Epf(DataArchive archive, DataArchiveEntry entry)
-    {
-        try
-        {
-            var epfFile = EpfFile.FromEntry(entry);
-            var palette = Legend01Palette ??= Palette.FromEntry(archive["legend01.pal"]);
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
-            var images = new SKImageCollection(transformer);
-
-            return new Animation(new SKImageCollection(images));
         } catch
         {
             return null;
@@ -123,14 +123,13 @@ public static partial class RenderUtil
             var paletteLookup = ItemPaletteLookup ??= PaletteLookup.FromArchive("itempal", "item", archive)
                                                                    .Freeze();
 
-            var transformer = epfFile.Select(
-                frame =>
-                {
-                    var itemId = identifier * 266;
-                    var palette = paletteLookup.GetPaletteForId(itemId);
+            var transformer = epfFile.Select((frame, index) =>
+            {
+                var itemId = (identifier - 1) * 266 + index + 1;
+                var palette = paletteLookup.GetPaletteForId(itemId);
 
-                    return Graphics.RenderImage(frame, palette);
-                });
+                return Graphics.RenderImage(frame, palette);
+            });
             using var images = new SKImageCollection(transformer);
             var grid = CreateGrid(images);
 

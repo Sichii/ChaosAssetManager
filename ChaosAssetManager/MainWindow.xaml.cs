@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
+using System.Windows.Interop;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls;
 using MaterialDesignThemes.Wpf;
@@ -74,7 +75,14 @@ public partial class MainWindow : Window
             WindowBorder.CornerRadius = new CornerRadius(0);
             WindowBorder.BorderThickness = new Thickness(0);
 
-            var workingArea = SystemParameters.WorkArea;
+            // get the HWND for this WPF window
+            var h = new WindowInteropHelper(this).Handle;
+
+            // figure out which Screen it's on
+            var screen = Screen.FromHandle(h);
+
+            // grab *that* screen's work‐area
+            var workingArea = screen.WorkingArea;
 
             Top = workingArea.Top;
             Left = workingArea.Left;
