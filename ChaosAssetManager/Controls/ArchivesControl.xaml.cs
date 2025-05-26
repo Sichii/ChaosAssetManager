@@ -35,6 +35,67 @@ public sealed partial class ArchivesControl : IDisposable
         Archive?.Dispose();
     }
 
+    private void CloseEntryBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        var btn = (Button)sender;
+        var context = btn.DataContext;
+
+        if (Archive is null || context is not DataArchiveEntry entry)
+            return;
+
+        var result = MessageBox.Show(
+            Application.Current.MainWindow!,
+            $"Are you sure you want to remove the entry \"{entry.EntryName}\"?",
+            "Are you sure?",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Exclamation);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            var currentIndex = ArchivesView.SelectedIndex;
+
+            //save expanded nodes
+            var currentlyExpandedGroupings = ArchivesView.Items
+                                                         .OfType<EntryGrouping>()
+                                                         .Where(grouping =>
+                                                         {
+                                                             if (ArchivesView.ItemContainerGenerator.ContainerFromItem(grouping)
+                                                                 is TreeListViewItem { IsExpanded: true })
+                                                                 return true;
+
+                                                             return false;
+                                                         })
+                                                         .ToList();
+
+            Archive.Remove(entry);
+
+            if (currentIndex >= Archive.Count)
+                currentIndex--;
+
+            SetViewSource();
+
+            var newExpandedGroupings = ArchivesView.Items
+                                                   .OfType<EntryGrouping>()
+                                                   .Where(group => currentlyExpandedGroupings.Contains(group))
+                                                   .ToList();
+
+            //force UI redraw
+            ArchivesView.UpdateLayout();
+
+            //deferred action to allow UI thread to redraw before attempting to find containers generated during redraw
+            Dispatcher.BeginInvoke(() =>
+            {
+                //re-expand nodes
+                foreach (var grouping in newExpandedGroupings)
+                    if (ArchivesView.ItemContainerGenerator.ContainerFromItem(grouping) is TreeListViewItem tvi)
+                        tvi.IsExpanded = true;
+
+                //restore selection
+                ArchivesView.SelectedIndex = currentIndex;
+            });
+        }
+    }
+
     #region Events
     private void ArchivesControl_OnDragEnter(object sender, DragEventArgs e)
         => e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
@@ -355,72 +416,9 @@ public sealed partial class ArchivesControl : IDisposable
 
             ArchivesView.ItemsSource = new CollectionView(
                 Archive.OrderBy(entry => Path.GetExtension(entry.EntryName), StringComparer.OrdinalIgnoreCase)
-                       .GroupBy(entry => Path.GetExtension(entry.EntryName))
+                       .GroupBy(entry => Path.GetExtension(entry.EntryName), StringComparer.OrdinalIgnoreCase)
                        .Select(group => new EntryGrouping(group.Key, group)));
         }
     }
     #endregion
-
-    private void CloseEntryBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        var btn = (Button)sender;
-        var context = btn.DataContext;
-
-        if(Archive is null || context is not DataArchiveEntry entry)
-            return;
-
-        var result = MessageBox.Show(
-            Application.Current.MainWindow!,
-            $"Are you sure you want to remove the entry \"{entry.EntryName}\"?",
-            "Are you sure?",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Exclamation);
-
-        if (result == MessageBoxResult.Yes)
-        {
-            var currentIndex = ArchivesView.SelectedIndex;
-
-            //save expanded nodes
-            var currentlyExpandedGroupings = ArchivesView.Items
-                                                         .OfType<EntryGrouping>()
-                                                         .Where(
-                                                             grouping =>
-                                                             {
-                                                                 if (ArchivesView.ItemContainerGenerator.ContainerFromItem(grouping)
-                                                                     is TreeListViewItem { IsExpanded: true })
-                                                                     return true;
-
-                                                                 return false;
-                                                             })
-                                                         .ToList();
-
-            Archive.Remove(entry);
-
-            if (currentIndex >= Archive.Count)
-                currentIndex--;
-
-            SetViewSource();
-
-            var newExpandedGroupings = ArchivesView.Items
-                                                   .OfType<EntryGrouping>()
-                                                   .Where(group => currentlyExpandedGroupings.Contains(group))
-                                                   .ToList();
-
-            //force UI redraw
-            ArchivesView.UpdateLayout();
-            
-            //deferred action to allow UI thread to redraw before attempting to find containers generated during redraw
-            Dispatcher.BeginInvoke(
-                () =>
-                {
-                    //re-expand nodes
-                    foreach (var grouping in newExpandedGroupings)
-                        if (ArchivesView.ItemContainerGenerator.ContainerFromItem(grouping) is TreeListViewItem tvi)
-                            tvi.IsExpanded = true;
-
-                    //restore selection
-                    ArchivesView.SelectedIndex = currentIndex;
-                });
-        }
-    }
 }

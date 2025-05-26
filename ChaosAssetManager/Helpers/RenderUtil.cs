@@ -298,15 +298,14 @@ public static partial class RenderUtil
             var palette = paletteLookup.GetPaletteForId(identifier + 1);
             var maxHeight = hpfFiles.Max(hpf => hpf.PixelHeight);
 
-            var transformer = hpfFiles.Select(
-                frame =>
-                {
-                    //since hpf files are rendered from the bottom up
-                    //we need to offset the tops of short images so that all the bottoms align
-                    var yOffset = maxHeight - frame.PixelHeight;
+            var transformer = hpfFiles.Select(frame =>
+            {
+                //since hpf files are rendered from the bottom up
+                //we need to offset the tops of short images so that all the bottoms align
+                var yOffset = maxHeight - frame.PixelHeight;
 
-                    return Graphics.RenderImage(frame, palette, yOffset);
-                });
+                return Graphics.RenderImage(frame, palette, yOffset);
+            });
             var frames = new SKImageCollection(transformer);
 
             //if there's an animation entry, use the interval from that
@@ -316,7 +315,7 @@ public static partial class RenderUtil
             return null;
         }
     }
-    
+
     public static Animation? RenderMpf(DataArchive archive, DataArchiveEntry entry)
     {
         try
@@ -361,10 +360,9 @@ public static partial class RenderUtil
             var spfFile = SpfFile.FromEntry(entry);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            var transformer = spfFile.Select(
-                                         frame => spfFile.Format == SpfFormatType.Colorized
-                                             ? Graphics.RenderImage(frame)
-                                             : Graphics.RenderImage(frame, spfFile.PrimaryColors!))
+            var transformer = spfFile.Select(frame => spfFile.Format == SpfFormatType.Colorized
+                                         ? Graphics.RenderImage(frame)
+                                         : Graphics.RenderImage(frame, spfFile.PrimaryColors!))
                                      .Where(frame => frame is not null);
 
             var frames = new SKImageCollection(transformer);
