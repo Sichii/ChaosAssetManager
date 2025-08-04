@@ -477,9 +477,27 @@ public partial class MapViewerControl : IDisposable
         if (ViewModel.TabMapChangePending)
             RenderTabMap(mapPoint);*/
 
-        canvas.DrawImage(BackgroundImage, SKPoint.Empty);
-        canvas.DrawImage(ForegroundImage, SKPoint.Empty);
-        canvas.DrawImage(TabMapImage, SKPoint.Empty);
+        var inverted = Element.Matrix.Invert();
+        var topLeft = inverted.MapPoint(new SKPoint(0, 0));
+        var bottomRight = inverted.MapPoint(new SKPoint((float)Element.ActualWidth, (float)Element.ActualHeight));
+
+        var viewRect = SKRect.Create(
+            topLeft.X,
+            topLeft.Y,
+            bottomRight.X - topLeft.X,
+            bottomRight.Y - topLeft.Y);
+
+        var imgRect = SKRect.Create(
+            0,
+            0,
+            BackgroundImage!.Width,
+            BackgroundImage.Height);
+
+        var visibleRect = SKRect.Intersect(viewRect, imgRect);
+        
+        canvas.DrawImage(BackgroundImage, visibleRect, visibleRect);
+        canvas.DrawImage(ForegroundImage, visibleRect, visibleRect);
+        canvas.DrawImage(TabMapImage, visibleRect, visibleRect);
 
         //draw tabgrid if enabled
 
