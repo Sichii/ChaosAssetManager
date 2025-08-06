@@ -1823,7 +1823,8 @@ public static class CONSTANTS
                 ranges:
                 [
                     //10k+
-                    (24245, 24307)
+                    //20k+
+                    //(24245, 24307)
                 ]));
 
         //       *
