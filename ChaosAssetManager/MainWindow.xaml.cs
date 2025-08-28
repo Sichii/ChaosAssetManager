@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls;
+using ChaosAssetManager.Helpers;
 using MaterialDesignThemes.Wpf;
 using WindowState = System.Windows.WindowState;
 
@@ -83,11 +84,12 @@ public partial class MainWindow : Window
 
             // grab *that* screen's work‐area
             var workingArea = screen.WorkingArea;
+            var dpiScale = DpiHelper.GetDpiScaleFactor();
 
             Top = workingArea.Top;
             Left = workingArea.Left;
-            MaxHeight = workingArea.Height + 6;
-            MaxWidth = workingArea.Width + 6;
+            MaxHeight = workingArea.Height / dpiScale + 6;
+            MaxWidth = workingArea.Width / dpiScale + 6;
         } else
         {
             //BorderThickness = new Thickness(0);
