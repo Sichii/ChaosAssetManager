@@ -478,8 +478,9 @@ public partial class MapViewerControl : IDisposable
             RenderTabMap(mapPoint);*/
 
         var inverted = Element.Matrix.Invert();
+        var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
         var topLeft = inverted.MapPoint(new SKPoint(0, 0));
-        var bottomRight = inverted.MapPoint(new SKPoint((float)Element.ActualWidth, (float)Element.ActualHeight));
+        var bottomRight = inverted.MapPoint(new SKPoint((float)Element.ActualWidth * dpiScale, (float)Element.ActualHeight * dpiScale));
 
         var viewRect = SKRect.Create(
             topLeft.X,
