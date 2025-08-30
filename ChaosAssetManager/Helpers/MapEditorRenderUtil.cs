@@ -107,24 +107,23 @@ public static class MapEditorRenderUtil
                                             .ToList();
             }
 
-            var transformer = tileIndexes.Select(
-                                             index => mapImageCache.BackgroundCache.GetOrCreate(
-                                                 index,
-                                                 localIndex =>
-                                                 {
-                                                     var tile = tileset.ElementAtOrDefault(localIndex);
+            var transformer = tileIndexes.Select(index => mapImageCache.BackgroundCache.GetOrCreate(
+                                             index,
+                                             localIndex =>
+                                             {
+                                                 var tile = tileset.ElementAtOrDefault(localIndex);
 
-                                                     if (tile is null)
-                                                         return null!;
+                                                 if (tile is null)
+                                                     return null!;
 
-                                                     if ((tile.PixelWidth == 0) || (tile.PixelHeight == 0))
-                                                         return null!;
+                                                 if ((tile.PixelWidth == 0) || (tile.PixelHeight == 0))
+                                                     return null!;
 
-                                                     var palette = MptPaletteLookup.GetPaletteForId(localIndex + 2);
-                                                     var image = Graphics.RenderTile(tile, palette);
+                                                 var palette = MptPaletteLookup.GetPaletteForId(localIndex + 2);
+                                                 var image = Graphics.RenderTile(tile, palette);
 
-                                                     return image;
-                                                 }))
+                                                 return image;
+                                             }))
 
                                          // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
                                          .Where(frame => frame is not null && (frame.Handle != nint.Zero));
@@ -177,27 +176,26 @@ public static class MapEditorRenderUtil
                                             .ToList();
             }
 
-            var transformer = tileIndexes.Select(
-                                             index => mapImageCache.ForegroundCache.GetOrCreate(
-                                                 index,
-                                                 localIndex =>
-                                                 {
-                                                     var localEntryName = $"{prefix}{localIndex:D5}.hpf";
+            var transformer = tileIndexes.Select(index => mapImageCache.ForegroundCache.GetOrCreate(
+                                             index,
+                                             localIndex =>
+                                             {
+                                                 var localEntryName = $"{prefix}{localIndex:D5}.hpf";
 
-                                                     if (!archive.Contains(localEntryName))
-                                                         return null!;
+                                                 if (!archive.Contains(localEntryName))
+                                                     return null!;
 
-                                                     var hpfFile = HpfFile.FromArchive(localEntryName, archive);
+                                                 var hpfFile = HpfFile.FromArchive(localEntryName, archive);
 
-                                                     if ((hpfFile.PixelWidth == 0) || (hpfFile.PixelHeight == 0))
-                                                         return null!;
+                                                 if ((hpfFile.PixelWidth == 0) || (hpfFile.PixelHeight == 0))
+                                                     return null!;
 
-                                                     var palette = paletteLookup.GetPaletteForId(localIndex + 1);
+                                                 var palette = paletteLookup.GetPaletteForId(localIndex + 1);
 
-                                                     var transparent = IsTransparent(localIndex);
+                                                 var transparent = IsTransparent(localIndex);
 
-                                                     return Graphics.RenderImage(hpfFile, palette, transparency: transparent);
-                                                 }))
+                                                 return Graphics.RenderImage(hpfFile, palette, transparency: transparent);
+                                             }))
 
                                          // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
                                          .Where(frame => frame is not null && (frame.Handle != nint.Zero));
@@ -252,6 +250,36 @@ public static class MapEditorRenderUtil
         TabWallImage = SKImage.FromBitmap(bitmap);
 
         return TabWallImage;
+    }
+
+    public static SKImage RenderTileOutline()
+    {
+        using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, 28);
+        using var canvas = new SKCanvas(bitmap);
+
+        Span<Point> vertices =
+        [
+            new(CONSTANTS.HALF_TILE_WIDTH, 0),
+            new(CONSTANTS.TILE_WIDTH, CONSTANTS.HALF_TILE_HEIGHT),
+            new(CONSTANTS.HALF_TILE_WIDTH, 28),
+            new(0, CONSTANTS.HALF_TILE_HEIGHT)
+        ];
+
+        using var path = new SKPath();
+        path.MoveTo(vertices[0].X, vertices[0].Y);
+
+        foreach (var vertex in vertices[1..])
+            path.LineTo(vertex.X, vertex.Y);
+
+        path.Close();
+
+        using var outline = new SKPaint();
+        outline.Color = SKColors.DimGray;
+        outline.Style = SKPaintStyle.Stroke;
+
+        canvas.DrawPath(path, outline);
+
+        return SKImage.FromBitmap(bitmap);
     }
 
     #region Background

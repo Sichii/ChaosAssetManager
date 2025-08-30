@@ -202,14 +202,12 @@ public partial class MapViewerControl : IDisposable
                 var sampledTile = ViewModel.BackgroundTilesView[(int)tileCoordinates.X, (int)tileCoordinates.Y];
 
                 var originalTile = MapEditorViewModel.BackgroundTiles
-                                                     .SelectMany(
-                                                         (row, rowIndex) => row.Select(
-                                                             (tile, columnIndex) => new
-                                                             {
-                                                                 tile,
-                                                                 rowIndex,
-                                                                 columnIndex
-                                                             }))
+                                                     .SelectMany((row, rowIndex) => row.Select((tile, columnIndex) => new
+                                                     {
+                                                         tile,
+                                                         rowIndex,
+                                                         columnIndex
+                                                     }))
                                                      .Single(x => x.tile.TileId == sampledTile.TileId);
 
                 SelectCell(originalTile.rowIndex, originalTile.columnIndex);
@@ -221,14 +219,12 @@ public partial class MapViewerControl : IDisposable
                 var sampledTile = ViewModel.LeftForegroundTilesView[(int)tileCoordinates.X, (int)tileCoordinates.Y];
 
                 var originalTile = MapEditorViewModel.ForegroundTiles
-                                                     .SelectMany(
-                                                         (row, rowIndex) => row.Select(
-                                                             (tile, columnIndex) => new
-                                                             {
-                                                                 tile,
-                                                                 rowIndex,
-                                                                 columnIndex
-                                                             }))
+                                                     .SelectMany((row, rowIndex) => row.Select((tile, columnIndex) => new
+                                                     {
+                                                         tile,
+                                                         rowIndex,
+                                                         columnIndex
+                                                     }))
                                                      .Single(x => x.tile.TileId == sampledTile.TileId);
 
                 SelectCell(originalTile.rowIndex, originalTile.columnIndex);
@@ -240,14 +236,12 @@ public partial class MapViewerControl : IDisposable
                 var sampledTile = ViewModel.RightForegroundTilesView[(int)tileCoordinates.X, (int)tileCoordinates.Y];
 
                 var originalTile = MapEditorViewModel.ForegroundTiles
-                                                     .SelectMany(
-                                                         (row, rowIndex) => row.Select(
-                                                             (tile, columnIndex) => new
-                                                             {
-                                                                 tile,
-                                                                 rowIndex,
-                                                                 columnIndex
-                                                             }))
+                                                     .SelectMany((row, rowIndex) => row.Select((tile, columnIndex) => new
+                                                     {
+                                                         tile,
+                                                         rowIndex,
+                                                         columnIndex
+                                                     }))
                                                      .Single(x => x.tile.TileId == sampledTile.TileId);
 
                 SelectCell(originalTile.rowIndex, originalTile.columnIndex);
@@ -495,7 +489,7 @@ public partial class MapViewerControl : IDisposable
             BackgroundImage.Height);
 
         var visibleRect = SKRect.Intersect(viewRect, imgRect);
-        
+
         canvas.DrawImage(BackgroundImage, visibleRect, visibleRect);
         canvas.DrawImage(ForegroundImage, visibleRect, visibleRect);
         canvas.DrawImage(TabMapImage, visibleRect, visibleRect);
@@ -523,8 +517,10 @@ public partial class MapViewerControl : IDisposable
         var tglfgTiles = new ListSegment2D<TileViewModel>();
         var tgrfgTiles = new ListSegment2D<TileViewModel>();
         var tabWallImage = MapEditorRenderUtil.RenderTabWall();
+        var tileOutline = MapEditorRenderUtil.RenderTileOutline();
         var isEditingLeftForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground);
         var isEditingRightForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground);
+        var seededRandom = new Random(8675309);
 
         if (TileGrab is not null)
         {
@@ -563,12 +559,73 @@ public partial class MapViewerControl : IDisposable
                 var isWall = MapEditorRenderUtil.IsWall(leftTileViewModel.TileId) || MapEditorRenderUtil.IsWall(rightTileViewModel.TileId);
                 var paint = leftForegroundPaint ?? rightForegroundPaint;
 
+                var gridPaint = new SKPaint
+                {
+                    BlendMode = SKBlendMode.Hue
+                };
+
+                var tlx = fgInitialDrawX + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
+                var tly = fgInitialDrawY + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+
                 if (MapEditorViewModel.ShowTabMap && isWall)
                     canvas.DrawImage(
                         tabWallImage,
-                        fgInitialDrawX + x * DALIB_CONSTANTS.HALF_TILE_WIDTH,
-                        fgInitialDrawY + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT,
+                        tlx,
+                        tly,
                         paint);
+
+                if (MapEditorViewModel.ShowGrid)
+                    canvas.DrawImage(
+                        tileOutline,
+                        tlx,
+                        tly,
+                        gridPaint);
+
+                if (MapEditorViewModel.ShowForegroundGrid)
+                {
+                    var randomColor = SKColorExtensions.GetRandomVividColor(seededRandom);
+                    var randomPhase = seededRandom.Next(6);
+
+                    var fgGridPaint = new SKPaint
+                    {
+                        Color = randomColor,
+                        Style = SKPaintStyle.Stroke,
+                        StrokeWidth = 1,
+                        PathEffect = SKPathEffect.CreateDash(
+                            [
+                                2,
+                                3
+                            ],
+                            randomPhase),
+                        BlendMode = SKBlendMode.SrcOver
+                    };
+
+                    tly += DALIB_CONSTANTS.TILE_HEIGHT;
+
+                    if (leftTileViewModel.TileId.IsRenderedTileIndex() && leftTileViewModel.CurrentFrame is { } lframe)
+                    {
+                        var leftRect = new SKRect(
+                            tlx,
+                            tly - lframe.Height,
+                            tlx + lframe.Width,
+                            tly);
+
+                        canvas.DrawRect(leftRect, fgGridPaint);
+                    }
+
+                    tlx += DALIB_CONSTANTS.HALF_TILE_WIDTH;
+
+                    if (rightTileViewModel.TileId.IsRenderedTileIndex() && rightTileViewModel.CurrentFrame is { } rframe)
+                    {
+                        var rightRect = new SKRect(
+                            tlx,
+                            tly - rframe.Height,
+                            tlx + rframe.Width,
+                            tly);
+
+                        canvas.DrawRect(rightRect, fgGridPaint);
+                    }
+                }
             }
 
             fgInitialDrawX -= DALIB_CONSTANTS.HALF_TILE_WIDTH;

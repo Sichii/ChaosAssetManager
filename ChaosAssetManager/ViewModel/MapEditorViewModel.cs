@@ -60,6 +60,28 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         }
     } = true;
 
+    public bool ShowForegroundGrid
+    {
+        get;
+
+        set
+        {
+            SetField(ref field, value);
+            MapEditorControl.Instance.ViewModel.CurrentMapViewer.TabMapChangePending = true;
+        }
+    } = false;
+
+    public bool ShowGrid
+    {
+        get;
+
+        set
+        {
+            SetField(ref field, value);
+            MapEditorControl.Instance.ViewModel.CurrentMapViewer.TabMapChangePending = true;
+        }
+    } = false;
+
     public bool ShowLeftForeground
     {
         get;

@@ -13,6 +13,7 @@ namespace ChaosAssetManager.ViewModel;
 public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
     private static readonly DateTime Origin = DateTime.FromOADate(50);
+    private readonly Lock Sync = new();
 
     public Animation? Animation
     {
@@ -92,6 +93,8 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 
     public void Update(TimeSpan delta)
     {
+        using var @lock = Sync.EnterScope();
+
         if (Animation is null || FrameTimer is null)
             return;
 
@@ -102,13 +105,19 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
     }
 
     public TileViewModel Clone()
-        => new()
+    {
+        using var @lock = Sync.EnterScope();
+
+        var vm = new TileViewModel
         {
             LayerFlags = LayerFlags,
             TileId = TileId,
-            CurrentFrameIndex = CurrentFrameIndex,
-            FrameTimer = FrameTimer is not null ? DeepClone.CreateRequired(FrameTimer) : null
+            FrameTimer = FrameTimer is not null ? DeepClone.CreateRequired(FrameTimer) : null,
+            CurrentFrameIndex = CurrentFrameIndex
         };
+
+        return vm;
+    }
 
     public void Initialize()
     {
