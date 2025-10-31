@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -26,8 +25,6 @@ namespace ChaosAssetManager.Controls.MapEditorControls;
 public partial class MapViewerControl : IDisposable
 {
     public const int FOREGROUND_PADDING = 512;
-
-    private static readonly TimeSpan MinRenderInterval = TimeSpan.FromMilliseconds(1000.0 / 60.0); // 60 FPS max
     private readonly Lock RenderSync = new();
     private SKImage? BackgroundImage;
 
@@ -36,6 +33,9 @@ public partial class MapViewerControl : IDisposable
     private Task? ForegroundRenderTask;
     private DateTime LastBackgroundRenderTime = DateTime.MinValue;
     private DateTime LastForegroundRenderTime = DateTime.MinValue;
+    private DateTime LastRequestedBackgroundRenderTime = DateTime.MinValue;
+    private DateTime LastRequestedForegroundRenderTime = DateTime.MinValue;
+    private DateTime LastRequestedTabMapRenderTime = DateTime.MinValue;
     private DateTime LastTabMapRenderTime = DateTime.MinValue;
     private SKImage? TabMapImage;
     private Task? TabMapRenderTask;
@@ -449,7 +449,7 @@ public partial class MapViewerControl : IDisposable
     private void ElementOnPaint(object? sender, SKPaintGLSurfaceEventArgs e)
     {
         using var rendersync = RenderSync.EnterScope();
-        
+
         var canvas = e.Surface.Canvas;
 
         // All rendering is now done asynchronously in background tasks
@@ -478,7 +478,7 @@ public partial class MapViewerControl : IDisposable
             BackgroundImage.Height);
 
         var visibleRect = SKRect.Intersect(viewRect, imgRect);
-        
+
         // Use paint with no filtering for faster drawing
         using var paint = new SKPaint();
         paint.IsAntialias = false;
@@ -492,9 +492,9 @@ public partial class MapViewerControl : IDisposable
             0,
             BackgroundImage.Width,
             BackgroundImage.Height);
-        
+
         visibleRectInt.Intersect(imageBounds);
-        
+
         SKImage? bgSubset = null;
         SKImage? fgSubset = null;
         SKImage? tmSubset = null;
@@ -525,14 +525,14 @@ public partial class MapViewerControl : IDisposable
                 visibleRectInt.Left,
                 visibleRectInt.Top,
                 paint);
-        
-        if(bgSubset != BackgroundImage)
+
+        if (bgSubset != BackgroundImage)
             bgSubset?.Dispose();
-        
-        if(fgSubset != ForegroundImage)
+
+        if (fgSubset != ForegroundImage)
             fgSubset?.Dispose();
-        
-        if(tmSubset != TabMapImage)
+
+        if (tmSubset != TabMapImage)
             tmSubset?.Dispose();
     }
 
@@ -1154,82 +1154,84 @@ public partial class MapViewerControl : IDisposable
     private void QueueBackgroundRender(SKPoint mapPoint, bool leftButtonPressed)
     {
         // Rate limit: Don't render more than 60 FPS
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
-        if ((now - LastBackgroundRenderTime) < MinRenderInterval)
-            return;
+        LastRequestedBackgroundRenderTime = now;
+        ViewModel.BackgroundChangePending = false;
 
         // Don't start a new render if one is already in progress
         if (BackgroundRenderTask is { IsCompleted: false })
             return;
 
-        LastBackgroundRenderTime = now;
-
         BackgroundRenderTask = Task.Run(() =>
         {
-            // No lock needed! SKImages are immutable, so even if tiles update mid-render,
-            // we just get a mix of old/new frames which is fine and will fix itself next render
-            RenderBackground(mapPoint, leftButtonPressed);
-
-            Dispatcher.BeginInvoke(() =>
+            while (LastRequestedBackgroundRenderTime > LastBackgroundRenderTime)
             {
-                Element.Redraw();
-                ViewModel.BackgroundChangePending = false;
-            });
+                // No lock needed! SKImages are immutable, so even if tiles update mid-render,
+                // we just get a mix of old/new frames which is fine and will fix itself next render
+                RenderBackground(mapPoint, leftButtonPressed);
+                LastBackgroundRenderTime = DateTime.UtcNow;
+
+                Dispatcher.BeginInvoke(() =>
+                {
+                    Element.Redraw();
+                });
+            }
         });
     }
 
     private void QueueForegroundRender(SKPoint mapPoint, bool leftButtonPressed)
     {
         // Rate limit: Don't render more than 60 FPS
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
-        if ((now - LastForegroundRenderTime) < MinRenderInterval)
-            return;
+        LastRequestedForegroundRenderTime = now;
+        ViewModel.ForegroundChangePending = false;
 
         // Don't start a new render if one is already in progress
         if (ForegroundRenderTask is { IsCompleted: false })
             return;
 
-        LastForegroundRenderTime = now;
-
         ForegroundRenderTask = Task.Run(() =>
         {
-            // No lock needed - renders can run in parallel since they write to separate images
-            RenderForeground(mapPoint, leftButtonPressed);
-
-            Dispatcher.BeginInvoke(() =>
+            while (LastRequestedForegroundRenderTime > LastForegroundRenderTime)
             {
-                Element.Redraw();
-                ViewModel.ForegroundChangePending = false;
-            });
+                RenderForeground(mapPoint, leftButtonPressed);
+                LastForegroundRenderTime = DateTime.UtcNow;
+
+                Dispatcher.BeginInvoke(() =>
+                {
+                    Element.Redraw();
+                });
+            }
         });
     }
 
     private void QueueTabMapRender(SKPoint mapPoint, bool leftButtonPressed)
     {
         // Rate limit: Don't render more than 60 FPS
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
-        if ((now - LastTabMapRenderTime) < MinRenderInterval)
-            return;
+        LastRequestedTabMapRenderTime = now;
+        ViewModel.TabMapChangePending = false;
 
         // Don't start a new render if one is already in progress
         if (TabMapRenderTask is { IsCompleted: false })
             return;
 
-        LastTabMapRenderTime = now;
-
         TabMapRenderTask = Task.Run(() =>
         {
-            // No lock needed - renders can run in parallel since they write to separate images
-            RenderTabMap(mapPoint, leftButtonPressed);
-
-            Dispatcher.BeginInvoke(() =>
+            while (LastRequestedTabMapRenderTime > LastTabMapRenderTime)
             {
-                Element.Redraw();
-                ViewModel.TabMapChangePending = false;
-            });
+                // No lock needed - renders can run in parallel since they write to separate images
+                RenderTabMap(mapPoint, leftButtonPressed);
+                LastTabMapRenderTime = DateTime.UtcNow;
+
+                Dispatcher.BeginInvoke(() =>
+                {
+                    Element.Redraw();
+                });
+            }
         });
     }
 
