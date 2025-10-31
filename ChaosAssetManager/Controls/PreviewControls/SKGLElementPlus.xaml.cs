@@ -59,7 +59,7 @@ public sealed partial class SKGLElementPlus : IDisposable
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Black);
             canvas.SetMatrix(Matrix);
-            
+
             Paint?.Invoke(sender, e);
 
             canvas.Flush();

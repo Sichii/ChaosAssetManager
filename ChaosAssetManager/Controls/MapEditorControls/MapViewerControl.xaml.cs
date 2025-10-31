@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,9 +26,19 @@ namespace ChaosAssetManager.Controls.MapEditorControls;
 public partial class MapViewerControl : IDisposable
 {
     public const int FOREGROUND_PADDING = 512;
+
+    private static readonly TimeSpan MinRenderInterval = TimeSpan.FromMilliseconds(1000.0 / 60.0); // 60 FPS max
+    private readonly Lock RenderSync = new();
     private SKImage? BackgroundImage;
+
+    private Task? BackgroundRenderTask;
     private SKImage? ForegroundImage;
+    private Task? ForegroundRenderTask;
+    private DateTime LastBackgroundRenderTime = DateTime.MinValue;
+    private DateTime LastForegroundRenderTime = DateTime.MinValue;
+    private DateTime LastTabMapRenderTime = DateTime.MinValue;
     private SKImage? TabMapImage;
+    private Task? TabMapRenderTask;
 
     private TileGrabViewModel? HistoricalTileGrab { get; set; }
 
@@ -437,45 +448,23 @@ public partial class MapViewerControl : IDisposable
     #region Rendering
     private void ElementOnPaint(object? sender, SKPaintGLSurfaceEventArgs e)
     {
+        using var rendersync = RenderSync.EnterScope();
+        
         var canvas = e.Surface.Canvas;
 
-        var mousePoint = Element.GetMousePoint();
-        var leftButtonPressed = Mouse.LeftButton == MouseButtonState.Pressed;
-        var mapPoint = ConvertMouseToTileCoordinates(mousePoint!.Value);
+        // All rendering is now done asynchronously in background tasks
+        // This paint handler just draws the cached images
 
-        // ReSharper disable once ConvertIfStatementToSwitchStatement
-        if (ViewModel is { BackgroundChangePending: true, ForegroundChangePending: true, TabMapChangePending: true })
-            Parallel.Invoke(
-                () => RenderBackground(mapPoint, leftButtonPressed),
-                () => RenderForeground(mapPoint, leftButtonPressed),
-                () => RenderTabMap(mapPoint, leftButtonPressed));
-        else if (ViewModel is { BackgroundChangePending: true, ForegroundChangePending: true })
-            Parallel.Invoke(() => RenderBackground(mapPoint, leftButtonPressed), () => RenderForeground(mapPoint, leftButtonPressed));
-        else if (ViewModel is { BackgroundChangePending: true, TabMapChangePending: true })
-            Parallel.Invoke(() => RenderBackground(mapPoint, leftButtonPressed), () => RenderTabMap(mapPoint, leftButtonPressed));
-        else if (ViewModel is { ForegroundChangePending: true, TabMapChangePending: true })
-            Parallel.Invoke(() => RenderForeground(mapPoint, leftButtonPressed), () => RenderTabMap(mapPoint, leftButtonPressed));
-        else if (ViewModel.BackgroundChangePending)
-            RenderBackground(mapPoint, leftButtonPressed);
-        else if (ViewModel.ForegroundChangePending)
-            RenderForeground(mapPoint, leftButtonPressed);
-        else if (ViewModel.TabMapChangePending)
-            RenderTabMap(mapPoint, leftButtonPressed);
+        if (BackgroundImage is null || ForegroundImage is null || TabMapImage is null)
+            return;
 
-        /*if (ViewModel.BackgroundChangePending)
-            RenderBackground(mapPoint);
-
-        if (ViewModel.ForegroundChangePending)
-            RenderForeground(mapPoint);
-
-        if (ViewModel.TabMapChangePending)
-            RenderTabMap(mapPoint);*/
-
+        // Calculate visible portion of the map to reduce pixels drawn
         var inverted = Element.Matrix.Invert();
         var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
         var topLeft = inverted.MapPoint(new SKPoint(0, 0));
         var bottomRight = inverted.MapPoint(new SKPoint((float)Element.ActualWidth * dpiScale, (float)Element.ActualHeight * dpiScale));
 
+        // viewRect is in map space - what portion of the map is visible on screen
         var viewRect = SKRect.Create(
             topLeft.X,
             topLeft.Y,
@@ -485,20 +474,66 @@ public partial class MapViewerControl : IDisposable
         var imgRect = SKRect.Create(
             0,
             0,
-            BackgroundImage!.Width,
+            BackgroundImage.Width,
             BackgroundImage.Height);
 
         var visibleRect = SKRect.Intersect(viewRect, imgRect);
+        
+        // Use paint with no filtering for faster drawing
+        using var paint = new SKPaint();
+        paint.IsAntialias = false;
 
-        canvas.DrawImage(BackgroundImage, visibleRect, visibleRect);
-        canvas.DrawImage(ForegroundImage, visibleRect, visibleRect);
-        canvas.DrawImage(TabMapImage, visibleRect, visibleRect);
+        // Create subsets containing only visible portions - MUCH smaller GPU uploads!
+        // Clamp to actual image bounds to prevent Subset() from throwing
+        var visibleRectInt = SKRectI.Ceiling(visibleRect);
 
-        //draw tabgrid if enabled
+        var imageBounds = new SKRectI(
+            0,
+            0,
+            BackgroundImage.Width,
+            BackgroundImage.Height);
+        
+        visibleRectInt.Intersect(imageBounds);
+        
+        SKImage? bgSubset = null;
+        SKImage? fgSubset = null;
+        SKImage? tmSubset = null;
 
-        ViewModel.BackgroundChangePending = false;
-        ViewModel.ForegroundChangePending = false;
-        ViewModel.TabMapChangePending = false;
+        Parallel.Invoke(
+            () => bgSubset = BackgroundImage.Subset(visibleRectInt),
+            () => fgSubset = ForegroundImage.Subset(visibleRectInt),
+            () => tmSubset = TabMapImage.Subset(visibleRectInt));
+
+        // Draw the small subsets at the visible rect location (use float position from visibleRect)
+        if (bgSubset is not null)
+            canvas.DrawImage(
+                bgSubset,
+                visibleRectInt.Left,
+                visibleRectInt.Top,
+                paint);
+
+        if (fgSubset is not null)
+            canvas.DrawImage(
+                fgSubset,
+                visibleRectInt.Left,
+                visibleRectInt.Top,
+                paint);
+
+        if (tmSubset is not null)
+            canvas.DrawImage(
+                tmSubset,
+                visibleRectInt.Left,
+                visibleRectInt.Top,
+                paint);
+        
+        if(bgSubset != BackgroundImage)
+            bgSubset?.Dispose();
+        
+        if(fgSubset != ForegroundImage)
+            fgSubset?.Dispose();
+        
+        if(tmSubset != TabMapImage)
+            tmSubset?.Dispose();
     }
 
     private void RenderTabMap(SKPoint mouseCoordinates, bool leftButtonPressed)
@@ -632,15 +667,17 @@ public partial class MapViewerControl : IDisposable
             fgInitialDrawY += DALIB_CONSTANTS.HALF_TILE_HEIGHT;
         }
 
-        TabMapImage?.Dispose();
-        TabMapImage = SKImage.FromBitmap(bitmap);
+        var oldImage = TabMapImage;
+        var image = SKImage.FromBitmap(bitmap);
+
+        using (RenderSync.EnterScope())
+            TabMapImage = image;
+
+        oldImage?.Dispose();
     }
 
     private void RenderBackground(SKPoint mouseCoordinates, bool leftButtonPressed)
     {
-        if (ViewModel is { BackgroundChangePending: false })
-            return;
-
         var width = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_WIDTH;
         var height = (ViewModel.Bounds.Width + ViewModel.Bounds.Height + 1) * DALIB_CONSTANTS.HALF_TILE_HEIGHT + FOREGROUND_PADDING;
         var bgTiles = ViewModel.BackgroundTilesView;
@@ -693,12 +730,19 @@ public partial class MapViewerControl : IDisposable
             }
         }
 
-        BackgroundImage?.Dispose();
-        BackgroundImage = SKImage.FromBitmap(bitmap);
+        var oldImage = BackgroundImage;
+        var image = SKImage.FromBitmap(bitmap);
+
+        using (RenderSync.EnterScope())
+            BackgroundImage = image;
+
+        oldImage?.Dispose();
     }
 
     public SKImage RenderMapImage()
     {
+        using var rendersync = RenderSync.EnterScope();
+
         var dimensions = ImageHelper.CalculateRenderedImageSize(
             ViewModel.BackgroundTilesView,
             ViewModel.LeftForegroundTilesView,
@@ -880,8 +924,13 @@ public partial class MapViewerControl : IDisposable
             fgInitialDrawY += DALIB_CONSTANTS.HALF_TILE_HEIGHT;
         }
 
-        ForegroundImage?.Dispose();
-        ForegroundImage = SKImage.FromBitmap(bitmap);
+        var oldImage = ForegroundImage;
+        var image = SKImage.FromBitmap(bitmap);
+
+        using (RenderSync.EnterScope())
+            ForegroundImage = image;
+
+        oldImage?.Dispose();
     }
 
     private void HandleLeftForegroundToolHover(
@@ -1087,10 +1136,101 @@ public partial class MapViewerControl : IDisposable
         if (string.IsNullOrEmpty(e.PropertyName))
             return;
 
-        if ((e.PropertyName.EqualsI(nameof(MapViewerViewModel.BackgroundChangePending)) && ViewModel.BackgroundChangePending)
-            || (e.PropertyName.EqualsI(nameof(MapViewerViewModel.ForegroundChangePending)) && ViewModel.ForegroundChangePending)
-            || (e.PropertyName.EqualsI(nameof(MapViewerViewModel.TabMapChangePending)) && ViewModel.TabMapChangePending))
-            Element.Redraw();
+        // Calculate mouse state once for all renders
+        var mousePoint = Element.GetMousePoint();
+        var leftButtonPressed = Mouse.LeftButton == MouseButtonState.Pressed;
+        var mapPoint = mousePoint.HasValue ? ConvertMouseToTileCoordinates(mousePoint.Value) : new SKPoint(-1, -1);
+
+        if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.BackgroundChangePending)) && ViewModel.BackgroundChangePending)
+            QueueBackgroundRender(mapPoint, leftButtonPressed);
+
+        if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.ForegroundChangePending)) && ViewModel.ForegroundChangePending)
+            QueueForegroundRender(mapPoint, leftButtonPressed);
+
+        if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.TabMapChangePending)) && ViewModel.TabMapChangePending)
+            QueueTabMapRender(mapPoint, leftButtonPressed);
+    }
+
+    private void QueueBackgroundRender(SKPoint mapPoint, bool leftButtonPressed)
+    {
+        // Rate limit: Don't render more than 60 FPS
+        var now = DateTime.Now;
+
+        if ((now - LastBackgroundRenderTime) < MinRenderInterval)
+            return;
+
+        // Don't start a new render if one is already in progress
+        if (BackgroundRenderTask is { IsCompleted: false })
+            return;
+
+        LastBackgroundRenderTime = now;
+
+        BackgroundRenderTask = Task.Run(() =>
+        {
+            // No lock needed! SKImages are immutable, so even if tiles update mid-render,
+            // we just get a mix of old/new frames which is fine and will fix itself next render
+            RenderBackground(mapPoint, leftButtonPressed);
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                Element.Redraw();
+                ViewModel.BackgroundChangePending = false;
+            });
+        });
+    }
+
+    private void QueueForegroundRender(SKPoint mapPoint, bool leftButtonPressed)
+    {
+        // Rate limit: Don't render more than 60 FPS
+        var now = DateTime.Now;
+
+        if ((now - LastForegroundRenderTime) < MinRenderInterval)
+            return;
+
+        // Don't start a new render if one is already in progress
+        if (ForegroundRenderTask is { IsCompleted: false })
+            return;
+
+        LastForegroundRenderTime = now;
+
+        ForegroundRenderTask = Task.Run(() =>
+        {
+            // No lock needed - renders can run in parallel since they write to separate images
+            RenderForeground(mapPoint, leftButtonPressed);
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                Element.Redraw();
+                ViewModel.ForegroundChangePending = false;
+            });
+        });
+    }
+
+    private void QueueTabMapRender(SKPoint mapPoint, bool leftButtonPressed)
+    {
+        // Rate limit: Don't render more than 60 FPS
+        var now = DateTime.Now;
+
+        if ((now - LastTabMapRenderTime) < MinRenderInterval)
+            return;
+
+        // Don't start a new render if one is already in progress
+        if (TabMapRenderTask is { IsCompleted: false })
+            return;
+
+        LastTabMapRenderTime = now;
+
+        TabMapRenderTask = Task.Run(() =>
+        {
+            // No lock needed - renders can run in parallel since they write to separate images
+            RenderTabMap(mapPoint, leftButtonPressed);
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                Element.Redraw();
+                ViewModel.TabMapChangePending = false;
+            });
+        });
     }
 
     private void MapViewerControl_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -1129,6 +1269,12 @@ public partial class MapViewerControl : IDisposable
         }
 
         ViewModel.Refresh();
+        ViewModel.BackgroundChangePending = false;
+        ViewModel.ForegroundChangePending = false;
+        ViewModel.TabMapChangePending = false;
+        ViewModel.BackgroundChangePending = true;
+        ViewModel.ForegroundChangePending = true;
+        ViewModel.TabMapChangePending = true;
     }
     #endregion
 }

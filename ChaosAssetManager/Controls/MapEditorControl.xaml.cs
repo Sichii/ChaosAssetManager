@@ -717,7 +717,7 @@ public partial class MapEditorControl
 
     private async Task UpdateLoop()
     {
-        var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(1000d / 30d));
+        var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(1000d / 10d));
         var deltaTime = new DeltaTime();
         var waitingForArchivesDirectory = true;
 
@@ -739,7 +739,7 @@ public partial class MapEditorControl
                     && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath)
                     && waitingForArchivesDirectory)
                 {
-                    Snackbar.MessageQueue.Clear();
+                    Snackbar.MessageQueue!.Clear();
                     waitingForArchivesDirectory = false;
                     PopulateTileViewModels();
                 }

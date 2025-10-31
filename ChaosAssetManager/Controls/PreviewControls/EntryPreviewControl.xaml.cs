@@ -286,6 +286,7 @@ public sealed partial class EntryPreviewControl : IDisposable
         try
         {
             using var @lock = Sync.EnterScope();
+            using var updateLock = Sync.EnterScope();
 
             if (Disposed == 1)
                 return;

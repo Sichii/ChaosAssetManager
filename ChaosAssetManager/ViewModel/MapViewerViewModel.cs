@@ -82,16 +82,16 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
     public static MapViewerViewModel Empty { get; } = new()
     {
-        BackgroundChangePending = true,
-        ForegroundChangePending = true,
-        TabMapChangePending = true,
         PossibleBounds = [],
         Bounds = new Rectangle(
             0,
             0,
             0,
             0),
-        FromPath = ""
+        FromPath = "",
+        BackgroundChangePending = false,
+        ForegroundChangePending = false,
+        TabMapChangePending = false
     };
 
     public ObservingCollection<TileViewModel> RawBackgroundTiles { get; } = [];
