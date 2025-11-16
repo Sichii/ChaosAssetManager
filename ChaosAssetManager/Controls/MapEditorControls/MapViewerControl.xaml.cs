@@ -165,7 +165,13 @@ public partial class MapViewerControl : IDisposable
         var point = new Point(tileX, tileY);
 
         if (!ViewModel.Bounds.Contains(point))
-            return new SKPoint(-1, -1);
+        {
+            var clampedX = Math.Clamp(tileX, ViewModel.Bounds.Left, ViewModel.Bounds.Right);
+            var clampedY = Math.Clamp(tileY, ViewModel.Bounds.Top, ViewModel.Bounds.Bottom);
+            
+            //if the mouse is outside the map bounds, snap it to the closest edge
+            point = new Point(clampedX, clampedY);
+        }
 
         return new SKPoint(point.X, point.Y);
     }
@@ -312,6 +318,9 @@ public partial class MapViewerControl : IDisposable
     private void HandleSelectToolDrag(SKPoint tileCoordinates)
     {
         if (TileGrab?.SelectionStart is null)
+            return;
+
+        if (tileCoordinates == new SKPoint(-1, -1))
             return;
 
         var originalSelectionStart = TileGrab.SelectionStart.Value;
