@@ -1279,6 +1279,9 @@ public partial class MapViewerControl : IDisposable
             Element.Redraw();
         }
 
+        if ((ViewModel.Bounds.Width <= 0) || (ViewModel.Bounds.Height <= 0))
+            return;
+        
         ViewModel.Refresh();
         ViewModel.BackgroundChangePending = false;
         ViewModel.ForegroundChangePending = false;
