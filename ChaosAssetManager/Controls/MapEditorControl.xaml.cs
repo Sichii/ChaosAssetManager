@@ -16,7 +16,9 @@ using DALib.Extensions;
 using SkiaSharp;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MenuItem = System.Windows.Controls.MenuItem;
 using Rectangle = Chaos.Geometry.Rectangle;
+using DataGrid = System.Windows.Controls.DataGrid;
 
 // ReSharper disable ClassCanBeSealed.Global
 

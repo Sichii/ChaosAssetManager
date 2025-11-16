@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
+        <TargetFramework>net10.0-windows</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <UseWindowsForms>true</UseWindowsForms>
-        <LangVersion>preview</LangVersion>
+        <LangVersion>14</LangVersion>
         <ApplicationIcon>Resources\chaosAssetManager.ico</ApplicationIcon>
     </PropertyGroup>
 
