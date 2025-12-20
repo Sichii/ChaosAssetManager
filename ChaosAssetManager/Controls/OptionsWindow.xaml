@@ -5,7 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Height="150"
+        Height="220"
         Width="500"
         Background="{DynamicResource MaterialDesignPaper}"
         TextElement.FontWeight="Medium"
@@ -24,6 +24,8 @@
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -45,7 +47,27 @@
                 Content="{materialDesign:PackIcon Kind=FolderOutline, Size=18}"
                 Click="ArchivesDirectoryBtn_OnClick" />
 
-        <Button Grid.Row="1"
+        <Button x:Name="AssociateMapBtn"
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Margin="0,10,0,0"
+                Content="Associate Map Files (.map)"
+                Style="{StaticResource MaterialDesignOutlinedButton}"
+                Visibility="{Binding MapAssociationVisibility}"
+                Click="AssociateMapBtn_OnClick" />
+
+        <Button x:Name="AssociateDatBtn"
+                Grid.Row="2"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Margin="0,10,0,0"
+                Content="Associate Archive Files (.dat)"
+                Style="{StaticResource MaterialDesignOutlinedButton}"
+                Visibility="{Binding DatAssociationVisibility}"
+                Click="AssociateDatBtn_OnClick" />
+
+        <Button Grid.Row="3"
                 Grid.Column="1"
                 Content="Save"
                 Style="{StaticResource MaterialDesignOutlinedButton}"
