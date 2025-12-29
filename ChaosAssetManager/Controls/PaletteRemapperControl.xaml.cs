@@ -68,7 +68,7 @@ public partial class PaletteRemapperControl
         if (!PathHelper.Instance.ArchivePathIsValid())
             throw new InvalidOperationException("Please set the archives path in the settings");
 
-        var legendDat = ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "legend.dat");
+        var legendDat = ArchiveCache.Legend;
         var entry = legendDat["color0.tbl"];
         var colorTable = ColorTable.FromEntry(entry);
         var defaultColorEntry = colorTable[0];

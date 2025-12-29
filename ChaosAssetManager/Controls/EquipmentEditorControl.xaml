@@ -1,4 +1,4 @@
-<UserControl x:Class="ChaosAssetManager.Controls.EffectEditorControl"
+<UserControl x:Class="ChaosAssetManager.Controls.EquipmentEditorControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -13,7 +13,7 @@
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             Loaded="EffectEditorControl_OnLoaded">
+             Loaded="EquipmentEditorControl_OnLoaded">
     <Grid>
         <!-- Archive Path Not Configured Message -->
         <TextBlock x:Name="NotConfiguredMessage"
@@ -30,29 +30,57 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Left Panel: Effect List -->
+            <!-- Left Panel: Selection Controls -->
             <Border Grid.Column="0"
                     BorderBrush="{DynamicResource MaterialDesignDivider}"
                     BorderThickness="0,0,1,0">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Effect List -->
-                    <StackPanel Grid.Row="0">
-                        <TextBlock Text="Effects" Margin="0,0,0,5" />
-                        <ListView x:Name="EffectListView"
+                    <!-- Gender Toggle -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <TextBlock Text="Gender"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,5" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <RadioButton x:Name="MaleRadio"
+                                         Content="Male"
+                                         IsChecked="True"
+                                         Margin="0,0,10,0"
+                                         Checked="Gender_OnChecked" />
+                            <RadioButton x:Name="FemaleRadio"
+                                         Content="Female"
+                                         Checked="Gender_OnChecked" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Equipment Type Dropdown -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,15">
+                        <TextBlock Text="Equipment Type" Margin="0,0,0,5" />
+                        <ComboBox x:Name="EquipmentTypeCmb"
                                   HorizontalAlignment="Stretch"
-                                  MaxHeight="500"
+                                  SelectionChanged="EquipmentType_OnSelectionChanged"
+                                  Style="{StaticResource MaterialDesignComboBox}" />
+                    </StackPanel>
+
+                    <!-- Entry List -->
+                    <StackPanel Grid.Row="2">
+                        <TextBlock Text="Entries" Margin="0,0,0,5" />
+                        <ListView x:Name="EntryListView"
+                                  HorizontalAlignment="Stretch"
+                                  MaxHeight="400"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                  SelectionChanged="Effect_OnSelectionChanged" />
+                                  SelectionChanged="Entry_OnSelectionChanged" />
                     </StackPanel>
 
                     <!-- Save Button -->
                     <Button x:Name="SaveBtn"
-                            Grid.Row="1"
+                            Grid.Row="3"
                             Content="Save to Archive"
                             Margin="0,15,0,0"
                             HorizontalAlignment="Stretch"

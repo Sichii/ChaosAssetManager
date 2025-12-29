@@ -69,6 +69,11 @@ public sealed class PathHelper
     public string? PaletteRemapperPalFromPath { get; set; }
     public string? ArchiveExtractFromPath { get; set; }
     public string? ArchivesPath { get; set; }
+    public string? PanelSpritesArchivePath { get; set; }
+    public string? PanelSpritesInputPath { get; set; }
+    public string? EquipmentEditorFromPath { get; set; }
+    public string? EquipmentEditorPalFromPath { get; set; }
+    public string? EquipmentEditorToPath { get; set; }
     #endregion
 
     #region To

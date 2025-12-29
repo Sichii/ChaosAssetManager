@@ -1,9 +1,10 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Interop;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls;
 using ChaosAssetManager.Helpers;
+using RadioButton = System.Windows.Controls.RadioButton;
 using MaterialDesignThemes.Wpf;
 using WindowState = System.Windows.WindowState;
 
@@ -15,13 +16,24 @@ namespace ChaosAssetManager;
 public partial class MainWindow : Window
 {
     private Rectangle? RestoreBounds;
+    private readonly Dictionary<string, UIElement> _navContentMap = new();
 
     public MainWindow()
     {
         InitializeComponent();
 
-        Width = SystemParameters.PrimaryScreenWidth * 0.5;
-        Height = SystemParameters.PrimaryScreenHeight * 0.5;
+        Width = SystemParameters.PrimaryScreenWidth * 0.625;
+        Height = SystemParameters.PrimaryScreenHeight * 0.625;
+
+        // Map navigation items to their corresponding content
+        _navContentMap["ArchivesNav"] = ArchivesView;
+        _navContentMap["ConvertNav"] = ConvertView;
+        _navContentMap["PanelSpritesNav"] = PanelSpritesView;
+        _navContentMap["EffectEditorNav"] = EffectEditorView;
+        _navContentMap["EquipmentEditorNav"] = EquipmentEditorView;
+        _navContentMap["MetaFileEditorNav"] = MetaFileEditorView;
+        _navContentMap["PaletteRemapperNav"] = PaletteRemapperView;
+        _navContentMap["MapEditorNav"] = MapEditorView;
     }
 
     private void CloseBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
@@ -40,24 +52,47 @@ public partial class MainWindow : Window
 
             if (extension.EqualsI(".dat"))
             {
-                MainTabControl.SelectedItem = ArchivesTab;
+                NavigateTo(ArchivesNav);
                 ArchivesView.LoadArchive(args[0]);
             } else if (extension.EqualsI(".map"))
             {
-                MainTabControl.SelectedItem = MapEditorTab;
+                NavigateTo(MapEditorNav);
                 MapEditorView.LoadMap(args[0]);
             } else if (string.IsNullOrEmpty(extension))
             {
-                MainTabControl.SelectedItem = MetaFileEditorTab;
+                NavigateTo(MetaFileEditorNav);
                 MetaFileEditorView.LoadMetaData(args[0]);
             }
         } else if (args.All(arg => Path.GetExtension(arg)
                                        .EqualsI(".map")))
             foreach (var arg in args)
             {
-                MainTabControl.SelectedItem = MapEditorTab;
+                NavigateTo(MapEditorNav);
                 MapEditorView.LoadMap(arg);
             }
+    }
+
+    private void NavigateTo(RadioButton navButton)
+    {
+        navButton.IsChecked = true;
+
+        // If navigating to a sub-item, expand its parent
+        if (navButton == EffectEditorNav || navButton == EquipmentEditorNav || navButton == MetaFileEditorNav || navButton == MapEditorNav)
+            EditorsExpander.IsExpanded = true;
+    }
+
+    private void NavItem_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton radioButton)
+            return;
+
+        // Hide all content
+        foreach (var content in _navContentMap.Values)
+            content.Visibility = Visibility.Collapsed;
+
+        // Show selected content
+        if (_navContentMap.TryGetValue(radioButton.Name, out var selectedContent))
+            selectedContent.Visibility = Visibility.Visible;
     }
 
     private void MainWindow_OnStateChanged(object? sender, EventArgs e)

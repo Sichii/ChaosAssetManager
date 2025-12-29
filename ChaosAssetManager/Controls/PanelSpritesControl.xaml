@@ -1,0 +1,119 @@
+<UserControl x:Class="ChaosAssetManager.Controls.PanelSpritesControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="700"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             Loaded="PanelSpritesControl_OnLoaded">
+    <Grid>
+        <!-- Archive Path Not Configured Message -->
+        <TextBlock x:Name="NotConfiguredMessage"
+                   Text="Please configure the Archives Directory in Settings (gear icon)"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Visibility="Collapsed" />
+
+        <!-- Info Message -->
+        <TextBlock x:Name="InfoMessage"
+                   Text="Select a folder containing PNG images. Images will be automatically trimmed, resized to 32x32, centered, and grouped into shared palettes."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="500"
+                   Margin="20"
+                   FontSize="13"
+                   Opacity="0.7" />
+
+        <!-- Main Content -->
+        <Grid x:Name="MainContent"
+              Margin="20"
+              VerticalAlignment="Center"
+              HorizontalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Input Path -->
+            <TextBlock Grid.Row="0"
+                       Grid.Column="0"
+                       Text="Input Path:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,10" />
+            <TextBox x:Name="InputPathTxt"
+                     Grid.Row="0"
+                     Grid.Column="1"
+                     Margin="0,0,10,10"
+                     Style="{StaticResource MaterialDesignTextBox}"
+                     ToolTip="Path to folder containing PNG panel sprite images" />
+            <Button x:Name="BrowseInputBtn"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Content="Browse"
+                    Margin="0,0,0,10"
+                    Click="BrowseInputBtn_OnClick"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+
+            <!-- Options -->
+            <StackPanel Grid.Row="1"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        HorizontalAlignment="Center"
+                        Margin="0,10,0,10">
+                <Label Content="Dyeable Palette"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+                <ToggleButton x:Name="DyeableToggle"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              ToolTip="Enable if importing panel sprites for dyeable items. This will automatically rearrange the palette and place dyeable colors in the correct location. Only the exact RGB values of the default dyeable colors will be considered as dyeable for the purposes of arranging the palette." />
+            </StackPanel>
+
+            <!-- Import Button -->
+            <Button x:Name="ImportBtn"
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Content="Import Panel Sprites"
+                    Margin="0,20,0,0"
+                    HorizontalAlignment="Center"
+                    Click="ImportBtn_OnClick"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+        </Grid>
+
+        <!-- Bottom Info Message -->
+        <TextBlock x:Name="BottomInfoMessage"
+                   Text="Images and palettes will be saved to legend.dat in the configured Archives Directory, starting with the first available empty slot among the item EPFs. The palette table will also be automatically patched."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="500"
+                   Margin="20,20,20,40"
+                   FontSize="13"
+                   Opacity="0.7" />
+
+        <!-- Snackbar -->
+        <materialDesign:Snackbar x:Name="Snackbar"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Bottom"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>

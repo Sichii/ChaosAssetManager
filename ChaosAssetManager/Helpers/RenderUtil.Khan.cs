@@ -42,9 +42,11 @@ public static partial class RenderUtil
             _   => letter
         };
 
+        //bodies
         if (letter.EqualsI("m"))
             return RenderKhanMEpf(entry, archiveRoot);
 
+        //pants
         if (letter.EqualsI("n"))
             return RenderKhanNEpf(entry, archiveRoot);
 

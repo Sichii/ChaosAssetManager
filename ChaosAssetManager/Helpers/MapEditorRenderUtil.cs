@@ -44,7 +44,7 @@ public static class MapEditorRenderUtil
 
         tileIndex--;
 
-        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "ia.dat")["sotp.dat"]
+        Sotp ??= ArchiveCache.Ia["sotp.dat"]
                              .ToSpan()
                              .ToArray()
                              .Select(value => (TileFlags)value)
@@ -64,7 +64,7 @@ public static class MapEditorRenderUtil
 
         tileIndex--;
 
-        Sotp ??= ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "ia.dat")["sotp.dat"]
+        Sotp ??= ArchiveCache.Ia["sotp.dat"]
                              .ToSpan()
                              .ToArray()
                              .Select(value => (TileFlags)value)
@@ -83,8 +83,7 @@ public static class MapEditorRenderUtil
 
         try
         {
-            var archiveRoot = PathHelper.Instance.ArchivesPath!;
-            var archive = ArchiveCache.GetArchive(archiveRoot, "seo.dat");
+            var archive = ArchiveCache.Seo;
             var mapImageCache = snowTileSet ? SnowMapImageCache : MapImageCache;
 
             Tileset ??= Tileset.FromArchive("tilea.bmp", archive);
@@ -146,8 +145,7 @@ public static class MapEditorRenderUtil
 
         try
         {
-            var archiveRoot = PathHelper.Instance.ArchivesPath!;
-            var archive = ArchiveCache.GetArchive(archiveRoot, "ia.dat");
+            var archive = ArchiveCache.Ia;
             var prefix = snowTileSet ? "sts" : "stc";
             var mapImageCache = snowTileSet ? SnowMapImageCache : MapImageCache;
 

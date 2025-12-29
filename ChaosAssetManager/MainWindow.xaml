@@ -1,4 +1,4 @@
-﻿<Window x:Class="ChaosAssetManager.MainWindow"
+<Window x:Class="ChaosAssetManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -28,6 +28,20 @@
                       ResizeBorderThickness="5"
                       UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <Style x:Key="NavButtonStyle" TargetType="RadioButton" BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style x:Key="SubNavButtonStyle" TargetType="RadioButton" BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="32,0,16,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -96,63 +110,108 @@
                     ToolTip="Close" />
         </StackPanel>
 
-        <TabControl Grid.Row="1"
-                    x:Name="MainTabControl"
-                    HorizontalContentAlignment="Left"
-                    TabStripPlacement="Left"
-                    Style="{StaticResource MaterialDesignTabControl}">
-            <TabItem Header="Archives"
-                     Name="ArchivesTab"
-                     IsSelected="true"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:ArchivesControl x:Name="ArchivesView" />
-            </TabItem>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <TabItem Header="Convert"
-                     Name="ConvertTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:ConvertControl x:Name="ConvertView" />
-            </TabItem>
+            <!-- Left Navigation Panel -->
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel MinWidth="150">
+                    <RadioButton x:Name="ArchivesNav"
+                                 Content="Archives"
+                                 GroupName="Navigation"
+                                 IsChecked="True"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavItem_Checked" />
 
-            <TabItem Header="Effect Editor"
-                     Name="EffectEditorTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:EffectEditorControl x:Name="EffectEditorView" />
-            </TabItem>
+                    <RadioButton x:Name="ConvertNav"
+                                 Content="Convert"
+                                 GroupName="Navigation"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavItem_Checked" />
 
-            <TabItem Header="Equipment Editor"
-                     Name="EquipmentEditorTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:EffectEditorControl x:Name="EquipmentEditorView" />
-            </TabItem>
+                    <!-- Import Expander -->
+                    <Expander Header="Import"
+                              x:Name="ImportExpander"
+                              Padding="0"
+                              HorizontalAlignment="Stretch">
+                        <StackPanel>
+                            <RadioButton x:Name="PanelSpritesNav"
+                                         Content="Panel Sprites"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+                        </StackPanel>
+                    </Expander>
 
-            <TabItem Header="Palette Remapper"
-                     Name="PaletteRemapperTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:PaletteRemapperControl x:Name="PaletteRemapperView" />
-            </TabItem>
+                    <!-- Editors Expander -->
+                    <Expander Header="Edit"
+                              x:Name="EditorsExpander"
+                              Padding="0"
+                              HorizontalAlignment="Stretch">
+                        <StackPanel>
+                            <RadioButton x:Name="EffectEditorNav"
+                                         Content="Effect Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
 
-            <TabItem Header="MetaFile Editor"
-                     Name="MetaFileEditorTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:MetaFileEditorControl x:Name="MetaFileEditorView" />
-            </TabItem>
+                            <RadioButton x:Name="EquipmentEditorNav"
+                                         Content="Equipment Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
 
-            <TabItem Header="Mpf Creator"
-                     Name="MpfCreatorTab"
-                     Style="{StaticResource MaterialDesignTabItem}" />
+                            <RadioButton x:Name="MetaFileEditorNav"
+                                         Content="MetaFile Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
 
-            <TabItem Header="Ability Icons"
-                     Name="AbilityIconCreatorTab"
-                     Style="{StaticResource MaterialDesignTabItem}" />
+                            <RadioButton x:Name="MapEditorNav"
+                                         Content="Map Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+                        </StackPanel>
+                    </Expander>
 
-            <TabItem Header="Map Editor"
-                     Name="MapEditorTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <controls:MapEditorControl x:Name="MapEditorView" />
-            </TabItem>
+                    <RadioButton x:Name="PaletteRemapperNav"
+                                 Content="Palette Remapper"
+                                 GroupName="Navigation"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavItem_Checked" />
 
-        </TabControl>
+                    <RadioButton x:Name="MpfCreatorNav"
+                                 Content="Mpf Creator"
+                                 GroupName="Navigation"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavItem_Checked" />
+
+                    <RadioButton x:Name="AbilityIconsNav"
+                                 Content="Ability Icons"
+                                 GroupName="Navigation"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavItem_Checked" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Content Area -->
+            <Grid Grid.Column="1">
+                <controls:ArchivesControl x:Name="ArchivesView" Visibility="Visible" />
+                <controls:ConvertControl x:Name="ConvertView" Visibility="Collapsed" />
+                <controls:PanelSpritesControl x:Name="PanelSpritesView" Visibility="Collapsed" />
+                <controls:EffectEditorControl x:Name="EffectEditorView" Visibility="Collapsed" />
+                <controls:EquipmentEditorControl x:Name="EquipmentEditorView" Visibility="Collapsed" />
+                <controls:PaletteRemapperControl x:Name="PaletteRemapperView" Visibility="Collapsed" />
+                <controls:MetaFileEditorControl x:Name="MetaFileEditorView" Visibility="Collapsed" />
+                <controls:MapEditorControl x:Name="MapEditorView" Visibility="Collapsed" />
+            </Grid>
+        </Grid>
 
         <Border x:Name="WindowBorder"
                 Grid.Row="0"

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ChaosAssetManager.Controls.EpfEquipmentEditorControl"
+<UserControl x:Class="ChaosAssetManager.Controls.EpfEquipmentEditorControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,8 +6,8 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:previewControls="clr-namespace:ChaosAssetManager.Controls.PreviewControls"
              mc:Ignorable="d"
-             d:DesignHeight="400"
-             d:DesignWidth="700"
+             d:DesignHeight="625"
+             d:DesignWidth="1125"
              Background="{DynamicResource MaterialDesignPaper}"
              TextElement.FontWeight="Medium"
              TextElement.FontSize="14"
@@ -15,208 +15,127 @@
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" MinWidth="275" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0"
-              materialDesign:MenuAssist.TopLevelMenuItemHeight="30">
-            <MenuItem x:Name="Load"
-                      Header="Load"
-                      Padding="10 0 10 0"
-                      Click="Load_OnClick" />
+        <!-- Left Panel: Controls -->
+        <Grid Grid.Column="0" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <MenuItem x:Name="Save"
-                      Header="Save"
-                      Padding="10 0 10 0"
-                      Click="Save_OnClick" />
-        </Menu>
+            <!-- Direction Selector -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <TextBlock Text="Direction" Margin="0,0,0,3" />
+                <ComboBox x:Name="DirectionCmb"
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="Direction_OnSelectionChanged"
+                          Style="{StaticResource MaterialDesignComboBox}">
+                    <ComboBoxItem Content="Up" />
+                    <ComboBoxItem Content="Right" IsSelected="True" />
+                    <ComboBoxItem Content="Down" />
+                    <ComboBoxItem Content="Left" />
+                </ComboBox>
+            </StackPanel>
 
-        <TabControl Grid.Row="1"
-                    x:Name="EditorTabControl"
-                    HorizontalContentAlignment="Left"
-                    Style="{StaticResource MaterialDesignTabControl}"
-                    Visibility="Hidden">
-            <TabItem Header="File"
-                     Name="FileTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-                <Grid VerticalAlignment="Stretch"
-                      HorizontalAlignment="Stretch">
+            <!-- Frame Position -->
+            <GroupBox Grid.Row="1" Header="Frame Position" Margin="0,0,0,10" Padding="5">
+                <StackPanel>
+                    <Grid HorizontalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="32" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="32" />
+                        </Grid.RowDefinitions>
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Content="{materialDesign:PackIcon Kind=ArrowUp}"
+                                Click="MoveUp_OnClick"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="1" Grid.Column="0"
+                                Content="{materialDesign:PackIcon Kind=ArrowLeft}"
+                                Click="MoveLeft_OnClick"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="1" Grid.Column="2"
+                                Content="{materialDesign:PackIcon Kind=ArrowRight}"
+                                Click="MoveRight_OnClick"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="2" Grid.Column="1"
+                                Content="{materialDesign:PackIcon Kind=ArrowDown}"
+                                Click="MoveDown_OnClick"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                        <TextBlock Text="Show Bounds"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,5,0" />
+                        <ToggleButton x:Name="ShowBoundsChk"
+                                      VerticalAlignment="Center"
+                                      Checked="ShowBoundsChk_OnChecked"
+                                      Unchecked="ShowBoundsChk_OnChecked" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Animation Selector and Play/Pause -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                <TextBlock Text="Animation" Margin="0,0,0,3" />
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto"
-                                          MinWidth="125" />
-                        <ColumnDefinition Width="50" />
                         <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0"
-                                VerticalAlignment="Center">
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Bottom"
-                               Margin="5"
-                               Content="PixelWidth:" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="PixekHeight:" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1"
-                                VerticalAlignment="Center">
-                        <TextBox x:Name="PixelWidthTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EpfFileViewModel.PixelWidth}" />
-                        <TextBox x:Name="PixelHeightTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EpfFileViewModel.PixelHeight}" />
-                    </StackPanel>
-
-                    <Button Grid.Column="1"
-                            x:Name="ImageApplyBtn"
-                            Content="Apply"
-                            VerticalAlignment="Bottom"
-                            HorizontalAlignment="Right"
-                            Margin="10"
-                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                            Click="ImageApplyBtn_OnClick" />
-
-                    <previewControls:SKGLElementPlus Grid.Column="3"
-                                                     x:Name="ImageRenderElement"
-                                                     Margin="10"
-                                                     MinWidth="250"
-                                                     MinHeight="250"
-                                                     Paint="ImageRenderElement_OnPaint"
-                                                     Loaded="ImageRenderElement_OnElementLoaded" />
-
-                </Grid>
-            </TabItem>
-            <TabItem Header="Frames"
-                     Name="FramesTab"
-                     Style="{StaticResource MaterialDesignTabItem}">
-
-                <Grid VerticalAlignment="Stretch"
-                      HorizontalAlignment="Stretch">
-                    <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto"
-                                          MinWidth="125" />
-                        <ColumnDefinition Width="50" />
-                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-
-                    <ListView Grid.Column="0"
-                              x:Name="FramesListView"
-                              HorizontalAlignment="Left"
-                              MinWidth="50"
-                              ScrollViewer.VerticalScrollBarVisibility="Visible"
-                              SelectedItem="{Binding SelectedFrameIndex}" />
-
-                    <StackPanel Grid.Column="1"
-                                VerticalAlignment="Center">
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Bottom"
-                               Margin="5"
-                               Content="Left:"
-                               Foreground="Yellow"
-                               ToolTip="The lowest X coordinate of the frame" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="Top:"
-                               Foreground="Yellow"
-                               ToolTip="The lowest Y coordinate of the frame" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="Right:"
-                               Foreground="Yellow"
-                               ToolTip="The highest X coordinate of the frame" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Top"
-                               Margin="5"
-                               Content="Bottom:"
-                               Foreground="Yellow"
-                               ToolTip="The highest Y coordinate of the frame" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Bottom"
-                               Margin="5"
-                               Content="CenterX:"
-                               Foreground="Fuchsia"
-                               ToolTip="The 'X' of the point within the ImageFrame to align with the center of the screen" />
-                        <Label HorizontalAlignment="Right"
-                               VerticalAlignment="Bottom"
-                               Margin="5"
-                               Content="CenterY:"
-                               Foreground="Fuchsia"
-                               ToolTip="The 'Y' of the point within the ImageFrame to align with the center of the screen" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2"
-                                VerticalAlignment="Center">
-                        <TextBox x:Name="LeftTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EpfFrameViewModel.Left, FallbackValue=''}" />
-                        <TextBox x:Name="TopTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EpfFrameViewModel.Top, FallbackValue=''}" />
-                        <TextBox x:Name="RightTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EpfFrameViewModel.Right, FallbackValue=''}" />
-                        <TextBox x:Name="BottomTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding EpfFrameViewModel.Bottom, FallbackValue=''}" />
-                        <TextBox x:Name="CenterXTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding CurrentCenterX, FallbackValue=''}" />
-                        <TextBox x:Name="CenterYTbox"
-                                 VerticalAlignment="Top"
-                                 Margin="5"
-                                 Foreground="{DynamicResource MaterialDesignBody}"
-                                 Text="{Binding CurrentCenterY, FallbackValue=''}" />
-                    </StackPanel>
-
-                    <Button Grid.Column="2"
-                            x:Name="FrameApplyBtn"
-                            Content="Apply"
-                            VerticalAlignment="Bottom"
-                            HorizontalAlignment="Right"
-                            Margin="10"
-                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                            Click="FrameApplyBtn_OnClick" />
-
-                    <previewControls:SKGLElementPlus Grid.Column="4"
-                                                     x:Name="FrameRenderElement"
-                                                     Margin="10"
-                                                     MinWidth="250"
-                                                     MinHeight="250"
-                                                     Paint="FrameRenderElement_OnPaint"
-                                                     Loaded="FrameRenderElement_OnElementLoaded" />
+                    <ComboBox x:Name="AnimationCmb"
+                              Grid.Column="0"
+                              SelectionChanged="Animation_OnSelectionChanged"
+                              Style="{StaticResource MaterialDesignComboBox}" />
+                    <Button x:Name="PlayPauseBtn"
+                            Grid.Column="1"
+                            Content="{materialDesign:PackIcon Kind=Play}"
+                            Margin="10,0,0,0"
+                            Click="PlayPause_OnClick"
+                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
                 </Grid>
-            </TabItem>
-        </TabControl>
+            </StackPanel>
 
-        <materialDesign:Snackbar Name="Snackbar"
-                                 Grid.ColumnSpan="99"
-                                 Grid.RowSpan="99"
+            <!-- Frame Selector -->
+            <StackPanel Grid.Row="3">
+                <TextBlock Text="Frame" Margin="0,0,0,3" />
+                <ListView x:Name="FramesListView"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          SelectionChanged="Frame_OnSelectionChanged" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Right Panel: Preview -->
+        <previewControls:SKGLElementPlus Grid.Column="1"
+                                         x:Name="PreviewElement"
+                                         Margin="10"
+                                         Paint="PreviewElement_OnPaint"
+                                         Loaded="PreviewElement_OnLoaded" />
+
+        <materialDesign:Snackbar x:Name="Snackbar"
+                                 Grid.Column="0"
+                                 Grid.ColumnSpan="2"
                                  HorizontalAlignment="Center"
-                                 VerticalAlignment="Center"
-                                 Margin="0"
+                                 VerticalAlignment="Bottom"
                                  MessageQueue="{materialDesign:MessageQueue}" />
     </Grid>
 </UserControl>

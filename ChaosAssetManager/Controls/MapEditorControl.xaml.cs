@@ -414,8 +414,8 @@ public partial class MapEditorControl
         if (Interlocked.CompareExchange(ref IsPopulated, true, false))
             return;
 
-        var iaDat = ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "ia.dat");
-        var seoDat = ArchiveCache.GetArchive(PathHelper.Instance.ArchivesPath!, "seo.dat");
+        var iaDat = ArchiveCache.Ia;
+        var seoDat = ArchiveCache.Seo;
 
         var tileset = Tileset.FromArchive("tilea.bmp", seoDat);
         var backgroundCount = tileset.Count;

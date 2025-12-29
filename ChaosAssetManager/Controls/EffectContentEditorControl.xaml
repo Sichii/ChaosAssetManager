@@ -1,0 +1,238 @@
+<UserControl x:Class="ChaosAssetManager.Controls.EffectContentEditorControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:previewControls="clr-namespace:ChaosAssetManager.Controls.PreviewControls"
+             mc:Ignorable="d"
+             d:DesignHeight="625"
+             d:DesignWidth="700"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" MinWidth="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Panel: Controls -->
+        <Grid Grid.Column="0" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Direction Selector -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <TextBlock Text="Direction" Margin="0,0,0,3" />
+                <ComboBox x:Name="DirectionCmb"
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="Direction_OnSelectionChanged"
+                          Style="{StaticResource MaterialDesignComboBox}">
+                    <ComboBoxItem Content="Up" />
+                    <ComboBoxItem Content="Right" IsSelected="True" />
+                    <ComboBoxItem Content="Down" />
+                    <ComboBoxItem Content="Left" />
+                </ComboBox>
+            </StackPanel>
+
+            <!-- EFA Settings (hidden for EPF) -->
+            <GroupBox Grid.Row="1"
+                      Header="Animation Settings"
+                      Margin="0,0,0,10"
+                      Padding="5"
+                      Visibility="{Binding EfaSettingsVisibility}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <TextBlock Text="Blending Type" Margin="0,0,0,3" />
+                            <ComboBox x:Name="BlendingTypeCmb"
+                                      HorizontalAlignment="Stretch"
+                                      SelectionChanged="BlendingType_OnSelectionChanged"
+                                      Style="{StaticResource MaterialDesignComboBox}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                            <TextBlock Text="Interval (ms)" Margin="0,0,0,3" />
+                            <TextBox x:Name="IntervalTbox"
+                                     Text="{Binding FrameIntervalMs, UpdateSourceTrigger=PropertyChanged}"
+                                     HorizontalAlignment="Stretch"
+                                     Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Movement Buttons -->
+            <Grid Grid.Row="2" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Frame Position -->
+                <GroupBox Grid.Column="0" Header="Frame Position" Padding="5" Margin="0,0,5,0">
+                    <Grid HorizontalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="32" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="32" />
+                        </Grid.RowDefinitions>
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Content="{materialDesign:PackIcon Kind=ArrowUp}"
+                                Click="MoveFrameUp_OnClick"
+                                Background="#FFFFCC00"
+                                Foreground="Black"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="1" Grid.Column="0"
+                                Content="{materialDesign:PackIcon Kind=ArrowLeft}"
+                                Click="MoveFrameLeft_OnClick"
+                                Background="#FFFFCC00"
+                                Foreground="Black"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <ToggleButton x:Name="MoveAllFramesChk"
+                                      Grid.Row="1" Grid.Column="1"
+                                      ToolTip="Move all frames" />
+                        <Button Grid.Row="1" Grid.Column="2"
+                                Content="{materialDesign:PackIcon Kind=ArrowRight}"
+                                Click="MoveFrameRight_OnClick"
+                                Background="#FFFFCC00"
+                                Foreground="Black"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="2" Grid.Column="1"
+                                Content="{materialDesign:PackIcon Kind=ArrowDown}"
+                                Click="MoveFrameDown_OnClick"
+                                Background="#FFFFCC00"
+                                Foreground="Black"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                    </Grid>
+                </GroupBox>
+
+                <!-- Center Point -->
+                <GroupBox Grid.Column="1" Header="Center Point" Padding="5" Margin="5,0,0,0">
+                    <Grid HorizontalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="32" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="32" />
+                        </Grid.RowDefinitions>
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Content="{materialDesign:PackIcon Kind=ArrowUp}"
+                                Click="MoveCenterUp_OnClick"
+                                Background="#FFFF00FF"
+                                Foreground="White"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="1" Grid.Column="0"
+                                Content="{materialDesign:PackIcon Kind=ArrowLeft}"
+                                Click="MoveCenterLeft_OnClick"
+                                Background="#FFFF00FF"
+                                Foreground="White"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <ToggleButton x:Name="MoveAllCentersChk"
+                                      Grid.Row="1" Grid.Column="1"
+                                      ToolTip="Move all center points" />
+                        <Button Grid.Row="1" Grid.Column="2"
+                                Content="{materialDesign:PackIcon Kind=ArrowRight}"
+                                Click="MoveCenterRight_OnClick"
+                                Background="#FFFF00FF"
+                                Foreground="White"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                        <Button Grid.Row="2" Grid.Column="1"
+                                Content="{materialDesign:PackIcon Kind=ArrowDown}"
+                                Click="MoveCenterDown_OnClick"
+                                Background="#FFFF00FF"
+                                Foreground="White"
+                                Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
+                                Padding="0" />
+                    </Grid>
+                </GroupBox>
+            </Grid>
+
+            <!-- Frame Selector with Play/Pause -->
+            <StackPanel Grid.Row="3">
+                <Grid Margin="0,0,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Frames"
+                               VerticalAlignment="Center" />
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,10,0">
+                        <TextBlock Text="Bounds"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,5,0" />
+                        <ToggleButton x:Name="ShowBoundsChk"
+                                      VerticalAlignment="Center"
+                                      Checked="ShowBoundsChk_OnChecked"
+                                      Unchecked="ShowBoundsChk_OnChecked" />
+                    </StackPanel>
+
+                    <Button x:Name="PlayPauseBtn"
+                            Grid.Column="2"
+                            Content="{materialDesign:PackIcon Kind=Play}"
+                            Click="PlayPause_OnClick"
+                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+                </Grid>
+
+                <ListView x:Name="FramesListView"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          MaxHeight="300"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          SelectionChanged="Frame_OnSelectionChanged" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Right Panel: Preview -->
+        <previewControls:SKGLElementPlus Grid.Column="1"
+                                         x:Name="PreviewElement"
+                                         Margin="10"
+                                         Paint="PreviewElement_OnPaint"
+                                         Loaded="PreviewElement_OnLoaded" />
+
+        <materialDesign:Snackbar x:Name="Snackbar"
+                                 Grid.Column="0"
+                                 Grid.ColumnSpan="2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Bottom"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>
