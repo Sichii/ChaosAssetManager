@@ -41,14 +41,20 @@
                     </Grid.RowDefinitions>
 
                     <!-- Effect List -->
-                    <StackPanel Grid.Row="0">
-                        <TextBlock Text="Effects" Margin="0,0,0,5" />
+                    <Grid Grid.Row="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="Effects"
+                                   Margin="0,0,0,5" />
                         <ListView x:Name="EffectListView"
+                                  Grid.Row="1"
                                   HorizontalAlignment="Stretch"
-                                  MaxHeight="500"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
                                   SelectionChanged="Effect_OnSelectionChanged" />
-                    </StackPanel>
+                    </Grid>
 
                     <!-- Save Button -->
                     <Button x:Name="SaveBtn"

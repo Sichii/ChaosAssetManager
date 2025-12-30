@@ -16,6 +16,7 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         StateChanged="MainWindow_OnStateChanged"
         Loaded="MainWindow_OnLoaded"
+        Activated="MainWindow_OnActivated"
         WindowStyle="None"
         AllowsTransparency="false"
         ResizeMode="CanResize"
@@ -30,16 +31,27 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <Style x:Key="NavButtonStyle" TargetType="RadioButton" BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
-            <Setter Property="Height" Value="40" />
-            <Setter Property="Padding" Value="16,0" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Style x:Key="NavButtonStyle"
+               TargetType="RadioButton"
+               BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
+            <Setter Property="Height"
+                    Value="40" />
+            <Setter Property="Padding"
+                    Value="16,0" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
         </Style>
-        <Style x:Key="SubNavButtonStyle" TargetType="RadioButton" BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
-            <Setter Property="Height" Value="36" />
-            <Setter Property="Padding" Value="32,0,16,0" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="FontSize" Value="13" />
+        <Style x:Key="SubNavButtonStyle"
+               TargetType="RadioButton"
+               BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
+            <Setter Property="Height"
+                    Value="36" />
+            <Setter Property="Padding"
+                    Value="32,0,16,0" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
+            <Setter Property="FontSize"
+                    Value="13" />
         </Style>
     </Window.Resources>
 
@@ -61,6 +73,16 @@
                        Margin="5"
                        Text="Chaos Asset Manager" />
         </StackPanel>
+
+        <TextBlock x:Name="ArchivePathLabel"
+                   Grid.Row="0"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Center"
+                   TextAlignment="Center"
+                   TextTrimming="CharacterEllipsis"
+                   FontSize="11"
+                   Opacity="0.7"
+                   Margin="150,0,150,0" />
 
         <StackPanel Grid.Row="0"
                     Orientation="Horizontal"
@@ -145,6 +167,18 @@
                                          GroupName="Navigation"
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="EquipmentImportNav"
+                                         Content="Equipment"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="NPCImportNav"
+                                         Content="NPCs"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
                         </StackPanel>
                     </Expander>
 
@@ -162,6 +196,12 @@
 
                             <RadioButton x:Name="EquipmentEditorNav"
                                          Content="Equipment Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="NPCEditorNav"
+                                         Content="NPC Editor"
                                          GroupName="Navigation"
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
@@ -186,30 +226,33 @@
                                  Style="{StaticResource NavButtonStyle}"
                                  Checked="NavItem_Checked" />
 
-                    <RadioButton x:Name="MpfCreatorNav"
-                                 Content="Mpf Creator"
-                                 GroupName="Navigation"
-                                 Style="{StaticResource NavButtonStyle}"
-                                 Checked="NavItem_Checked" />
-
-                    <RadioButton x:Name="AbilityIconsNav"
-                                 Content="Ability Icons"
-                                 GroupName="Navigation"
-                                 Style="{StaticResource NavButtonStyle}"
-                                 Checked="NavItem_Checked" />
                 </StackPanel>
             </ScrollViewer>
 
             <!-- Content Area -->
             <Grid Grid.Column="1">
-                <controls:ArchivesControl x:Name="ArchivesView" Visibility="Visible" />
-                <controls:ConvertControl x:Name="ConvertView" Visibility="Collapsed" />
-                <controls:PanelSpritesControl x:Name="PanelSpritesView" Visibility="Collapsed" />
-                <controls:EffectEditorControl x:Name="EffectEditorView" Visibility="Collapsed" />
-                <controls:EquipmentEditorControl x:Name="EquipmentEditorView" Visibility="Collapsed" />
-                <controls:PaletteRemapperControl x:Name="PaletteRemapperView" Visibility="Collapsed" />
-                <controls:MetaFileEditorControl x:Name="MetaFileEditorView" Visibility="Collapsed" />
-                <controls:MapEditorControl x:Name="MapEditorView" Visibility="Collapsed" />
+                <controls:ArchivesControl x:Name="ArchivesView"
+                                          Visibility="Visible" />
+                <controls:ConvertControl x:Name="ConvertView"
+                                         Visibility="Collapsed" />
+                <controls:PanelSpritesControl x:Name="PanelSpritesView"
+                                              Visibility="Collapsed" />
+                <controls:EquipmentImportControl x:Name="EquipmentImportView"
+                                                 Visibility="Collapsed" />
+                <controls:NPCImportControl x:Name="NPCImportView"
+                                           Visibility="Collapsed" />
+                <controls:EffectEditorControl x:Name="EffectEditorView"
+                                              Visibility="Collapsed" />
+                <controls:EquipmentEditorControl x:Name="EquipmentEditorView"
+                                                 Visibility="Collapsed" />
+                <controls:NPCEditorControl x:Name="NPCEditorView"
+                                           Visibility="Collapsed" />
+                <controls:PaletteRemapperControl x:Name="PaletteRemapperView"
+                                                 Visibility="Collapsed" />
+                <controls:MetaFileEditorControl x:Name="MetaFileEditorView"
+                                                Visibility="Collapsed" />
+                <controls:MapEditorControl x:Name="MapEditorView"
+                                           Visibility="Collapsed" />
             </Grid>
         </Grid>
 

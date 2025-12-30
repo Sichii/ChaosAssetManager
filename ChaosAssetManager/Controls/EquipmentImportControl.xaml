@@ -1,0 +1,180 @@
+<UserControl x:Class="ChaosAssetManager.Controls.EquipmentImportControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="700"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             Loaded="EquipmentImportControl_OnLoaded">
+    <Grid>
+        <!-- Archive Path Not Configured Message -->
+        <TextBlock x:Name="NotConfiguredMessage"
+                   Text="Please configure the Archives Directory in Settings (gear icon)"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Visibility="Collapsed" />
+
+        <!-- Info Message -->
+        <TextBlock x:Name="InfoMessage"
+                   Text="Select a folder containing animation subdirectories (01, 02, 03, 04, b, c, d, e, f) with PNG images. Images will be converted to EPF format and imported into the appropriate Khan archive."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="550"
+                   Margin="20"
+                   FontSize="13"
+                   Opacity="0.7" />
+
+        <!-- Main Content -->
+        <Grid x:Name="MainContent"
+              Margin="20"
+              VerticalAlignment="Center"
+              HorizontalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Input Path -->
+            <TextBlock Grid.Row="0"
+                       Grid.Column="0"
+                       Text="Input Path:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,10" />
+            <TextBox x:Name="InputPathTxt"
+                     Grid.Row="0"
+                     Grid.Column="1"
+                     Margin="0,0,10,10"
+                     Style="{StaticResource MaterialDesignTextBox}"
+                     ToolTip="Path to folder containing animation subdirectories (01, 02, 03, 04, b, c, d, e, f)" />
+            <Button x:Name="BrowseInputBtn"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Content="Browse"
+                    Margin="0,0,0,10"
+                    Click="BrowseInputBtn_OnClick"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+
+            <!-- Gender Selection -->
+            <TextBlock Grid.Row="1"
+                       Grid.Column="0"
+                       Text="Gender:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,10" />
+            <StackPanel Grid.Row="1"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,10">
+                <RadioButton x:Name="MaleRadio"
+                             Content="Male"
+                             GroupName="Gender"
+                             Style="{StaticResource MaterialDesignTabRadioButtonLeft}"
+                             Margin="0,0,10,0" />
+                <RadioButton x:Name="FemaleRadio"
+                             Content="Female"
+                             GroupName="Gender"
+                             Style="{StaticResource MaterialDesignTabRadioButtonLeft}"
+                             Margin="0,0,10,0" />
+                <RadioButton x:Name="UnisexRadio"
+                             Content="Unisex"
+                             GroupName="Gender"
+                             IsChecked="True"
+                             Style="{StaticResource MaterialDesignTabRadioButtonLeft}" />
+            </StackPanel>
+
+            <!-- Equipment Type -->
+            <TextBlock Grid.Row="2"
+                       Grid.Column="0"
+                       Text="Equipment Type:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,10" />
+            <ComboBox x:Name="EquipmentTypeCbx"
+                      Grid.Row="2"
+                      Grid.Column="1"
+                      Grid.ColumnSpan="2"
+                      Margin="0,0,0,10"
+                      Style="{StaticResource MaterialDesignComboBox}"
+                      SelectedIndex="0">
+                <ComboBoxItem Content="a - Arms 1" Tag="a" />
+                <ComboBoxItem Content="b - Body 1" Tag="b" />
+                <ComboBoxItem Content="c - Accessories 1" Tag="c" />
+                <ComboBoxItem Content="e - Head 1 (front)" Tag="e" />
+                <ComboBoxItem Content="f - Head 3 (behind body)" Tag="f" />
+                <ComboBoxItem Content="g - Accessories 2 (behind body)" Tag="g" />
+                <ComboBoxItem Content="h - Head 2 (behind armor)" Tag="h" />
+                <ComboBoxItem Content="i - Armor 2 (+1k)" Tag="i" />
+                <ComboBoxItem Content="j - Arms 2" Tag="j" />
+                <ComboBoxItem Content="l - Boots" Tag="l" />
+                <ComboBoxItem Content="m - Body 2" Tag="m" />
+                <ComboBoxItem Content="n - Pants (dyeable 0-15)" Tag="n" />
+                <ComboBoxItem Content="o - Faces" Tag="o" />
+                <ComboBoxItem Content="p - Weapons 2 (casting)" Tag="p" />
+                <ComboBoxItem Content="s - Shields" Tag="s" />
+                <ComboBoxItem Content="u - Armor 1" Tag="u" />
+                <ComboBoxItem Content="w - Weapons 1 (attacks)" Tag="w" />
+            </ComboBox>
+
+            <!-- Options -->
+            <StackPanel Grid.Row="3"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        HorizontalAlignment="Center"
+                        Margin="0,10,0,10">
+                <Label Content="Dyeable Palette"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+                <ToggleButton x:Name="DyeableToggle"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              ToolTip="Enable if importing equipment with dyeable colors. This will automatically rearrange the palette and place dyeable colors in the correct location." />
+            </StackPanel>
+
+            <!-- Import Button -->
+            <Button x:Name="ImportBtn"
+                    Grid.Row="4"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Content="Import Equipment"
+                    Margin="0,20,0,0"
+                    HorizontalAlignment="Center"
+                    Click="ImportBtn_OnClick"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+        </Grid>
+
+        <!-- Bottom Info Message -->
+        <TextBlock x:Name="BottomInfoMessage"
+                   Text="Equipment will be saved to the appropriate Khan archive in the configured Archives Directory. The next available ID will be automatically assigned. Palettes and palette tables will be updated in khanpal.dat. Note: For armors, you will need to manually update skill_e.tbl in legend.dat."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="550"
+                   Margin="20,20,20,40"
+                   FontSize="13"
+                   Opacity="0.7" />
+
+        <!-- Snackbar -->
+        <materialDesign:Snackbar x:Name="Snackbar"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Bottom"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>

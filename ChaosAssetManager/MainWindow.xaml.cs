@@ -4,8 +4,8 @@ using System.Windows.Interop;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Controls;
 using ChaosAssetManager.Helpers;
-using RadioButton = System.Windows.Controls.RadioButton;
 using MaterialDesignThemes.Wpf;
+using RadioButton = System.Windows.Controls.RadioButton;
 using WindowState = System.Windows.WindowState;
 
 namespace ChaosAssetManager;
@@ -15,8 +15,8 @@ namespace ChaosAssetManager;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private Rectangle? RestoreBounds;
     private readonly Dictionary<string, UIElement> _navContentMap = new();
+    private Rectangle? RestoreBounds;
 
     public MainWindow()
     {
@@ -29,8 +29,11 @@ public partial class MainWindow : Window
         _navContentMap["ArchivesNav"] = ArchivesView;
         _navContentMap["ConvertNav"] = ConvertView;
         _navContentMap["PanelSpritesNav"] = PanelSpritesView;
+        _navContentMap["EquipmentImportNav"] = EquipmentImportView;
+        _navContentMap["NPCImportNav"] = NPCImportView;
         _navContentMap["EffectEditorNav"] = EffectEditorView;
         _navContentMap["EquipmentEditorNav"] = EquipmentEditorView;
+        _navContentMap["NPCEditorNav"] = NPCEditorView;
         _navContentMap["MetaFileEditorNav"] = MetaFileEditorView;
         _navContentMap["PaletteRemapperNav"] = PaletteRemapperView;
         _navContentMap["MapEditorNav"] = MapEditorView;
@@ -38,8 +41,13 @@ public partial class MainWindow : Window
 
     private void CloseBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
 
+    private void MainWindow_OnActivated(object? sender, EventArgs e) => UpdateArchivePathLabel();
+
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
+        // Pre-load grid tile for editors
+        RenderUtil.Preload();
+
         var args = Environment.GetCommandLineArgs()
                               .Skip(1)
                               .ToArray();
@@ -70,29 +78,8 @@ public partial class MainWindow : Window
                 NavigateTo(MapEditorNav);
                 MapEditorView.LoadMap(arg);
             }
-    }
 
-    private void NavigateTo(RadioButton navButton)
-    {
-        navButton.IsChecked = true;
-
-        // If navigating to a sub-item, expand its parent
-        if (navButton == EffectEditorNav || navButton == EquipmentEditorNav || navButton == MetaFileEditorNav || navButton == MapEditorNav)
-            EditorsExpander.IsExpanded = true;
-    }
-
-    private void NavItem_Checked(object sender, RoutedEventArgs e)
-    {
-        if (sender is not RadioButton radioButton)
-            return;
-
-        // Hide all content
-        foreach (var content in _navContentMap.Values)
-            content.Visibility = Visibility.Collapsed;
-
-        // Show selected content
-        if (_navContentMap.TryGetValue(radioButton.Name, out var selectedContent))
-            selectedContent.Visibility = Visibility.Visible;
+        UpdateArchivePathLabel();
     }
 
     private void MainWindow_OnStateChanged(object? sender, EventArgs e)
@@ -166,6 +153,33 @@ public partial class MainWindow : Window
 
     private void MinimizeBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);
 
+    private void NavigateTo(RadioButton navButton)
+    {
+        navButton.IsChecked = true;
+
+        // If navigating to a sub-item, expand its parent
+        if ((navButton == EffectEditorNav)
+            || (navButton == EquipmentEditorNav)
+            || (navButton == NPCEditorNav)
+            || (navButton == MetaFileEditorNav)
+            || (navButton == MapEditorNav))
+            EditorsExpander.IsExpanded = true;
+    }
+
+    private void NavItem_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton radioButton)
+            return;
+
+        // Hide all content
+        foreach (var content in _navContentMap.Values)
+            content.Visibility = Visibility.Collapsed;
+
+        // Show selected content
+        if (_navContentMap.TryGetValue(radioButton.Name, out var selectedContent))
+            selectedContent.Visibility = Visibility.Visible;
+    }
+
     private void SettingsBtn_OnClick(object sender, RoutedEventArgs e)
     {
         var options = new OptionsWindow
@@ -175,4 +189,6 @@ public partial class MainWindow : Window
 
         options.Show();
     }
+
+    private void UpdateArchivePathLabel() => ArchivePathLabel.Text = PathHelper.Instance.ArchivesPath ?? string.Empty;
 }

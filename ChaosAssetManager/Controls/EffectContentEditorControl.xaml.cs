@@ -286,11 +286,11 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
     #endregion
 
     #region Event Handlers
-    private void Direction_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void Direction_OnClick(object sender, RoutedEventArgs e)
     {
-        if (DirectionCmb?.SelectedItem is ComboBoxItem item)
+        if (sender is System.Windows.Controls.Button { Tag: string dir })
         {
-            CurrentViewDirection = item.Content?.ToString() switch
+            var newDirection = dir switch
             {
                 "Up"    => ViewDirection.Up,
                 "Right" => ViewDirection.Right,
@@ -298,7 +298,18 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
                 "Left"  => ViewDirection.Left,
                 _       => ViewDirection.Right
             };
-            PreviewElement?.Redraw();
+
+            //if same direction and not playing, advance frame
+            if (newDirection == CurrentViewDirection && !IsPlaying && FramesListView.Items.Count > 0)
+            {
+                var nextIndex = (FramesListView.SelectedIndex + 1) % FramesListView.Items.Count;
+                FramesListView.SelectedIndex = nextIndex;
+            }
+            else
+            {
+                CurrentViewDirection = newDirection;
+                PreviewElement?.Redraw();
+            }
         }
     }
 
@@ -391,8 +402,9 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
     {
         try
         {
-            var elementWidth = PreviewElement.ActualWidth;
-            var elementHeight = PreviewElement.ActualHeight;
+            var dpiScale = DpiHelper.GetDpiScaleFactor();
+            var elementWidth = PreviewElement.ActualWidth * dpiScale;
+            var elementHeight = PreviewElement.ActualHeight * dpiScale;
 
             var translateX = (float)(elementWidth / 2);
             var translateY = (float)(elementHeight / 2);
@@ -430,22 +442,20 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
                 return;
 
             var canvas = e.Surface.Canvas;
+            var canvasWidth = e.Info.Width;
+            var canvasHeight = e.Info.Height;
 
             canvas.Clear(SKColors.DimGray);
 
-            canvas.Scale(
-                2.0f,
-                2.0f,
-                BODY_CENTER_X,
-                BODY_CENTER_Y);
+            // Draw grid before scaling (at 2x tile size so it matches the scaled sprites)
+            RenderUtil.DrawIsometricGrid(canvas, canvasWidth, canvasHeight);
 
-            // Apply horizontal flip for down and left directions
+            // Scale around origin (body center is at 0,0)
+            canvas.Scale(2.0f, 2.0f, 0, 0);
+
+            // Apply horizontal flip for down and left directions (flip around origin)
             if (CurrentViewDirection is ViewDirection.Down or ViewDirection.Left)
-                canvas.Scale(
-                    -1,
-                    1,
-                    BODY_CENTER_X,
-                    BODY_CENTER_Y);
+                canvas.Scale(-1, 1, 0, 0);
 
             // Draw body first
             DrawBodyFrame(canvas);
@@ -470,7 +480,8 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         if (idleFrameIndex < bodyFrames.Count)
         {
             var bodyFrame = bodyFrames[idleFrameIndex];
-            canvas.DrawImage(bodyFrame, 0, 0);
+            // Draw body so that BODY_CENTER is at (0,0)
+            canvas.DrawImage(bodyFrame, -BODY_CENTER_X, -BODY_CENTER_Y);
         }
     }
 
@@ -501,9 +512,9 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
             frameCenterY = pt.Y;
         }
 
-        // Position effect relative to body center
-        var left = BODY_CENTER_X - frameCenterX;
-        var top = BODY_CENTER_Y - frameCenterY;
+        // Position effect relative to origin (body center is at 0,0)
+        var left = -frameCenterX;
+        var top = -frameCenterY;
 
         // Draw effect frame
         using var paint = new SKPaint();

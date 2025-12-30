@@ -20,10 +20,39 @@ public sealed partial class EffectEditorControl
 
     private void Effect_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (EffectListView.SelectedItem is not ListViewItem { Tag: DataArchiveEntry entry })
+        if (EffectListView.SelectedItem is not ListViewItem listViewItem)
             return;
 
-        LoadEffect(entry);
+        //first time loading - tag is DataArchiveEntry, convert to file object
+        if (listViewItem.Tag is DataArchiveEntry entry)
+        {
+            var archive = ArchiveCache.Roh;
+
+            if (entry.EntryName.EndsWithI(".efa"))
+            {
+                var efaFile = EfaFile.FromEntry(entry);
+                listViewItem.Tag = efaFile;
+            } else if (entry.EntryName.EndsWithI(".epf"))
+            {
+                var epfFile = EpfFile.FromEntry(entry);
+                var palette = GetPaletteForEffect(entry, archive);
+
+                if (palette is null)
+                {
+                    Snackbar.MessageQueue!.Enqueue($"Could not find palette for {entry.EntryName}");
+
+                    return;
+                }
+
+                var centerPoints = LoadCenterPoints(entry.EntryName, archive, epfFile.Count);
+                listViewItem.Tag = (epfFile, palette, centerPoints);
+            }
+        }
+
+        if (listViewItem is { Tag: EfaFile efa, Content: string efaEntryName })
+            LoadEffect(efaEntryName, efa);
+        else if (listViewItem is { Tag: (EpfFile epf, Palette pal, List<SKPoint> centerPoints), Content: string epfEntryName })
+            LoadEffect(epfEntryName, epf, pal, centerPoints);
     }
 
     private void EffectEditorControl_OnLoaded(object sender, RoutedEventArgs e)
@@ -97,40 +126,25 @@ public sealed partial class EffectEditorControl
                          .ToList();
     }
 
-    private void LoadEffect(DataArchiveEntry entry)
+    private void LoadEffect(string entryName, EfaFile efaFile)
     {
-        // Dispose previous content
+        //dispose previous content
         (ContentPanel.Content as IDisposable)?.Dispose();
         ContentPanel.Content = null;
-        CurrentEntryName = entry.EntryName;
+        CurrentEntryName = entryName;
 
-        var archive = ArchiveCache.Roh;
+        ContentPanel.Content = new EffectContentEditorControl(efaFile);
+    }
 
-        if (entry.EntryName.EndsWithI(".efa"))
-        {
-            // Load EFA file
-            var efaFile = EfaFile.FromEntry(entry);
-            ContentPanel.Content = new EffectContentEditorControl(efaFile);
-        } else if (entry.EntryName.EndsWithI(".epf"))
-        {
-            // Load EPF file
-            var epfFile = EpfFile.FromEntry(entry);
 
-            // Get palette
-            var palette = GetPaletteForEffect(entry, archive);
+    private void LoadEffect(string entryName, EpfFile epfFile, Palette palette, List<SKPoint> centerPoints)
+    {
+        //dispose previous content
+        (ContentPanel.Content as IDisposable)?.Dispose();
+        ContentPanel.Content = null;
+        CurrentEntryName = entryName;
 
-            if (palette is null)
-            {
-                Snackbar.MessageQueue!.Enqueue($"Could not find palette for {entry.EntryName}");
-
-                return;
-            }
-
-            // Load center points from TBL file
-            var centerPoints = LoadCenterPoints(entry.EntryName, archive, epfFile.Count);
-
-            ContentPanel.Content = new EffectContentEditorControl(epfFile, palette, centerPoints);
-        }
+        ContentPanel.Content = new EffectContentEditorControl(epfFile, palette, centerPoints);
     }
 
     private void PopulateEffectList()
@@ -139,9 +153,10 @@ public sealed partial class EffectEditorControl
 
         var archive = ArchiveCache.Roh;
 
-        // Find all EPF and EFA entries
+        //find all EPF and EFA entries, sort with mefc at end, then numerically
         var effectEntries = archive.Where(e => e.EntryName.EndsWithI(".epf") || e.EntryName.EndsWithI(".efa"))
-                                   .OrderBy(e => e.EntryName, StringComparer.OrdinalIgnoreCase)
+                                   .OrderBy(e => e.EntryName.StartsWithI("mefc") ? 1 : 0)
+                                   .ThenBy(e => e.TryGetNumericIdentifier(out var num) ? num : int.MaxValue)
                                    .ToList();
 
         foreach (var entry in effectEntries)

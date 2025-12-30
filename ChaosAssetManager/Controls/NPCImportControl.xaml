@@ -1,0 +1,216 @@
+<UserControl x:Class="ChaosAssetManager.Controls.NPCImportControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="550"
+             d:DesignWidth="700"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             Loaded="NPCImportControl_OnLoaded">
+    <Grid>
+        <!-- Archive Path Not Configured Message -->
+        <TextBlock x:Name="NotConfiguredMessage"
+                   Text="Please configure the Archives Directory in Settings (gear icon)"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Visibility="Collapsed" />
+
+        <!-- Info Message -->
+        <TextBlock x:Name="InfoMessage"
+                   Text="Select a folder containing PNG frames for NPC animation. Frames should be named in order (e.g., 001.png, 002.png...). Images will be converted to MPF format and imported into hades.dat."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="550"
+                   Margin="20"
+                   FontSize="13"
+                   Opacity="0.7" />
+
+        <!-- Main Content -->
+        <ScrollViewer x:Name="MainContent"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="20"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Input Path -->
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Text="Input Path:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,10" />
+                <TextBox x:Name="InputPathTxt"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         Margin="0,0,10,10"
+                         Style="{StaticResource MaterialDesignTextBox}"
+                         ToolTip="Path to folder containing PNG frames for the NPC animation" />
+                <Button x:Name="BrowseInputBtn"
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Content="Browse"
+                        Margin="0,0,0,10"
+                        Click="BrowseInputBtn_OnClick"
+                        Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+
+                <!-- Format Type -->
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Text="Format Type:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,10" />
+                <ComboBox x:Name="FormatTypeCbx"
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="2"
+                          Margin="0,0,0,10"
+                          Style="{StaticResource MaterialDesignComboBox}"
+                          SelectedIndex="0"
+                          SelectionChanged="FormatTypeCbx_SelectionChanged">
+                    <ComboBoxItem Content="Single Attack" Tag="SingleAttack" />
+                    <ComboBoxItem Content="Multiple Attacks" Tag="MultipleAttacks" />
+                </ComboBox>
+
+                <!-- Animation Settings -->
+                <GroupBox Grid.Row="2"
+                          Grid.Column="0"
+                          Grid.ColumnSpan="3"
+                          Header="Animation Settings"
+                          Margin="0,10,0,10"
+                          Padding="10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Walk -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Walk:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" />
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Start:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="WalkIndexTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="WalkCountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+
+                        <!-- Attack -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Attack:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" />
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Start:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="AttackIndexTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="AttackCountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+
+                        <!-- Standing -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Standing:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" />
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Start:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="StandingIndexTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="StandingCountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+
+                        <!-- Attack 2 (MultipleAttacks only) -->
+                        <TextBlock x:Name="Attack2Label" Grid.Row="3" Grid.Column="0" Text="Attack 2:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" Visibility="Collapsed" />
+                        <StackPanel x:Name="Attack2IndexPanel" Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Start:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="Attack2IndexTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+                        <StackPanel x:Name="Attack2CountPanel" Grid.Row="3" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="Attack2CountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+
+                        <!-- Attack 3 (MultipleAttacks only) -->
+                        <TextBlock x:Name="Attack3Label" Grid.Row="4" Grid.Column="0" Text="Attack 3:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" Visibility="Collapsed" />
+                        <StackPanel x:Name="Attack3IndexPanel" Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Start:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="Attack3IndexTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+                        <StackPanel x:Name="Attack3CountPanel" Grid.Row="4" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="Attack3CountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" />
+                        </StackPanel>
+
+                        <!-- Stop Motion (Optional Animation) -->
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Stop Motion:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" ToolTip="Optional standing frames that occasionally play instead of normal standing animation" />
+                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Ratio:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="StopMotionRatioTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" ToolTip="Percentage chance to play optional frames (e.g. 30 = 30% of the time)" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="5" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="StopMotionCountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" ToolTip="Total standing frames including optional. E.g. 4 normal + 2 optional = 6. Set to 0 if no optional animation." />
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Import Button -->
+                <Button x:Name="ImportBtn"
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        Content="Import NPC"
+                        Margin="0,10,0,0"
+                        HorizontalAlignment="Center"
+                        Click="ImportBtn_OnClick"
+                        Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Bottom Info Message -->
+        <TextBlock x:Name="BottomInfoMessage"
+                   Text="NPC will be saved to hades.dat in the configured Archives Directory. The next available ID will be automatically assigned. Palette will be auto-generated."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="550"
+                   Margin="20,20,20,40"
+                   FontSize="13"
+                   Opacity="0.7" />
+
+        <!-- Snackbar -->
+        <materialDesign:Snackbar x:Name="Snackbar"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Bottom"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>

@@ -20,6 +20,8 @@ namespace ChaosAssetManager.Helpers;
 
 public static partial class RenderUtil
 {
+    private static SKShader? GridShader;
+
     private static IDictionary<int, Palette>? MpfPaletteLookup;
     private static PaletteLookup? StcPaletteLookup;
     private static PaletteLookup? StsPaletteLookup;
@@ -49,6 +51,129 @@ public static partial class RenderUtil
 
         return SKImage.FromBitmap(grid);
     }
+
+    /// <summary>
+    ///     Creates a shader that tiles the isometric grid pattern infinitely.
+    /// </summary>
+    private static SKShader CreateGridShader(int scale)
+    {
+        var tileWidth = CONSTANTS.TILE_WIDTH * scale;
+        var halfTileWidth = CONSTANTS.HALF_TILE_WIDTH * scale;
+        var halfTileHeight = CONSTANTS.HALF_TILE_HEIGHT * scale;
+
+        //pattern needs to be 2 rows tall to account for the stagger offset
+        var patternWidth = tileWidth;
+        var patternHeight = halfTileHeight * 2;
+
+        using var bitmap = new SKBitmap(patternWidth, patternHeight);
+        using var canvas = new SKCanvas(bitmap);
+
+        using var paint = new SKPaint();
+        paint.Color = new SKColor(80, 80, 80);
+        paint.Style = SKPaintStyle.Stroke;
+        paint.StrokeWidth = 1;
+        paint.IsAntialias = false;
+
+        //row 0: diamond centered in tile
+        DrawDiamond(
+            canvas,
+            paint,
+            halfTileWidth,
+            0,
+            halfTileWidth,
+            halfTileHeight);
+
+        //row 1: diamond at left edge (combines with right edge when tiled)
+        DrawDiamond(
+            canvas,
+            paint,
+            0,
+            halfTileHeight,
+            halfTileWidth,
+            halfTileHeight);
+
+        //row 1: diamond at right edge (other half)
+        DrawDiamond(
+            canvas,
+            paint,
+            tileWidth,
+            halfTileHeight,
+            halfTileWidth,
+            halfTileHeight);
+
+        using var image = SKImage.FromBitmap(bitmap);
+
+        //offset the shader so a tile center is at world origin (0,0)
+        var offsetMatrix = SKMatrix.CreateTranslation(-halfTileWidth, -halfTileHeight);
+
+        return image.ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, offsetMatrix);
+    }
+
+    /// <summary>
+    ///     Draws an isometric diamond shape at the specified center position.
+    /// </summary>
+    private static void DrawDiamond(
+        SKCanvas canvas,
+        SKPaint paint,
+        float centerX,
+        float centerY,
+        float halfWidth,
+        float halfHeight)
+    {
+        using var path = new SKPath();
+        path.MoveTo(centerX, centerY);
+        path.LineTo(centerX + halfWidth, centerY + halfHeight);
+        path.LineTo(centerX, centerY + halfHeight * 2);
+        path.LineTo(centerX - halfWidth, centerY + halfHeight);
+        path.Close();
+
+        canvas.DrawPath(path, paint);
+    }
+
+    /// <summary>
+    ///     Draws an isometric grid on the canvas that covers the visible area using a shader for infinite tiling.
+    /// </summary>
+    public static void DrawIsometricGrid(SKCanvas canvas, float canvasWidth, float canvasHeight, int scale = 2)
+    {
+        GridShader ??= CreateGridShader(scale);
+
+        //get the inverse of the current canvas matrix to find visible world area
+        var matrix = canvas.TotalMatrix;
+
+        if (!matrix.TryInvert(out var inverseMatrix))
+            return;
+
+        //transform canvas corners to world coordinates
+        var corners = new[]
+        {
+            inverseMatrix.MapPoint(0, 0),
+            inverseMatrix.MapPoint(canvasWidth, 0),
+            inverseMatrix.MapPoint(0, canvasHeight),
+            inverseMatrix.MapPoint(canvasWidth, canvasHeight)
+        };
+
+        //find bounding box in world coordinates
+        var minX = corners.Min(p => p.X);
+        var maxX = corners.Max(p => p.X);
+        var minY = corners.Min(p => p.Y);
+        var maxY = corners.Max(p => p.Y);
+
+        //draw a rect covering the visible area with the grid shader
+        using var paint = new SKPaint();
+        paint.Shader = GridShader;
+
+        canvas.DrawRect(
+            minX,
+            minY,
+            maxX - minX,
+            maxY - minY,
+            paint);
+    }
+
+    /// <summary>
+    ///     Pre-loads the grid shader to avoid delay on first render.
+    /// </summary>
+    public static void Preload() => GridShader ??= CreateGridShader(2);
 
     public static Animation? RenderBmp(DataArchiveEntry entry)
     {
@@ -142,7 +267,7 @@ public static partial class RenderUtil
                 if (entry.EntryName.StartsWithI("mefc"))
                     return RenderRohMefcEpf(archive, entry);
 
-                return null;
+                break;
             }
             case "setoa.dat":
             {
@@ -405,6 +530,8 @@ public static partial class RenderUtil
 
     public static void Reset()
     {
+        GridShader?.Dispose();
+        GridShader = null;
         MpfPaletteLookup = null;
         StcPaletteLookup = null;
         StsPaletteLookup = null;

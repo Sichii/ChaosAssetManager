@@ -1,4 +1,4 @@
-<UserControl x:Class="ChaosAssetManager.Controls.EquipmentEditorControl"
+<UserControl x:Class="ChaosAssetManager.Controls.NPCEditorControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -13,7 +13,7 @@
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             Loaded="EquipmentEditorControl_OnLoaded">
+             Loaded="NPCEditorControl_OnLoaded">
     <Grid>
         <!-- Archive Path Not Configured Message -->
         <TextBlock x:Name="NotConfiguredMessage"
@@ -30,63 +30,35 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Left Panel: Selection Controls -->
+            <!-- Left Panel: NPC List -->
             <Border Grid.Column="0"
                     BorderBrush="{DynamicResource MaterialDesignDivider}"
                     BorderThickness="0,0,1,0">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Gender Toggle -->
-                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                        <TextBlock Text="Gender"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,5" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <RadioButton x:Name="MaleRadio"
-                                         Content="Male"
-                                         IsChecked="True"
-                                         Margin="0,0,10,0"
-                                         Checked="Gender_OnChecked" />
-                            <RadioButton x:Name="FemaleRadio"
-                                         Content="Female"
-                                         Checked="Gender_OnChecked" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Equipment Type Dropdown -->
-                    <StackPanel Grid.Row="1" Margin="0,0,0,15">
-                        <TextBlock Text="Equipment Type" Margin="0,0,0,5" />
-                        <ComboBox x:Name="EquipmentTypeCmb"
-                                  HorizontalAlignment="Stretch"
-                                  SelectionChanged="EquipmentType_OnSelectionChanged"
-                                  Style="{StaticResource MaterialDesignComboBox}" />
-                    </StackPanel>
-
-                    <!-- Entry List -->
-                    <Grid Grid.Row="2">
+                    <!-- NPC List -->
+                    <Grid Grid.Row="0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0"
-                                   Text="Entries"
+                                   Text="NPCs"
                                    Margin="0,0,0,5" />
-                        <ListView x:Name="EntryListView"
+                        <ListView x:Name="NPCListView"
                                   Grid.Row="1"
                                   HorizontalAlignment="Stretch"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                  SelectionChanged="Entry_OnSelectionChanged" />
+                                  SelectionChanged="NPC_OnSelectionChanged" />
                     </Grid>
 
                     <!-- Save Button -->
                     <Button x:Name="SaveBtn"
-                            Grid.Row="3"
+                            Grid.Row="1"
                             Content="Save to Archive"
                             Margin="0,15,0,0"
                             HorizontalAlignment="Stretch"

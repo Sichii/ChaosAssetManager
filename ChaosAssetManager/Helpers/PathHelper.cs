@@ -74,6 +74,8 @@ public sealed class PathHelper
     public string? EquipmentEditorFromPath { get; set; }
     public string? EquipmentEditorPalFromPath { get; set; }
     public string? EquipmentEditorToPath { get; set; }
+    public string? EquipmentImportFromPath { get; set; }
+    public string? NPCImportFromPath { get; set; }
     #endregion
 
     #region To

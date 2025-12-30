@@ -58,11 +58,11 @@ public partial class EquipmentEditorControl
 
     private void Entry_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (EntryListView.SelectedItem is not ListViewItem { Tag: int entryId })
+        if (EntryListView.SelectedItem is not ListViewItem { Tag: (int entryId, Dictionary<string, EpfFile> equipmentFiles) })
             return;
 
         CurrentEntryId = entryId;
-        LoadEquipmentEntry(CurrentTypeLetter, entryId);
+        LoadEquipmentEntry(CurrentTypeLetter, entryId, equipmentFiles);
     }
 
     private void EquipmentEditorControl_OnLoaded(object sender, RoutedEventArgs e)
@@ -181,50 +181,24 @@ public partial class EquipmentEditorControl
         }
     }
 
-    private void LoadEquipmentEntry(char typeLetter, int entryId)
+    private void LoadEquipmentEntry(char typeLetter, int entryId, Dictionary<string, EpfFile> equipmentFiles)
     {
-        // Dispose previous content
+        //dispose previous content
         (ContentPanel.Content as IDisposable)?.Dispose();
         ContentPanel.Content = null;
-        EquipmentFiles = null;
         EquipmentPalette = null;
 
         var male = MaleRadio.IsChecked == true;
-        var archive = GetArchiveForType(typeLetter, male);
 
-        if (archive is null)
-        {
-            Snackbar.MessageQueue!.Enqueue("Could not find archive for equipment type");
+        EquipmentFiles = equipmentFiles;
 
-            return;
-        }
-
-        var prefix = male ? $"m{typeLetter}" : $"w{typeLetter}";
-        var baseEntryName = $"{prefix}{entryId:D3}";
-
-        // Load all animation files for this entry
-        EquipmentFiles = new Dictionary<string, EpfFile>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var suffix in AnimationSuffixes.Keys)
-        {
-            var entryName = $"{baseEntryName}{suffix}.epf";
-
-            if (archive.Contains(entryName))
-                EquipmentFiles[suffix] = EpfFile.FromEntry(archive[entryName]);
-        }
-
-        if (EquipmentFiles.Count == 0)
-        {
-            Snackbar.MessageQueue!.Enqueue($"No EPF files found for {baseEntryName}");
-
-            return;
-        }
-
-        // Load palette
+        //load palette
         EquipmentPalette = GetPaletteForType(typeLetter, entryId, male);
 
         if (EquipmentPalette is null)
         {
+            var prefix = male ? $"m{typeLetter}" : $"w{typeLetter}";
+            var baseEntryName = $"{prefix}{entryId:D3}";
             Snackbar.MessageQueue!.Enqueue($"Could not find palette for {baseEntryName}");
 
             return;
@@ -247,7 +221,7 @@ public partial class EquipmentEditorControl
         if (archive is null)
             return;
 
-        // Find all unique entry IDs for this equipment type
+        //find all unique entry IDs for this equipment type
         var prefix = male ? $"m{typeLetter}" : $"w{typeLetter}";
         var entryIds = new HashSet<int>();
 
@@ -259,18 +233,33 @@ public partial class EquipmentEditorControl
             if (!entry.EntryName.EndsWith(".epf", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            // Extract numeric identifier (3 digits after prefix)
+            //extract numeric identifier (3 digits after prefix)
             if (entry.TryGetNumericIdentifier(out var id, 3))
                 entryIds.Add(id);
         }
 
+        //preload all entry files
         foreach (var id in entryIds.OrderBy(x => x))
-            EntryListView.Items.Add(
-                new ListViewItem
-                {
-                    Content = id.ToString("D3"),
-                    Tag = id
-                });
+        {
+            var baseEntryName = $"{prefix}{id:D3}";
+            var files = new Dictionary<string, EpfFile>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var suffix in AnimationSuffixes.Keys)
+            {
+                var entryName = $"{baseEntryName}{suffix}.epf";
+
+                if (archive.Contains(entryName))
+                    files[suffix] = EpfFile.FromEntry(archive[entryName]);
+            }
+
+            if (files.Count > 0)
+                EntryListView.Items.Add(
+                    new ListViewItem
+                    {
+                        Content = id.ToString("D3"),
+                        Tag = (id, files)
+                    });
+        }
     }
 
     private void Save_OnClick(object sender, RoutedEventArgs e)

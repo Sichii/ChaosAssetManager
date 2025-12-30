@@ -16,12 +16,14 @@
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="275" />
+            <ColumnDefinition Width="Auto"
+                              MinWidth="275" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!-- Left Panel: Controls -->
-        <Grid Grid.Column="0" Margin="10">
+        <Grid Grid.Column="0"
+              Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -30,57 +32,117 @@
             </Grid.RowDefinitions>
 
             <!-- Direction Selector -->
-            <StackPanel Grid.Row="0" Margin="0,0,0,10">
-                <TextBlock Text="Direction" Margin="0,0,0,3" />
-                <ComboBox x:Name="DirectionCmb"
-                          HorizontalAlignment="Stretch"
-                          SelectionChanged="Direction_OnSelectionChanged"
-                          Style="{StaticResource MaterialDesignComboBox}">
-                    <ComboBoxItem Content="Up" />
-                    <ComboBoxItem Content="Right" IsSelected="True" />
-                    <ComboBoxItem Content="Down" />
-                    <ComboBoxItem Content="Left" />
-                </ComboBox>
-            </StackPanel>
+            <GroupBox Grid.Row="0"
+                      Header="Direction"
+                      Margin="0,0,0,10"
+                      Padding="5"
+                      HorizontalAlignment="Center">
+                <Grid HorizontalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Button x:Name="DirLeftBtn"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Content="{materialDesign:PackIcon Kind=ArrowTopLeft}"
+                            Tag="Left"
+                            Click="Direction_OnClick"
+                            Background="White"
+                            Foreground="Black"
+                            Padding="7"
+                            Margin="2" />
+                    <Button x:Name="DirUpBtn"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Content="{materialDesign:PackIcon Kind=ArrowTopRight}"
+                            Tag="Up"
+                            Click="Direction_OnClick"
+                            Background="White"
+                            Foreground="Black"
+                            Padding="7"
+                            Margin="2" />
+                    <Button x:Name="DirDownBtn"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Content="{materialDesign:PackIcon Kind=ArrowBottomLeft}"
+                            Tag="Down"
+                            Click="Direction_OnClick"
+                            Background="White"
+                            Foreground="Black"
+                            Padding="7"
+                            Margin="2" />
+                    <Button x:Name="DirRightBtn"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Content="{materialDesign:PackIcon Kind=ArrowBottomRight}"
+                            Tag="Right"
+                            Click="Direction_OnClick"
+                            Background="White"
+                            Foreground="Black"
+                            Padding="7"
+                            Margin="2" />
+                </Grid>
+            </GroupBox>
 
             <!-- Frame Position -->
-            <GroupBox Grid.Row="1" Header="Frame Position" Margin="0,0,0,10" Padding="5">
+            <GroupBox Grid.Row="1"
+                      Header="Frame Position"
+                      Margin="0,0,0,10"
+                      Padding="5">
                 <StackPanel>
                     <Grid HorizontalAlignment="Center">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="32" />
-                            <ColumnDefinition Width="32" />
-                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="32" />
-                            <RowDefinition Height="32" />
-                            <RowDefinition Height="32" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Button Grid.Row="0" Grid.Column="1"
+                        <Button Grid.Row="0"
+                                Grid.Column="1"
                                 Content="{materialDesign:PackIcon Kind=ArrowUp}"
                                 Click="MoveUp_OnClick"
                                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                                Padding="0" />
-                        <Button Grid.Row="1" Grid.Column="0"
+                                Padding="10" />
+                        <Button Grid.Row="1"
+                                Grid.Column="0"
                                 Content="{materialDesign:PackIcon Kind=ArrowLeft}"
                                 Click="MoveLeft_OnClick"
                                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                                Padding="0" />
-                        <Button Grid.Row="1" Grid.Column="2"
+                                Padding="10" />
+                        <ToggleButton x:Name="MoveAllFramesChk"
+                                      Grid.Row="1"
+                                      Grid.Column="1"
+                                      ToolTip="Move all frames"
+                                      Margin="3"
+                                      Padding="3" />
+                        <Button Grid.Row="1"
+                                Grid.Column="2"
                                 Content="{materialDesign:PackIcon Kind=ArrowRight}"
                                 Click="MoveRight_OnClick"
                                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                                Padding="0" />
-                        <Button Grid.Row="2" Grid.Column="1"
+                                Padding="10" />
+                        <Button Grid.Row="2"
+                                Grid.Column="1"
                                 Content="{materialDesign:PackIcon Kind=ArrowDown}"
                                 Click="MoveDown_OnClick"
                                 Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}"
-                                Padding="0" />
+                                Padding="10" />
                     </Grid>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0,8,0,0">
                         <TextBlock Text="Show Bounds"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0" />
@@ -93,8 +155,10 @@
             </GroupBox>
 
             <!-- Animation Selector and Play/Pause -->
-            <StackPanel Grid.Row="2" Margin="0,0,0,10">
-                <TextBlock Text="Animation" Margin="0,0,0,3" />
+            <StackPanel Grid.Row="2"
+                        Margin="0,0,0,10">
+                <TextBlock Text="Animation"
+                           Margin="0,0,0,3" />
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -115,7 +179,8 @@
 
             <!-- Frame Selector -->
             <StackPanel Grid.Row="3">
-                <TextBlock Text="Frame" Margin="0,0,0,3" />
+                <TextBlock Text="Frame"
+                           Margin="0,0,0,3" />
                 <ListView x:Name="FramesListView"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"

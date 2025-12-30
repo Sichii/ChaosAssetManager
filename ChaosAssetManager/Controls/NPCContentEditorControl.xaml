@@ -1,4 +1,4 @@
-<UserControl x:Class="ChaosAssetManager.Controls.EffectContentEditorControl"
+<UserControl x:Class="ChaosAssetManager.Controls.NPCContentEditorControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -25,6 +25,7 @@
         <Grid Grid.Column="0"
               Margin="10">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -90,44 +91,8 @@
                 </Grid>
             </GroupBox>
 
-            <!-- EFA Settings (hidden for EPF) -->
-            <GroupBox Grid.Row="1"
-                      Header="Animation Settings"
-                      Margin="0,0,0,10"
-                      Padding="5"
-                      Visibility="{Binding EfaSettingsVisibility}">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0"
-                                    Margin="0,0,5,0">
-                            <TextBlock Text="Blending Type"
-                                       Margin="0,0,0,3" />
-                            <ComboBox x:Name="BlendingTypeCmb"
-                                      HorizontalAlignment="Stretch"
-                                      SelectionChanged="BlendingType_OnSelectionChanged"
-                                      Style="{StaticResource MaterialDesignComboBox}" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1"
-                                    Margin="5,0,0,0">
-                            <TextBlock Text="Interval (ms)"
-                                       Margin="0,0,0,3" />
-                            <TextBox x:Name="IntervalTbox"
-                                     Text="{Binding FrameIntervalMs, UpdateSourceTrigger=PropertyChanged}"
-                                     HorizontalAlignment="Stretch"
-                                     Style="{StaticResource MaterialDesignTextBox}" />
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
-            </GroupBox>
-
             <!-- Movement Buttons -->
-            <Grid Grid.Row="2"
+            <Grid Grid.Row="1"
                   Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -171,7 +136,8 @@
                                       Grid.Row="1"
                                       Grid.Column="1"
                                       ToolTip="Move all frames"
-                                      Margin="3" />
+                                      Margin="3"
+                                      Padding="0" />
                         <Button Grid.Row="1"
                                 Grid.Column="2"
                                 Content="{materialDesign:PackIcon Kind=ArrowRight}"
@@ -249,12 +215,215 @@
                 </GroupBox>
             </Grid>
 
-            <!-- Frame Selector with Play/Pause -->
-            <StackPanel Grid.Row="3">
+            <!-- File Properties -->
+            <Grid Grid.Row="2"
+                  Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Walk -->
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Text="Walk Index:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="0"
+                         Grid.Column="1"
+                         Text="{Binding WalkFrameIndex, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3" />
+                <TextBlock Grid.Row="0"
+                           Grid.Column="2"
+                           Text="Count:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="0"
+                         Grid.Column="3"
+                         Text="{Binding WalkFrameCount, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,3" />
+
+                <!-- Attack -->
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Text="Attack Index:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="1"
+                         Grid.Column="1"
+                         Text="{Binding AttackFrameIndex, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3" />
+                <TextBlock Grid.Row="1"
+                           Grid.Column="2"
+                           Text="Count:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="1"
+                         Grid.Column="3"
+                         Text="{Binding AttackFrameCount, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,3" />
+
+                <!-- Attack 2 (MultipleAttacks only) -->
+                <TextBlock Grid.Row="2"
+                           Grid.Column="0"
+                           Text="Attack 2 Index:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3"
+                           Visibility="{Binding MultipleAttacksVisibility}" />
+                <TextBox Grid.Row="2"
+                         Grid.Column="1"
+                         Text="{Binding Attack2StartIndex, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3"
+                         Visibility="{Binding MultipleAttacksVisibility}" />
+                <TextBlock Grid.Row="2"
+                           Grid.Column="2"
+                           Text="Count:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3"
+                           Visibility="{Binding MultipleAttacksVisibility}" />
+                <TextBox Grid.Row="2"
+                         Grid.Column="3"
+                         Text="{Binding Attack2FrameCount, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,3"
+                         Visibility="{Binding MultipleAttacksVisibility}" />
+
+                <!-- Attack 3 (MultipleAttacks only) -->
+                <TextBlock Grid.Row="3"
+                           Grid.Column="0"
+                           Text="Attack 3 Index:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3"
+                           Visibility="{Binding MultipleAttacksVisibility}" />
+                <TextBox Grid.Row="3"
+                         Grid.Column="1"
+                         Text="{Binding Attack3StartIndex, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3"
+                         Visibility="{Binding MultipleAttacksVisibility}" />
+                <TextBlock Grid.Row="3"
+                           Grid.Column="2"
+                           Text="Count:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3"
+                           Visibility="{Binding MultipleAttacksVisibility}" />
+                <TextBox Grid.Row="3"
+                         Grid.Column="3"
+                         Text="{Binding Attack3FrameCount, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,3"
+                         Visibility="{Binding MultipleAttacksVisibility}" />
+
+                <!-- Standing -->
+                <TextBlock Grid.Row="4"
+                           Grid.Column="0"
+                           Text="Standing Index:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="4"
+                         Grid.Column="1"
+                         Text="{Binding StandingFrameIndex, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3" />
+                <TextBlock Grid.Row="4"
+                           Grid.Column="2"
+                           Text="Count:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="4"
+                         Grid.Column="3"
+                         Text="{Binding StandingFrameCount, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,3" />
+
+                <!-- Stop-motion -->
+                <TextBlock Grid.Row="5"
+                           Grid.Column="0"
+                           Text="Stop-motion Count:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="5"
+                         Grid.Column="1"
+                         Text="{Binding OptionalAnimationFrameCount, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3" />
+                <TextBlock Grid.Row="5"
+                           Grid.Column="2"
+                           Text="Ratio:"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="5"
+                         Grid.Column="3"
+                         Text="{Binding StopMotionRatio, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,3"
+                         ToolTip="Percentage chance to play stop-motion frames" />
+            </Grid>
+
+            <!-- Stop Motion Ratio (conditional) - now hidden since it's in File Properties -->
+            <StackPanel x:Name="StopMotionPanel"
+                        Grid.Row="3"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,10"
+                        Visibility="Collapsed">
+                <TextBlock Text="Stop Motion Ratio:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0" />
+                <TextBox x:Name="StopMotionRatioTxt"
+                         Text="{Binding StopMotionRatio, UpdateSourceTrigger=PropertyChanged}"
+                         Width="60"
+                         Style="{StaticResource MaterialDesignTextBox}"
+                         ToolTip="Percentage chance to play optional frames (e.g. 30 = 30% of the time)" />
+            </StackPanel>
+
+            <!-- Frame Selector with Animation and Play/Pause -->
+            <StackPanel Grid.Row="4">
+                <!-- Animation Selector Row -->
                 <Grid Margin="0,0,0,5">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Animation"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+
+                    <ComboBox x:Name="AnimationTypeCmb"
+                              Grid.Column="1"
+                              HorizontalAlignment="Stretch"
+                              SelectionChanged="AnimationType_OnSelectionChanged"
+                              Style="{StaticResource MaterialDesignComboBox}" />
+
+                    <Button x:Name="PlayPauseBtn"
+                            Grid.Column="2"
+                            Content="{materialDesign:PackIcon Kind=Play}"
+                            Click="PlayPause_OnClick"
+                            Margin="10,0,0,0"
+                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+                </Grid>
+
+                <!-- Frames Header Row -->
+                <Grid Margin="0,5,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
@@ -264,8 +433,7 @@
 
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                Margin="0,0,10,0">
+                                VerticalAlignment="Center">
                         <TextBlock Text="Bounds"
                                    VerticalAlignment="Center"
                                    Margin="0,0,5,0" />
@@ -274,12 +442,6 @@
                                       Checked="ShowBoundsChk_OnChecked"
                                       Unchecked="ShowBoundsChk_OnChecked" />
                     </StackPanel>
-
-                    <Button x:Name="PlayPauseBtn"
-                            Grid.Column="2"
-                            Content="{materialDesign:PackIcon Kind=Play}"
-                            Click="PlayPause_OnClick"
-                            Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
                 </Grid>
 
                 <ListView x:Name="FramesListView"

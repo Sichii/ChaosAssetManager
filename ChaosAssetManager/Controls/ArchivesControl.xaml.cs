@@ -247,23 +247,23 @@ public sealed partial class ArchivesControl : IDisposable
 
     private void ExtractBtn_OnClick(object sender, RoutedEventArgs e)
     {
-        var saveFileDialog = new SaveFileDialog
+        var openFileDialog = new OpenFileDialog
         {
             Filter = "Data Archive (*.dat)|*.dat",
             InitialDirectory = PathHelper.Instance.ArchiveExtractFromPath
         };
 
-        if (saveFileDialog.ShowDialog() == true)
+        if (openFileDialog.ShowDialog() == true)
         {
             using var folderBrowserDialog = new FolderBrowserDialog();
             folderBrowserDialog.InitialDirectory = PathHelper.Instance.ArchiveExtractToPath!;
 
             if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
             {
-                using var archive = DataArchive.FromFile(saveFileDialog.FileName);
+                using var archive = DataArchive.FromFile(openFileDialog.FileName);
                 archive.ExtractTo(folderBrowserDialog.SelectedPath);
 
-                PathHelper.Instance.ArchiveExtractFromPath = Path.GetDirectoryName(saveFileDialog.FileName);
+                PathHelper.Instance.ArchiveExtractFromPath = Path.GetDirectoryName(openFileDialog.FileName);
                 PathHelper.Instance.ArchiveExtractToPath = folderBrowserDialog.SelectedPath;
                 PathHelper.Instance.Save();
 

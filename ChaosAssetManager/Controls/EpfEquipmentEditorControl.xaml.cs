@@ -12,6 +12,7 @@ using DALib.Utility;
 using MaterialDesignThemes.Wpf;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
+using Button = System.Windows.Controls.Button;
 using Palette = DALib.Drawing.Palette;
 using Graphics = DALib.Drawing.Graphics;
 
@@ -22,7 +23,11 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
     //animation definitions: Name, Suffix, UpStart, UpEnd, RightStart, RightEnd
 
     //equipment types that render behind the body
-    private static readonly HashSet<char> RenderBehindBodyTypes = ['f', 'g']; //head2, accessories 2 //accessories 2
+    private static readonly HashSet<char> RenderBehindBodyTypes =
+    [
+        'f',
+        'g'
+    ]; //head2, accessories 2 //accessories 2
 
     private static readonly List<(string Name, string Suffix, int UpStart, int UpEnd, int RightStart, int RightEnd)> AnimationDefinitions =
     [
@@ -324,11 +329,11 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
     }
 
     #region Event Handlers
-    private void Direction_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void Direction_OnClick(object sender, RoutedEventArgs e)
     {
-        if (DirectionCmb?.SelectedItem is ComboBoxItem item)
+        if (sender is Button { Tag: string dir })
         {
-            CurrentViewDirection = item.Content?.ToString() switch
+            var newDirection = dir switch
             {
                 "Up"    => ViewDirection.Up,
                 "Right" => ViewDirection.Right,
@@ -336,7 +341,17 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
                 "Left"  => ViewDirection.Left,
                 _       => ViewDirection.Up
             };
-            UpdateCurrentAnimation();
+
+            //if same direction and not playing, advance frame
+            if ((newDirection == CurrentViewDirection) && !IsPlaying && (FramesListView.Items.Count > 0))
+            {
+                var nextIndex = (FramesListView.SelectedIndex + 1) % FramesListView.Items.Count;
+                FramesListView.SelectedIndex = nextIndex;
+            } else
+            {
+                CurrentViewDirection = newDirection;
+                UpdateCurrentAnimation();
+            }
         }
     }
 
@@ -368,7 +383,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
     private void MoveLeft_OnClick(object sender, RoutedEventArgs e) => MoveFrame(-1, 0);
     private void MoveRight_OnClick(object sender, RoutedEventArgs e) => MoveFrame(1, 0);
 
-    private void MoveFrame(int deltaX, int deltaY)
+    private void MoveFrame(int dx, int dy)
     {
         if (CurrentAnimationSuffix is null || !EquipmentFiles.TryGetValue(CurrentAnimationSuffix, out var epfFile))
             return;
@@ -377,10 +392,10 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
             return;
 
         var frame = epfFile[CurrentFrameIndex];
-        frame.Left = (short)(frame.Left + deltaX);
-        frame.Right = (short)(frame.Right + deltaX);
-        frame.Top = (short)(frame.Top + deltaY);
-        frame.Bottom = (short)(frame.Bottom + deltaY);
+        frame.Left = (short)(frame.Left + dx);
+        frame.Right = (short)(frame.Right + dx);
+        frame.Top = (short)(frame.Top + dy);
+        frame.Bottom = (short)(frame.Bottom + dy);
 
         //re-render the equipment frame
         if ((EquipmentAnimations?.TryGetValue(CurrentAnimationSuffix, out var anim) == true) && (CurrentFrameIndex < anim.Frames.Count))
@@ -481,8 +496,9 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
     {
         try
         {
-            var elementWidth = PreviewElement.ActualWidth;
-            var elementHeight = PreviewElement.ActualHeight;
+            var dpiScale = DpiHelper.GetDpiScaleFactor();
+            var elementWidth = PreviewElement.ActualWidth * dpiScale;
+            var elementHeight = PreviewElement.ActualHeight * dpiScale;
 
             var translateX = (float)(elementWidth / 2);
             var translateY = (float)(elementHeight / 2);
@@ -505,18 +521,28 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
                 return;
 
             var canvas = e.Surface.Canvas;
+            var canvasWidth = e.Info.Width;
+            var canvasHeight = e.Info.Height;
 
             canvas.Clear(SKColors.DimGray);
 
+            // Draw grid before scaling (at 2x tile size so it matches the scaled sprites)
+            RenderUtil.DrawIsometricGrid(canvas, canvasWidth, canvasHeight);
+
+            // Scale around origin (body center is at 0,0)
             canvas.Scale(
                 2.0f,
                 2.0f,
-                BODY_CENTER_X,
-                BODY_CENTER_Y);
+                0,
+                0);
 
-            //apply horizontal flip for down and left directions (flip around center)
+            // Apply horizontal flip for down and left directions (flip around origin)
             if (CurrentViewDirection is ViewDirection.Down or ViewDirection.Left)
-                canvas.Scale(-1, 1, BODY_CENTER_X, BODY_CENTER_Y);
+                canvas.Scale(
+                    -1,
+                    1,
+                    0,
+                    0);
 
             //determine render order based on equipment type
             var renderBehindBody = RenderBehindBodyTypes.Contains(EquipmentTypeLetter);
@@ -550,13 +576,17 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
                 if (idleFrameIndex < fallbackFrames.Count)
                 {
                     var bodyFrame = fallbackFrames[idleFrameIndex];
-                    canvas.DrawImage(bodyFrame, 0, 0);
+
+                    // Draw body so that BODY_CENTER is at (0,0)
+                    canvas.DrawImage(bodyFrame, -BODY_CENTER_X, -BODY_CENTER_Y);
                 }
             }
         } else if (CurrentBodyAnimation?.Frames is { } bodyFrames && (CurrentFrameIndex >= 0) && (CurrentFrameIndex < bodyFrames.Count))
         {
             var bodyFrame = bodyFrames[CurrentFrameIndex];
-            canvas.DrawImage(bodyFrame, 0, 0);
+
+            // Draw body so that BODY_CENTER is at (0,0)
+            canvas.DrawImage(bodyFrame, -BODY_CENTER_X, -BODY_CENTER_Y);
         }
     }
 
@@ -570,8 +600,12 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
             && (CurrentFrameIndex < currentEpfFile.Count))
         {
             var epfFrame = currentEpfFile[CurrentFrameIndex];
-            (var offsetX, var offsetY) = GetEquipmentDrawOffset(epfFrame);
+            (var typeOffsetX, var typeOffsetY) = GetEquipmentDrawOffset(epfFrame);
             var equipFrame = equipFrames[CurrentFrameIndex];
+
+            // Draw equipment relative to body center at (0,0)
+            var offsetX = -BODY_CENTER_X + typeOffsetX;
+            var offsetY = -BODY_CENTER_Y + typeOffsetY;
             canvas.DrawImage(equipFrame, offsetX, offsetY);
 
             //draw debug rectangles if enabled
