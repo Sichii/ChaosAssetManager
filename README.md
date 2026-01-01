@@ -4,7 +4,8 @@ A gui application built around the capabilities of dalib(https://github.com/eris
 
 Archive Tools (viewing, patching, compiling, extracting)  
 Conversion Tools (.png, .jpg, .jpeg, .bmp, .efa, .epf, .hpf, .mpf, .spf)  
-Palette Remapper (.pal)
+Palette Remapper (.pal)  
+Background Tile splicer
 
 # Editors
 
@@ -17,4 +18,5 @@ Map Editor (.map) - structures are a work in progress
 
 Panel Sprite Importer (legend.dat)  
 Equipment Importer (khan archives)  
-NPC Importer (hades.dat)
+NPC Importer (hades.dat)  
+Tile Importer (background and foreground)
