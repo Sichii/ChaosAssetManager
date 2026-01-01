@@ -1,0 +1,198 @@
+<UserControl x:Class="ChaosAssetManager.Controls.TileImportControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewModel="clr-namespace:ChaosAssetManager.ViewModel"
+             xmlns:previewControls="clr-namespace:ChaosAssetManager.Controls.PreviewControls"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+             d:DesignWidth="800"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             Loaded="TileImportControl_OnLoaded">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <!-- Archive Path Not Configured Message -->
+        <TextBlock x:Name="NotConfiguredMessage"
+                   Text="Please configure the Archives Directory in Settings (gear icon)"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="16"
+                   Visibility="Collapsed" />
+
+        <!-- Main Content -->
+        <Grid x:Name="MainContent">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Info Message -->
+            <TextBlock x:Name="InfoMessage"
+                       Grid.Row="0"
+                       Text="Select PNG images (56x27 pixels) to import as background tiles. Images will be grouped into shared palettes."
+                       HorizontalAlignment="Center"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       MaxWidth="600"
+                       Margin="20,15,20,5"
+                       FontSize="13"
+                       Opacity="0.7" />
+
+            <!-- Tile Type Selector -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="20,5,20,10">
+                <RadioButton x:Name="BackgroundRadio"
+                             Content="Background"
+                             GroupName="TileType"
+                             IsChecked="True"
+                             Checked="TileType_Changed"
+                             Style="{StaticResource MaterialDesignTabRadioButtonBottom}"
+                             Margin="0,0,10,0" />
+                <RadioButton x:Name="ForegroundRadio"
+                             Content="Foreground"
+                             GroupName="TileType"
+                             Checked="TileType_Changed"
+                             Style="{StaticResource MaterialDesignTabRadioButtonBottom}" />
+            </StackPanel>
+
+            <!-- Controls Row -->
+            <Grid Grid.Row="2"
+                  Margin="20,10">
+                <!-- Browse Button -->
+                <Button x:Name="BrowseBtn"
+                        Content="Select PNG Files"
+                        HorizontalAlignment="Center"
+                        Click="BrowseBtn_OnClick"
+                        Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+            </Grid>
+
+            <!-- Tile Preview Grid -->
+            <Border Grid.Row="3"
+                    Margin="20,0"
+                    BorderBrush="{DynamicResource MaterialDesignDivider}"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="TilesItemsControl"
+                                  ItemsSource="{Binding TileViewModels}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type viewModel:TileImportViewModel}">
+                                <Border Margin="8"
+                                        Padding="8"
+                                        BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Background="{DynamicResource MaterialDesignCardBackground}">
+                                    <StackPanel>
+                                        <!-- Tile Image at 2x scale -->
+                                        <Border Background="#1A1A1A"
+                                                HorizontalAlignment="Center">
+                                            <previewControls:SKImageElement Source="{Binding Image}"
+                                                                            Scale="2"
+                                                                            Width="112"
+                                                                            Height="54" />
+                                        </Border>
+
+                                        <!-- File Name -->
+                                        <TextBlock Text="{Binding FileName}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxWidth="120"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="11"
+                                                   Margin="0,4,0,4"
+                                                   ToolTip="{Binding FileName}" />
+
+                                        <!-- Flags (only for foreground tiles) -->
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Center"
+                                                    Visibility="{Binding ShowFlags, Converter={StaticResource BoolToVisConverter}}">
+                                            <CheckBox Content="Wall"
+                                                      IsChecked="{Binding IsWall}"
+                                                      Style="{StaticResource MaterialDesignCheckBox}"
+                                                      FontSize="11"
+                                                      Margin="0,0,8,0" />
+                                            <CheckBox Content="Transparent"
+                                                      IsChecked="{Binding IsTransparent}"
+                                                      Style="{StaticResource MaterialDesignCheckBox}"
+                                                      FontSize="11"
+                                                      ToolTip="Tile will be transparent just like an EFA effect (luminance-based, darker = more transparent)" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Import As (Normal/SnowTileSet) -->
+            <StackPanel Grid.Row="4"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="20,15,20,5">
+                <RadioButton x:Name="NormalRadio"
+                             Content="Normal"
+                             GroupName="TilesetVariant"
+                             IsChecked="True"
+                             VerticalAlignment="Center"
+                             Style="{StaticResource MaterialDesignTabRadioButtonBottom}"
+                             Margin="0,0,10,0" />
+                <RadioButton x:Name="SnowRadio"
+                             Content="SnowTileSet"
+                             GroupName="TilesetVariant"
+                             VerticalAlignment="Center"
+                             Style="{StaticResource MaterialDesignTabRadioButtonBottom}" />
+            </StackPanel>
+
+            <!-- Import Button -->
+            <Button x:Name="ImportBtn"
+                    Grid.Row="5"
+                    Content="Import Tiles"
+                    HorizontalAlignment="Center"
+                    Click="ImportBtn_OnClick"
+                    IsEnabled="False"
+                    Margin="20,5"
+                    Style="{StaticResource MaterialDesignFlatSecondaryMidBgButton}" />
+
+            <!-- Bottom Info Message -->
+            <TextBlock x:Name="BottomInfoMessage"
+                       Grid.Row="6"
+                       Text="Background tiles will be appended to the existing tileset in SEO.dat."
+                       HorizontalAlignment="Center"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       MaxWidth="600"
+                       Margin="20,5,20,15"
+                       FontSize="12"
+                       Opacity="0.6" />
+        </Grid>
+
+        <!-- Snackbar -->
+        <materialDesign:Snackbar x:Name="Snackbar"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Bottom"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>

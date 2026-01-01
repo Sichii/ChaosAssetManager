@@ -57,83 +57,63 @@ public static partial class RenderUtil
     /// </summary>
     private static SKShader CreateGridShader(int scale)
     {
-        var tileWidth = CONSTANTS.TILE_WIDTH * scale;
-        var halfTileWidth = CONSTANTS.HALF_TILE_WIDTH * scale;
-        var halfTileHeight = CONSTANTS.HALF_TILE_HEIGHT * scale;
+        using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, CONSTANTS.TILE_HEIGHT + 1);
 
-        //pattern needs to be 2 rows tall to account for the stagger offset
-        var patternWidth = tileWidth;
-        var patternHeight = halfTileHeight * 2;
+        var color = new SKColor(80, 80, 80);
 
-        using var bitmap = new SKBitmap(patternWidth, patternHeight);
-        using var canvas = new SKCanvas(bitmap);
-
-        using var paint = new SKPaint();
-        paint.Color = new SKColor(80, 80, 80);
-        paint.Style = SKPaintStyle.Stroke;
-        paint.StrokeWidth = 1;
-        paint.IsAntialias = false;
-
-        //row 0: diamond centered in tile
-        DrawDiamond(
-            canvas,
-            paint,
-            halfTileWidth,
+        //even row tile at origin
+        DrawTileOutline(
+            bitmap,
             0,
-            halfTileWidth,
-            halfTileHeight);
-
-        //row 1: diamond at left edge (combines with right edge when tiled)
-        DrawDiamond(
-            canvas,
-            paint,
             0,
-            halfTileHeight,
-            halfTileWidth,
-            halfTileHeight);
+            color);
 
-        //row 1: diamond at right edge (other half)
-        DrawDiamond(
-            canvas,
-            paint,
-            tileWidth,
-            halfTileHeight,
-            halfTileWidth,
-            halfTileHeight);
+        //left half of odd tile
+        DrawTileOutline(
+            bitmap,
+            -CONSTANTS.HALF_TILE_WIDTH,
+            -CONSTANTS.HALF_TILE_HEIGHT,
+            color);
+
+        DrawTileOutline(
+            bitmap,
+            -CONSTANTS.HALF_TILE_WIDTH,
+            CONSTANTS.HALF_TILE_HEIGHT,
+            color);
+
+        //right half of odd tile (shifted by -1 so edges overlap with left half)
+        DrawTileOutline(
+            bitmap,
+            CONSTANTS.HALF_TILE_WIDTH,
+            -CONSTANTS.HALF_TILE_HEIGHT,
+            color);
+
+        DrawTileOutline(
+            bitmap,
+            CONSTANTS.HALF_TILE_WIDTH,
+            CONSTANTS.HALF_TILE_HEIGHT,
+            color);
 
         using var image = SKImage.FromBitmap(bitmap);
 
         //offset the shader so a tile center is at world origin (0,0)
-        var offsetMatrix = SKMatrix.CreateTranslation(-halfTileWidth, -halfTileHeight);
+        var offsetMatrix = SKMatrix.CreateScaleTranslation(
+            scale,
+            scale,
+            -CONSTANTS.HALF_TILE_WIDTH * scale,
+            -CONSTANTS.HALF_TILE_HEIGHT * scale);
 
         return image.ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, offsetMatrix);
     }
 
     /// <summary>
-    ///     Draws an isometric diamond shape at the specified center position.
-    /// </summary>
-    private static void DrawDiamond(
-        SKCanvas canvas,
-        SKPaint paint,
-        float centerX,
-        float centerY,
-        float halfWidth,
-        float halfHeight)
-    {
-        using var path = new SKPath();
-        path.MoveTo(centerX, centerY);
-        path.LineTo(centerX + halfWidth, centerY + halfHeight);
-        path.LineTo(centerX, centerY + halfHeight * 2);
-        path.LineTo(centerX - halfWidth, centerY + halfHeight);
-        path.Close();
-
-        canvas.DrawPath(path, paint);
-    }
-
-    /// <summary>
     ///     Draws an isometric grid on the canvas that covers the visible area using a shader for infinite tiling.
     /// </summary>
-    public static void DrawIsometricGrid(SKCanvas canvas, float canvasWidth, float canvasHeight, int scale = 2)
+    public static void DrawIsometricGrid(
+        SKCanvas canvas,
+        float canvasWidth,
+        float canvasHeight,
+        int scale = 2)
     {
         GridShader ??= CreateGridShader(scale);
 
@@ -168,6 +148,111 @@ public static partial class RenderUtil
             maxX - minX,
             maxY - minY,
             paint);
+    }
+
+    /// <summary>
+    ///     Draws a filled isometric tile (diamond shape) pixel by pixel at the specified position.
+    /// </summary>
+    public static void DrawTileFilled(
+        SKBitmap bitmap,
+        int tileLeft,
+        int tileTop,
+        SKColor color)
+    {
+        using var outline = GetTileOutlinePath(tileLeft, tileTop);
+        using var canvas = new SKCanvas(bitmap);
+        using var paint = new SKPaint();
+        paint.Color = color;
+        paint.Style = SKPaintStyle.Fill;
+
+        canvas.DrawPath(outline, paint);
+    }
+
+    /// <summary>
+    ///     Draws an isometric tile outline (diamond shape) pixel by pixel at the specified position. Only draws the edge
+    ///     pixels of the diamond.
+    /// </summary>
+    public static void DrawTileOutline(
+        SKBitmap bitmap,
+        int tileLeft,
+        int tileTop,
+        SKColor color)
+    {
+        using var outline = GetTileOutlinePath(tileLeft, tileTop);
+        using var canvas = new SKCanvas(bitmap);
+        using var paint = new SKPaint();
+        paint.Color = color;
+        paint.Style = SKPaintStyle.Stroke;
+
+        canvas.DrawPath(outline, paint);
+    }
+
+    public static SKPath GetTileOutlinePath(int tileLeft, int tileTop)
+    {
+        var startPoint = new SKPoint(tileLeft + 28, tileTop);
+        var path = new SKPath();
+        path.MoveTo(startPoint);
+        var rightTwo = new SKPoint(2, 0);
+        var leftTwo = new SKPoint(-2, 0);
+        var downOne = new SKPoint(0, 1);
+        var upOne = new SKPoint(0, -1);
+
+        for (var i = 0; i < CONSTANTS.HALF_TILE_HEIGHT; i++)
+        {
+            path.LineTo(startPoint += rightTwo);
+            path.MoveTo(startPoint += downOne);
+        }
+
+        path.MoveTo(startPoint += new SKPoint(-2, -1)); //correction
+
+        for (var i = 0; i < (CONSTANTS.HALF_TILE_HEIGHT - 1); i++)
+        {
+            path.MoveTo(startPoint += downOne);
+            path.LineTo(startPoint += leftTwo);
+        }
+
+        for (var i = 0; i < CONSTANTS.HALF_TILE_HEIGHT; i++)
+        {
+            path.LineTo(startPoint += leftTwo);
+            path.MoveTo(startPoint += upOne);
+        }
+
+        path.MoveTo(startPoint += new SKPoint(2, 1)); //correction
+
+        for (var i = 0; i < (CONSTANTS.HALF_TILE_HEIGHT - 1); i++)
+        {
+            path.MoveTo(startPoint += upOne);
+            path.LineTo(startPoint += rightTwo);
+        }
+
+        path.Close();
+
+        return path;
+    }
+
+    /// <summary>
+    ///     Calculates the start and end X coordinates for a tile row. Row 0: 4 pixels (26-29), expanding by 2 on each side per
+    ///     row until row 13 (full width).
+    /// </summary>
+    public static (int StartX, int EndX) GetTileRowBounds(int row)
+    {
+        int startX,
+            endX;
+
+        if (row <= 13)
+        {
+            //top half: expands as we go down
+            startX = 26 - row * 2;
+            endX = 29 + row * 2;
+        } else
+        {
+            //bottom half: contracts as we go down (mirror of top)
+            var mirrorRow = (26 - row) * 2;
+            startX = 26 - mirrorRow;
+            endX = 29 + mirrorRow;
+        }
+
+        return (startX, endX);
     }
 
     /// <summary>

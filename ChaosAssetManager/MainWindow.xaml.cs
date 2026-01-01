@@ -31,12 +31,14 @@ public partial class MainWindow : Window
         _navContentMap["PanelSpritesNav"] = PanelSpritesView;
         _navContentMap["EquipmentImportNav"] = EquipmentImportView;
         _navContentMap["NPCImportNav"] = NPCImportView;
+        _navContentMap["TileImportNav"] = TileImportView;
         _navContentMap["EffectEditorNav"] = EffectEditorView;
         _navContentMap["EquipmentEditorNav"] = EquipmentEditorView;
         _navContentMap["NPCEditorNav"] = NPCEditorView;
         _navContentMap["MetaFileEditorNav"] = MetaFileEditorView;
         _navContentMap["PaletteRemapperNav"] = PaletteRemapperView;
         _navContentMap["MapEditorNav"] = MapEditorView;
+        _navContentMap["BgTileSplicerNav"] = BgTileSplicerView;
     }
 
     private void CloseBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
@@ -164,6 +166,15 @@ public partial class MainWindow : Window
             || (navButton == MetaFileEditorNav)
             || (navButton == MapEditorNav))
             EditorsExpander.IsExpanded = true;
+    }
+
+    /// <summary>
+    ///     Navigates to the Tile Import view (used by Tile Splicer)
+    /// </summary>
+    public void NavigateToTileImport()
+    {
+        ImportExpander.IsExpanded = true;
+        NavigateTo(TileImportNav);
     }
 
     private void NavItem_Checked(object sender, RoutedEventArgs e)

@@ -31,16 +31,6 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <Style x:Key="NavButtonStyle"
-               TargetType="RadioButton"
-               BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
-            <Setter Property="Height"
-                    Value="40" />
-            <Setter Property="Padding"
-                    Value="16,0" />
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Left" />
-        </Style>
         <Style x:Key="SubNavButtonStyle"
                TargetType="RadioButton"
                BasedOn="{StaticResource MaterialDesignTabRadioButtonLeft}">
@@ -143,24 +133,46 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel MinWidth="150">
-                    <RadioButton x:Name="ArchivesNav"
-                                 Content="Archives"
-                                 GroupName="Navigation"
-                                 IsChecked="True"
-                                 Style="{StaticResource NavButtonStyle}"
-                                 Checked="NavItem_Checked" />
+                    <!-- Tools Expander -->
+                    <Expander Header="Tools"
+                              x:Name="ToolsExpander"
+                              Padding="0"
+                              HorizontalAlignment="Stretch"
+                              IsExpanded="True">
+                        <StackPanel>
+                            <RadioButton x:Name="ArchivesNav"
+                                         Content="Archive Manager"
+                                         GroupName="Navigation"
+                                         IsChecked="True"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
 
-                    <RadioButton x:Name="ConvertNav"
-                                 Content="Convert"
-                                 GroupName="Navigation"
-                                 Style="{StaticResource NavButtonStyle}"
-                                 Checked="NavItem_Checked" />
+                            <RadioButton x:Name="ConvertNav"
+                                         Content="Convert"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="PaletteRemapperNav"
+                                         Content="Palette Remapper"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="BgTileSplicerNav"
+                                         Content="Bg Tile Splicer"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+                        </StackPanel>
+                    </Expander>
 
                     <!-- Import Expander -->
                     <Expander Header="Import"
                               x:Name="ImportExpander"
                               Padding="0"
-                              HorizontalAlignment="Stretch">
+                              HorizontalAlignment="Stretch"
+                              IsExpanded="True">
                         <StackPanel>
                             <RadioButton x:Name="PanelSpritesNav"
                                          Content="Panel Sprites"
@@ -179,6 +191,12 @@
                                          GroupName="Navigation"
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="TileImportNav"
+                                         Content="Tiles"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
                         </StackPanel>
                     </Expander>
 
@@ -186,7 +204,8 @@
                     <Expander Header="Edit"
                               x:Name="EditorsExpander"
                               Padding="0"
-                              HorizontalAlignment="Stretch">
+                              HorizontalAlignment="Stretch"
+                              IsExpanded="True">
                         <StackPanel>
                             <RadioButton x:Name="EffectEditorNav"
                                          Content="Effect Editor"
@@ -220,12 +239,6 @@
                         </StackPanel>
                     </Expander>
 
-                    <RadioButton x:Name="PaletteRemapperNav"
-                                 Content="Palette Remapper"
-                                 GroupName="Navigation"
-                                 Style="{StaticResource NavButtonStyle}"
-                                 Checked="NavItem_Checked" />
-
                 </StackPanel>
             </ScrollViewer>
 
@@ -241,6 +254,8 @@
                                                  Visibility="Collapsed" />
                 <controls:NPCImportControl x:Name="NPCImportView"
                                            Visibility="Collapsed" />
+                <controls:TileImportControl x:Name="TileImportView"
+                                            Visibility="Collapsed" />
                 <controls:EffectEditorControl x:Name="EffectEditorView"
                                               Visibility="Collapsed" />
                 <controls:EquipmentEditorControl x:Name="EquipmentEditorView"
@@ -253,6 +268,8 @@
                                                 Visibility="Collapsed" />
                 <controls:MapEditorControl x:Name="MapEditorView"
                                            Visibility="Collapsed" />
+                <controls:BgTileSplicerControl x:Name="BgTileSplicerView"
+                                               Visibility="Collapsed" />
             </Grid>
         </Grid>
 
