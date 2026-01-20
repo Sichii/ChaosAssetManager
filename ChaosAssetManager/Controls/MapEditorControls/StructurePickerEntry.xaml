@@ -22,5 +22,26 @@
         <ContentControl x:Name="ContentControl"
                         Padding="0"
                         Margin="0" />
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="4">
+            <Button x:Name="EditBtn"
+                    Width="24"
+                    Height="24"
+                    Padding="0"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Content="{materialDesign:PackIcon Kind=Pencil, Size=16}"
+                    ToolTip="Edit Structure"
+                    Click="EditBtn_OnClick" />
+            <Button x:Name="DeleteBtn"
+                    Width="24"
+                    Height="24"
+                    Padding="0"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Content="{materialDesign:PackIcon Kind=Delete, Size=16}"
+                    ToolTip="Delete Structure"
+                    Click="DeleteBtn_OnClick" />
+        </StackPanel>
     </Grid>
 </UserControl>

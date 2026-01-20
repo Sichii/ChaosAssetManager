@@ -32,6 +32,9 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
         <Resource Include="Resources\chaosAssetManager.ico"/>
+        <None Update="Resources\structures.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

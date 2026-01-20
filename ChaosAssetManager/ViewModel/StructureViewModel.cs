@@ -9,6 +9,8 @@ namespace ChaosAssetManager.ViewModel;
 
 public class StructureViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
+    public string? Id { get; set; }
+    public bool IsEditing { get; set; }
     public required Rectangle Bounds { get; set; }
     public ObservingCollection<TileViewModel> RawBackgroundTiles { get; } = [];
     public ObservingCollection<TileViewModel> RawLeftForegroundTiles { get; } = [];
@@ -19,6 +21,12 @@ public class StructureViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
     public bool HasBackgroundTiles => RawBackgroundTiles.Count > 0;
 
     public bool HasForegroundTiles => HasLeftForegroundTiles || HasRightForegroundTiles;
+
+    /// <summary>
+    /// Determines if this is a foreground structure based on having non-zero foreground tiles
+    /// </summary>
+    public bool HasNonZeroForegroundTiles =>
+        RawLeftForegroundTiles.Any(t => t.TileId != 0) || RawRightForegroundTiles.Any(t => t.TileId != 0);
 
     public bool HasLeftForegroundTiles => RawLeftForegroundTiles.Count > 0;
 

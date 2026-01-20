@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.ViewModel;
 using DALib.Extensions;
+using MaterialDesignThemes.Wpf;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using SkiaSharp.Views.WPF;
@@ -182,5 +184,49 @@ public partial class StructurePickerEntry
                               or nameof(StructureViewModel.RawLeftForegroundTiles)
                               or nameof(StructureViewModel.RawRightForegroundTiles))
             Element.InvalidateVisual();
+    }
+
+    private void EditBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is null)
+            return;
+
+        //stop the event from bubbling up to the DataGrid selection
+        e.Handled = true;
+
+        //open the structure in a new tab for editing
+        MapEditorControl.Instance.OpenStructureForEditing(ViewModel);
+    }
+
+    private async void DeleteBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is null)
+            return;
+
+        //stop the event from bubbling up to the DataGrid selection
+        e.Handled = true;
+
+        //show confirmation dialog
+        var result = await DialogHost.Show(
+            new TextBlock
+            {
+                Text = $"Delete structure '{ViewModel.Id}'?",
+                Margin = new Thickness(16)
+            },
+            "RootDialog",
+            (_, args) =>
+            {
+                args.Session.Close(args.Parameter is true);
+            });
+
+        if (result is not true)
+            return;
+
+        //delete from repository
+        if (ViewModel.Id is not null)
+        {
+            StructureRepository.Instance.Delete(ViewModel.Id);
+            MapEditorControl.Instance.LoadStructuresFromRepository();
+        }
     }
 }

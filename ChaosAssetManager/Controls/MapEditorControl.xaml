@@ -65,9 +65,44 @@
                              TabIndex="1" />
                 </Grid>
                 <Grid>
-                    <Button Content="Create"
+                    <Button Content="Create Map"
                             TabIndex="2"
                             Click="NewMapCreateBtn_OnClick" />
+                </Grid>
+                <Separator />
+                <TextBlock Text="--- Structure ---"
+                           FontWeight="Bold"
+                           Margin="5,5,5,0" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Width: " />
+                    <TextBox Grid.Column="1"
+                             x:Name="NewStructWidthTbx"
+                             Width="50"
+                             TabIndex="3" />
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Height: " />
+                    <TextBox Grid.Column="1"
+                             x:Name="NewStructHeightTbx"
+                             Width="50"
+                             TabIndex="4" />
+                </Grid>
+                <Grid>
+                    <Button Content="Create Structure"
+                            TabIndex="5"
+                            Click="NewStructureCreateBtn_OnClick" />
                 </Grid>
             </MenuItem>
             <MenuItem x:Name="LoadBtn"
@@ -591,6 +626,18 @@
                      Style="{StaticResource MaterialDesignTabItem}"
                      HorizontalContentAlignment="Stretch"
                      HorizontalAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button x:Name="CreateStructureFromGrabBtn"
+                            Grid.Row="0"
+                            Content="Create from Grab"
+                            Click="CreateStructureFromGrabBtn_OnClick"
+                            Margin="4"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            ToolTip="Create a new structure from the current tile selection" />
                 <DataGrid Grid.Row="1"
                           x:Name="StructuresControl"
                           SelectionMode="Single"
@@ -686,6 +733,7 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
+                </Grid>
             </TabItem>
         </TabControl>
 

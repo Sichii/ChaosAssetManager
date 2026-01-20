@@ -16,6 +16,11 @@ namespace ChaosAssetManager.ViewModel;
 
 public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
+    //structure editing properties
+    public bool IsStructure { get; set; }
+    public string? StructureId { get; set; }
+    public string? OriginalStructureId { get; set; } //tracks original id for updates
+
     public bool BackgroundChangePending
     {
         get;
@@ -42,7 +47,7 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
     public string FileName
     {
-        get;
+        get => IsStructure ? (StructureId ?? "New Structure") : field;
         set => SetField(ref field, value);
     }
 

@@ -409,6 +409,148 @@ public partial class MapEditorControl
         MapViewerTabControl.SelectedItem = viewer;
     }
 
+    private void NewStructureCreateBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(PathHelper.Instance.ArchivesPath))
+        {
+            ShowMessage("Fix the archive path first");
+
+            return;
+        }
+
+        if (!byte.TryParse(NewStructWidthTbx.Text, out var width) || width == 0 || width > 20)
+        {
+            ShowMessage("Invalid width (1-20)");
+
+            return;
+        }
+
+        if (!byte.TryParse(NewStructHeightTbx.Text, out var height) || height == 0 || height > 20)
+        {
+            ShowMessage("Invalid height (1-20)");
+
+            return;
+        }
+
+        var viewer = new MapViewerViewModel
+        {
+            Bounds = new Rectangle(0, 0, width, height),
+            FromPath = "New Structure",
+            PossibleBounds =
+            [
+                new MapBounds { Width = width, Height = height }
+            ],
+            IsStructure = true,
+            StructureId = "New Structure",
+            OriginalStructureId = null //new structure, no original id
+        };
+
+        //populate with empty tiles
+        viewer.RawBackgroundTiles.AddRange(
+            Enumerable.Range(0, width * height)
+                      .Select(_ => TileViewModel.EmptyBackground));
+
+        viewer.RawLeftForegroundTiles.AddRange(
+            Enumerable.Range(0, width * height)
+                      .Select(_ => TileViewModel.EmptyLeftForeground));
+
+        viewer.RawRightForegroundTiles.AddRange(
+            Enumerable.Range(0, width * height)
+                      .Select(_ => TileViewModel.EmptyRightForeground));
+
+        viewer.Initialize();
+
+        ViewModel.Maps.Add(viewer);
+        MapViewerTabControl.SelectedItem = viewer;
+    }
+
+    public void OpenStructureForEditing(StructureViewModel structure)
+    {
+        //check if structure is already open
+        var existing = ViewModel.Maps.FirstOrDefault(m => m.IsStructure && m.StructureId == structure.Id);
+
+        if (existing is not null)
+        {
+            MapViewerTabControl.SelectedItem = existing;
+
+            return;
+        }
+
+        //check if this is a new structure (not from repository) by checking if it exists
+        var isNewStructure = structure.Id is null || !StructureRepository.Instance.IdExists(structure.Id);
+
+        var viewer = new MapViewerViewModel
+        {
+            Bounds = structure.Bounds,
+            FromPath = structure.Id ?? "Structure",
+            PossibleBounds =
+            [
+                new MapBounds { Width = structure.Bounds.Width, Height = structure.Bounds.Height }
+            ],
+            IsStructure = true,
+            StructureId = structure.Id,
+            OriginalStructureId = isNewStructure ? null : structure.Id
+        };
+
+        //copy tiles from structure
+        foreach (var tile in structure.RawBackgroundTiles)
+        {
+            var cloned = tile.Clone();
+            viewer.RawBackgroundTiles.Add(cloned);
+        }
+
+        foreach (var tile in structure.RawLeftForegroundTiles)
+        {
+            var cloned = tile.Clone();
+            viewer.RawLeftForegroundTiles.Add(cloned);
+        }
+
+        foreach (var tile in structure.RawRightForegroundTiles)
+        {
+            var cloned = tile.Clone();
+            viewer.RawRightForegroundTiles.Add(cloned);
+        }
+
+        //if structure has no tiles, populate with empty tiles
+        if (viewer.RawBackgroundTiles.Count == 0)
+            viewer.RawBackgroundTiles.AddRange(
+                Enumerable.Range(0, structure.Bounds.Width * structure.Bounds.Height)
+                          .Select(_ => TileViewModel.EmptyBackground));
+
+        if (viewer.RawLeftForegroundTiles.Count == 0)
+            viewer.RawLeftForegroundTiles.AddRange(
+                Enumerable.Range(0, structure.Bounds.Width * structure.Bounds.Height)
+                          .Select(_ => TileViewModel.EmptyLeftForeground));
+
+        if (viewer.RawRightForegroundTiles.Count == 0)
+            viewer.RawRightForegroundTiles.AddRange(
+                Enumerable.Range(0, structure.Bounds.Width * structure.Bounds.Height)
+                          .Select(_ => TileViewModel.EmptyRightForeground));
+
+        viewer.Initialize();
+
+        ViewModel.Maps.Add(viewer);
+        MapViewerTabControl.SelectedItem = viewer;
+    }
+
+    private void CreateStructureFromGrabBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        var tileGrab = ViewModel.TileGrab;
+
+        if (tileGrab is null || tileGrab.IsEmpty)
+        {
+            Snackbar.MessageQueue?.Enqueue("No tile selection. Use the Grab tool to select tiles first.");
+
+            return;
+        }
+
+        //convert tile grab to structure and open for editing
+        var structure = tileGrab.ToStructureViewModel();
+        structure.Id = "New Structure";
+
+        OpenStructureForEditing(structure);
+    }
+
     private void PopulateTileViewModels()
     {
         if (Interlocked.CompareExchange(ref IsPopulated, true, false))
@@ -458,8 +600,27 @@ public partial class MapEditorControl
 
         ViewModel.ForegroundTiles.AddRange(foregroundTiles);
         ViewModel.BackgroundTiles.AddRange(backgroundtiles);
-        ViewModel.ForegroundStructures.AddRange(CONSTANTS.FOREGROUND_STRUCTURES);
-        ViewModel.BackgroundStructures.AddRange(CONSTANTS.BACKGROUND_STRUCTURES);
+
+        //load structures from repository
+        LoadStructuresFromRepository();
+    }
+
+    public void LoadStructuresFromRepository()
+    {
+        ViewModel.ForegroundStructures.Clear();
+        ViewModel.BackgroundStructures.Clear();
+
+        foreach (var definition in StructureRepository.Instance.Structures)
+        {
+            var viewModel = StructureRepository.ToViewModel(definition);
+            viewModel.Initialize();
+
+            //categorize based on whether structure has non-zero foreground tiles
+            if (definition.HasForegroundTiles)
+                ViewModel.ForegroundStructures.Add(viewModel);
+            else
+                ViewModel.BackgroundStructures.Add(viewModel);
+        }
     }
 
     private void RedoBtn_OnClick(object sender, RoutedEventArgs e) => DoRedo();
@@ -493,7 +654,7 @@ public partial class MapEditorControl
         }
     }
 
-    private void SaveBtn_OnClick(object sender, RoutedEventArgs e)
+    private async void SaveBtn_OnClick(object sender, RoutedEventArgs e)
     {
         if (MapViewerTabControl.SelectedItem is null)
         {
@@ -504,6 +665,14 @@ public partial class MapEditorControl
 
         var viewer = (MapViewerViewModel)MapViewerTabControl.SelectedItem;
 
+        //handle structure saving
+        if (viewer.IsStructure)
+        {
+            await SaveStructure(viewer);
+
+            return;
+        }
+
         if (viewer.FromPath.EqualsI(CONSTANTS.NEW_MAP_NAME))
         {
             SaveAsBtn_OnClick(sender, e);
@@ -513,20 +682,20 @@ public partial class MapEditorControl
 
         var path = viewer.FromPath;
 
-        using (var stream = File.Open(
-                   path.WithExtension(".map"),
-                   new FileStreamOptions
-                   {
-                       Access = FileAccess.Write,
-                       Mode = FileMode.Create,
-                       Options = FileOptions.SequentialScan,
-                       Share = FileShare.ReadWrite
-                   }))
+        await using (var stream = File.Open(
+                         path.WithExtension(".map"),
+                         new FileStreamOptions
+                         {
+                             Access = FileAccess.Write,
+                             Mode = FileMode.Create,
+                             Options = FileOptions.SequentialScan,
+                             Share = FileShare.ReadWrite
+                         }))
         {
             //clear existing data
             stream.SetLength(0);
 
-            using var writer = new BinaryWriter(stream, Encoding.Default, true);
+            await using var writer = new BinaryWriter(stream, Encoding.Default, true);
 
             var backgroundTiles = viewer.BackgroundTilesView;
             var leftForegroundTiles = viewer.LeftForegroundTilesView;
@@ -547,6 +716,109 @@ public partial class MapEditorControl
         }
 
         ShowMessage("Map saved successfully");
+    }
+
+    private async Task SaveStructure(MapViewerViewModel viewer)
+    {
+        var structureId = viewer.StructureId ?? "New Structure";
+        var isNewStructure = string.IsNullOrEmpty(viewer.OriginalStructureId);
+
+        //prompt for id if it's a new structure
+        if (isNewStructure)
+        {
+            var idInput = new System.Windows.Controls.TextBox
+            {
+                Text = structureId,
+                Width = 200,
+                Margin = new Thickness(16)
+            };
+
+            var stackPanel = new StackPanel();
+
+            stackPanel.Children.Add(
+                new TextBlock
+                {
+                    Text = "Enter structure ID:",
+                    Margin = new Thickness(16, 16, 16, 0)
+                });
+
+            stackPanel.Children.Add(idInput);
+
+            stackPanel.Children.Add(
+                new StackPanel
+                {
+                    Orientation = System.Windows.Controls.Orientation.Horizontal,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                    Margin = new Thickness(16),
+                    Children =
+                    {
+                        new Button
+                        {
+                            Content = "Cancel",
+                            Margin = new Thickness(0, 0, 8, 0),
+                            Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
+                            CommandParameter = false
+                        },
+                        new Button
+                        {
+                            Content = "Save",
+                            Style = (Style)FindResource("MaterialDesignFlatButton"),
+                            Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
+                            CommandParameter = true
+                        }
+                    }
+                });
+
+            var result = await MaterialDesignThemes.Wpf.DialogHost.Show(stackPanel, "RootDialog");
+
+            if (result is not true)
+                return;
+
+            structureId = idInput.Text;
+
+            if (string.IsNullOrWhiteSpace(structureId))
+            {
+                ShowMessage("Invalid structure ID");
+
+                return;
+            }
+
+            //check for duplicate id
+            if (StructureRepository.Instance.IdExists(structureId))
+            {
+                ShowMessage("A structure with that ID already exists");
+
+                return;
+            }
+        }
+
+        //create structure definition
+        var definition = new StructureDefinition
+        {
+            Id = structureId,
+            Width = viewer.Bounds.Width,
+            Height = viewer.Bounds.Height,
+            BackgroundTiles = viewer.RawBackgroundTiles.Select(t => t.TileId).ToArray(),
+            LeftForegroundTiles = viewer.RawLeftForegroundTiles.Select(t => t.TileId).ToArray(),
+            RightForegroundTiles = viewer.RawRightForegroundTiles.Select(t => t.TileId).ToArray()
+        };
+
+        //update the viewer with the id
+        viewer.StructureId = structureId;
+
+        //save to repository
+        if (isNewStructure)
+        {
+            StructureRepository.Instance.Add(definition);
+            viewer.OriginalStructureId = structureId; //now it's saved, track the id
+        }
+        else
+            StructureRepository.Instance.Update(viewer.OriginalStructureId!, definition);
+
+        //refresh the structure picker list
+        LoadStructuresFromRepository();
+
+        ShowMessage("Structure saved successfully");
     }
 
     private void SaveRenderBtn_OnClick(object sender, RoutedEventArgs e)

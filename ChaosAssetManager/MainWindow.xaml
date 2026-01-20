@@ -45,6 +45,8 @@
         </Style>
     </Window.Resources>
 
+    <materialDesign:DialogHost Identifier="RootDialog"
+                               CloseOnClickAway="False">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -282,4 +284,5 @@
                 BorderThickness="2"
                 BorderBrush="Silver" />
     </Grid>
+    </materialDesign:DialogHost>
 </Window>

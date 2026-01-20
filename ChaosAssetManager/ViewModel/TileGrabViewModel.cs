@@ -348,7 +348,85 @@ public sealed class TileGrabViewModel : NotifyPropertyChangedBase, IDeltaUpdatab
 
         return ret;
     }
-    
+
+    public StructureViewModel ToStructureViewModel()
+    {
+        var bgTiles = BackgroundTilesView;
+        var lfgTiles = LeftForegroundTilesView;
+        var rfgTiles = RightForegroundTilesView;
+
+        //find bounding box of non-empty tiles
+        var minX = Bounds.Width;
+        var minY = Bounds.Height;
+        var maxX = -1;
+        var maxY = -1;
+
+        for (var y = 0; y < Bounds.Height; y++)
+        {
+            for (var x = 0; x < Bounds.Width; x++)
+            {
+                var hasBg = HasBackgroundTiles && bgTiles[x, y].TileId != 0;
+                var hasLfg = HasLeftForegroundTiles && lfgTiles[x, y].TileId != 0;
+                var hasRfg = HasRightForegroundTiles && rfgTiles[x, y].TileId != 0;
+
+                if (hasBg || hasLfg || hasRfg)
+                {
+                    minX = Math.Min(minX, x);
+                    minY = Math.Min(minY, y);
+                    maxX = Math.Max(maxX, x);
+                    maxY = Math.Max(maxY, y);
+                }
+            }
+        }
+
+        //if no non-empty tiles found, return empty 1x1 structure
+        if (maxX < 0)
+        {
+            return new StructureViewModel
+            {
+                Bounds = new Rectangle(0, 0, 1, 1)
+            };
+        }
+
+        var trimmedWidth = maxX - minX + 1;
+        var trimmedHeight = maxY - minY + 1;
+
+        var ret = new StructureViewModel
+        {
+            Bounds = new Rectangle(0, 0, trimmedWidth, trimmedHeight)
+        };
+
+        //copy only the trimmed region
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                if (HasBackgroundTiles)
+                {
+                    var cloned = bgTiles[x, y].Clone();
+                    cloned.Initialize();
+                    ret.RawBackgroundTiles.Add(cloned);
+                }
+
+                if (HasLeftForegroundTiles)
+                {
+                    var cloned = lfgTiles[x, y].Clone();
+                    cloned.Initialize();
+                    ret.RawLeftForegroundTiles.Add(cloned);
+                }
+
+                if (HasRightForegroundTiles)
+                {
+                    var cloned = rfgTiles[x, y].Clone();
+                    cloned.Initialize();
+                    ret.RawRightForegroundTiles.Add(cloned);
+                }
+            }
+        }
+
+        return ret;
+    }
+
     public void Refresh()
     {
         foreach (var tile in RawBackgroundTiles)
