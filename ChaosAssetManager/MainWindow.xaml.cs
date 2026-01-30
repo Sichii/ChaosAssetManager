@@ -39,6 +39,8 @@ public partial class MainWindow : Window
         _navContentMap["PaletteRemapperNav"] = PaletteRemapperView;
         _navContentMap["MapEditorNav"] = MapEditorView;
         _navContentMap["BgTileSplicerNav"] = BgTileSplicerView;
+
+        PathHelper.ArchivesPathChanged += UpdateArchivePathLabel;
     }
 
     private void CloseBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);

@@ -13,7 +13,12 @@ namespace ChaosAssetManager.Controls;
 
 public sealed partial class NPCImportControl
 {
-    public NPCImportControl() => InitializeComponent();
+    public NPCImportControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => NPCImportControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     private void NPCImportControl_OnLoaded(object sender, RoutedEventArgs e)
     {

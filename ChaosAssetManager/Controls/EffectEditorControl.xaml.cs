@@ -16,7 +16,12 @@ public sealed partial class EffectEditorControl
     private static PaletteLookup? MefcPaletteLookup;
     private string? CurrentEntryName;
 
-    public EffectEditorControl() => InitializeComponent();
+    public EffectEditorControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => EffectEditorControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     private void Effect_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -64,6 +69,9 @@ public sealed partial class EffectEditorControl
 
             return;
         }
+
+        NotConfiguredMessage.Visibility = Visibility.Collapsed;
+        MainContent.Visibility = Visibility.Visible;
 
         PopulateEffectList();
     }

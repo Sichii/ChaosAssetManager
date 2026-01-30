@@ -14,7 +14,12 @@ namespace ChaosAssetManager.Controls;
 
 public sealed partial class EquipmentImportControl
 {
-    public EquipmentImportControl() => InitializeComponent();
+    public EquipmentImportControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => EquipmentImportControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     private void BrowseInputBtn_OnClick(object sender, RoutedEventArgs e)
     {

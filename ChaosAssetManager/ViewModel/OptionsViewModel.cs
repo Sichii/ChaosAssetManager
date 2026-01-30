@@ -15,7 +15,12 @@ public class OptionsViewModel : NotifyPropertyChangedBase
 
     public void Save()
     {
+        var pathChanged = !string.Equals(PathHelper.Instance.ArchivesPath, ArchivesPath, StringComparison.OrdinalIgnoreCase);
+
         PathHelper.Instance.ArchivesPath = ArchivesPath;
         PathHelper.Instance.Save();
+
+        if (pathChanged)
+            PathHelper.NotifyArchivesPathChanged();
     }
 }

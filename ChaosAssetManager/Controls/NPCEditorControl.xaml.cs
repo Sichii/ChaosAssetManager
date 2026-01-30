@@ -12,7 +12,12 @@ public sealed partial class NPCEditorControl
 {
     private string? CurrentEntryName;
 
-    public NPCEditorControl() => InitializeComponent();
+    public NPCEditorControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => NPCEditorControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     private void NPC_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -39,6 +44,9 @@ public sealed partial class NPCEditorControl
 
             return;
         }
+
+        NotConfiguredMessage.Visibility = Visibility.Collapsed;
+        MainContent.Visibility = Visibility.Visible;
 
         PopulateNPCList();
     }

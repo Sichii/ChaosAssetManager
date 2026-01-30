@@ -24,7 +24,12 @@ public sealed partial class TileImportControl
 
     private readonly record struct TileImportData(SKImage Image, TileFlags Flags);
 
-    public TileImportControl() => InitializeComponent();
+    public TileImportControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => TileImportControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     /// <summary>
     ///     Loads spliced tiles from the Tile Splicer tool

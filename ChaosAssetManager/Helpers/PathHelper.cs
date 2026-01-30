@@ -13,6 +13,8 @@ public sealed class PathHelper
     [JsonIgnore]
     public static PathHelper Instance { get; }
 
+    public static event Action? ArchivesPathChanged;
+
     static PathHelper()
     {
         PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PATH);
@@ -55,6 +57,12 @@ public sealed class PathHelper
             Instance,
             JsonSerializerOptions.Default,
             false);
+
+    public static void NotifyArchivesPathChanged()
+    {
+        ArchiveCache.Clear();
+        ArchivesPathChanged?.Invoke();
+    }
 
     #region From
     public string? ArchiveLoadFromPath { get; set; }

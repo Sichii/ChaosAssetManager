@@ -16,7 +16,12 @@ public sealed partial class PanelSpritesControl
     private const int ITEMS_PER_PAGE = 266;
     private const int TARGET_SIZE = 32;
 
-    public PanelSpritesControl() => InitializeComponent();
+    public PanelSpritesControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => PanelSpritesControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     private void PanelSpritesControl_OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -26,6 +31,13 @@ public sealed partial class PanelSpritesControl
             InfoMessage.Visibility = Visibility.Collapsed;
             BottomInfoMessage.Visibility = Visibility.Collapsed;
             NotConfiguredMessage.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            NotConfiguredMessage.Visibility = Visibility.Collapsed;
+            MainContent.Visibility = Visibility.Visible;
+            InfoMessage.Visibility = Visibility.Visible;
+            BottomInfoMessage.Visibility = Visibility.Visible;
         }
     }
 

@@ -54,7 +54,12 @@ public partial class EquipmentEditorControl
     private Dictionary<string, EpfFile>? EquipmentFiles;
     private Palette? EquipmentPalette;
 
-    public EquipmentEditorControl() => InitializeComponent();
+    public EquipmentEditorControl()
+    {
+        InitializeComponent();
+
+        PathHelper.ArchivesPathChanged += () => EquipmentEditorControl_OnLoaded(this, new RoutedEventArgs());
+    }
 
     private void Entry_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -74,6 +79,9 @@ public partial class EquipmentEditorControl
 
             return;
         }
+
+        NotConfiguredMessage.Visibility = Visibility.Collapsed;
+        MainContent.Visibility = Visibility.Visible;
 
         // Populate equipment type dropdown
         EquipmentTypeCmb.Items.Clear();
