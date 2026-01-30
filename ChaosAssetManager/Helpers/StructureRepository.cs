@@ -11,7 +11,7 @@ namespace ChaosAssetManager.Helpers;
 public sealed class StructureRepository
 {
     [JsonIgnore]
-    private static readonly string PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "structures.json");
+    private static readonly string PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "structures.json");
 
     [JsonIgnore]
     public static StructureRepository Instance { get; }
