@@ -12,7 +12,8 @@ Background Tile splicer
 Effect Editor (.efa, .epf)  
 Equipment Editor (.epf khan files)  
 NPC Editor (.mpf)  
-Map Editor (.map) - structures are a work in progress
+Map Editor (.map)
+Panel Sprite Editor (.epf legend files)
 
 # Importers
 

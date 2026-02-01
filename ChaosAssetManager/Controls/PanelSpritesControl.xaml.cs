@@ -145,6 +145,14 @@ public sealed partial class PanelSpritesControl
                     var count = 0;
                     var emptySlotIndex = 0;
 
+                    //overflow starts on a new page after all existing pages, since
+                    //FindEmptySlots already accounts for every slot on existing pages
+                    var maxExistingPageId = existingEntries.Keys.Where(k => k > 0)
+                        .DefaultIfEmpty(0)
+                        .Max();
+
+                    var nextOverflowSlot = maxExistingPageId * ITEMS_PER_PAGE;
+
                     foreach (var palettizedEpf in epfs)
                     {
                         // Save the palette for this group
@@ -157,28 +165,13 @@ public sealed partial class PanelSpritesControl
 
                             if (emptySlotIndex < emptySlots.Count)
                             {
-                                // Use an existing empty slot
+                                //use an existing empty slot
                                 globalSlot = emptySlots[emptySlotIndex++];
                             }
                             else
                             {
-                                // All empty slots used - find next slot after the last empty slot
-                                // or after existing content if no empty slots exist
-                                if (emptySlots.Count > 0)
-                                    globalSlot = emptySlots[^1] + 1 + (count - emptySlots.Count);
-                                else
-                                {
-                                    // No empty slots at all - find the highest used slot and continue from there
-                                    var maxPageId = existingEntries.Keys.Where(k => k > 0).DefaultIfEmpty(0).Max();
-
-                                    if (maxPageId > 0 && existingEntries.TryGetValue(maxPageId, out var lastEntry))
-                                    {
-                                        var lastEpf = EpfFile.FromEntry(lastEntry);
-                                        globalSlot = ((maxPageId - 1) * ITEMS_PER_PAGE) + lastEpf.Count + count;
-                                    }
-                                    else
-                                        globalSlot = count;
-                                }
+                                //all empty slots used, append after all existing pages
+                                globalSlot = nextOverflowSlot++;
                             }
 
                             var pageId = (globalSlot / ITEMS_PER_PAGE) + 1;
