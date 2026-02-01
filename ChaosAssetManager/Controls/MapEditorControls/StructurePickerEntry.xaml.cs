@@ -207,17 +207,41 @@ public partial class StructurePickerEntry
         e.Handled = true;
 
         //show confirmation dialog
-        var result = await DialogHost.Show(
+        var dialogContent = new StackPanel();
+
+        dialogContent.Children.Add(
             new TextBlock
             {
                 Text = $"Delete structure '{ViewModel.Id}'?",
-                Margin = new Thickness(16)
-            },
-            "RootDialog",
-            (_, args) =>
-            {
-                args.Session.Close(args.Parameter is true);
+                Margin = new Thickness(16, 16, 16, 0)
             });
+
+        dialogContent.Children.Add(
+            new StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                Margin = new Thickness(16),
+                Children =
+                {
+                    new System.Windows.Controls.Button
+                    {
+                        Content = "Cancel",
+                        Margin = new Thickness(0, 0, 8, 0),
+                        Command = DialogHost.CloseDialogCommand,
+                        CommandParameter = false
+                    },
+                    new System.Windows.Controls.Button
+                    {
+                        Content = "Delete",
+                        Style = (Style)FindResource("MaterialDesignFlatButton"),
+                        Command = DialogHost.CloseDialogCommand,
+                        CommandParameter = true
+                    }
+                }
+            });
+
+        var result = await DialogHost.Show(dialogContent, "RootDialog");
 
         if (result is not true)
             return;

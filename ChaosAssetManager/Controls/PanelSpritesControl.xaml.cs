@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using Chaos.Extensions.Common;
 using ChaosAssetManager.Helpers;
 using DALib.Data;
 using DALib.Definitions;
@@ -281,8 +282,7 @@ public sealed partial class PanelSpritesControl
 
             var combinedColors = new HashSet<SKColor>(currentColors);
 
-            foreach (var color in imageColors)
-                combinedColors.Add(color);
+            combinedColors.UnionWith(imageColors);
 
             if ((combinedColors.Count > CONSTANTS.COLORS_PER_PALETTE) && (currentGroup.Count > 0))
             {
@@ -290,8 +290,7 @@ public sealed partial class PanelSpritesControl
                 currentGroup = [];
                 currentColors.Clear();
 
-                foreach (var color in imageColors)
-                    currentColors.Add(color);
+                currentColors.UnionWith(imageColors);
             }
             else
                 currentColors = combinedColors;

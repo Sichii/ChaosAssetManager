@@ -238,6 +238,12 @@
                                          GroupName="Navigation"
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="PanelSpriteEditorNav"
+                                         Content="Panel Sprite Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
                         </StackPanel>
                     </Expander>
 
@@ -272,6 +278,8 @@
                                            Visibility="Collapsed" />
                 <controls:BgTileSplicerControl x:Name="BgTileSplicerView"
                                                Visibility="Collapsed" />
+                <controls:PanelSpriteEditorControl x:Name="PanelSpriteEditorView"
+                                                    Visibility="Collapsed" />
             </Grid>
         </Grid>
 
