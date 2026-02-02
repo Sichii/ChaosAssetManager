@@ -230,6 +230,23 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
         PreviewElement?.Redraw();
     }
 
+    private void ReRenderAllFrames()
+    {
+        using var @lock = Sync.EnterScope();
+
+        if (Animation is null)
+            return;
+
+        for (var i = 0; i < Animation.Frames.Count; i++)
+        {
+            Animation.Frames[i]
+                     .Dispose();
+            Animation.Frames[i] = Graphics.RenderImage(MpfFile[i], Palette);
+        }
+
+        PreviewElement?.Redraw();
+    }
+
     private enum AnimationType
     {
         Walk,
@@ -444,7 +461,10 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
             frame.Bottom = (short)(frame.Bottom + dy);
         }
 
-        ReRenderCurrentFrame();
+        if (moveAll)
+            ReRenderAllFrames();
+        else
+            ReRenderCurrentFrame();
     }
 
     private void MoveCenterPoint(int dx, int dy)
@@ -673,8 +693,10 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
         var mpfFrame = MpfFile[CurrentFrameIndex];
 
         //position NPC so that its center point is at (0,0)
-        var left = -mpfFrame.CenterX;
-        var top = -mpfFrame.CenterY;
+        //when left/top are negative, the rendered image has no padding
+        //so we shift the draw position to compensate
+        var left = -mpfFrame.CenterX + Math.Min(0, (int)mpfFrame.Left);
+        var top = -mpfFrame.CenterY + Math.Min(0, (int)mpfFrame.Top);
 
         //draw NPC frame
         canvas.DrawImage(frame, left, top);
@@ -683,8 +705,8 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
         if (ShowBoundsChk?.IsChecked == true)
             DrawDebugBounds(
                 canvas,
-                left,
-                top,
+                -mpfFrame.CenterX,
+                -mpfFrame.CenterY,
                 mpfFrame);
     }
 

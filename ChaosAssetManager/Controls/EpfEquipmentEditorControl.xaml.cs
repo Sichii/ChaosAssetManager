@@ -388,21 +388,28 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
         if (CurrentAnimationSuffix is null || !EquipmentFiles.TryGetValue(CurrentAnimationSuffix, out var epfFile))
             return;
 
-        if ((CurrentFrameIndex < 0) || (CurrentFrameIndex >= epfFile.Count))
-            return;
+        var moveAll = MoveAllFramesChk.IsChecked == true;
+        var startIdx = moveAll ? CurrentAnimationStartFrame : CurrentFrameIndex;
+        var endIdx = moveAll ? CurrentAnimationEndFrame : CurrentFrameIndex;
 
-        var frame = epfFile[CurrentFrameIndex];
-        frame.Left = (short)(frame.Left + dx);
-        frame.Right = (short)(frame.Right + dx);
-        frame.Top = (short)(frame.Top + dy);
-        frame.Bottom = (short)(frame.Bottom + dy);
-
-        //re-render the equipment frame
-        if ((EquipmentAnimations?.TryGetValue(CurrentAnimationSuffix, out var anim) == true) && (CurrentFrameIndex < anim.Frames.Count))
+        for (var i = startIdx; i <= endIdx; i++)
         {
-            anim.Frames[CurrentFrameIndex]
-                .Dispose();
-            anim.Frames[CurrentFrameIndex] = Graphics.RenderImage(frame, EquipmentPalette);
+            if ((i < 0) || (i >= epfFile.Count))
+                continue;
+
+            var frame = epfFile[i];
+            frame.Left = (short)(frame.Left + dx);
+            frame.Right = (short)(frame.Right + dx);
+            frame.Top = (short)(frame.Top + dy);
+            frame.Bottom = (short)(frame.Bottom + dy);
+
+            //re-render the equipment frame
+            if ((EquipmentAnimations?.TryGetValue(CurrentAnimationSuffix, out var anim) == true) && (i < anim.Frames.Count))
+            {
+                anim.Frames[i]
+                    .Dispose();
+                anim.Frames[i] = Graphics.RenderImage(frame, EquipmentPalette);
+            }
         }
 
         PreviewElement?.Redraw();
@@ -603,10 +610,15 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
             (var typeOffsetX, var typeOffsetY) = GetEquipmentDrawOffset(epfFrame);
             var equipFrame = equipFrames[CurrentFrameIndex];
 
-            // Draw equipment relative to body center at (0,0)
+            //draw equipment relative to body center at (0,0)
             var offsetX = -BODY_CENTER_X + typeOffsetX;
             var offsetY = -BODY_CENTER_Y + typeOffsetY;
-            canvas.DrawImage(equipFrame, offsetX, offsetY);
+
+            //when left/top are negative, the rendered image has no padding
+            //so we shift the draw position to compensate
+            var drawX = offsetX + Math.Min(0, (int)epfFrame.Left);
+            var drawY = offsetY + Math.Min(0, (int)epfFrame.Top);
+            canvas.DrawImage(equipFrame, drawX, drawY);
 
             //draw debug rectangles if enabled
             if (ShowBoundsChk?.IsChecked == true)

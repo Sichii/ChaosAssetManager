@@ -189,6 +189,27 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         PreviewElement?.Redraw();
     }
 
+    private void ReRenderAllFrames()
+    {
+        using var @lock = Sync.EnterScope();
+
+        if (Animation is null)
+            return;
+
+        for (var i = 0; i < Animation.Frames.Count; i++)
+        {
+            Animation.Frames[i]
+                     .Dispose();
+
+            if (IsEfa)
+                Animation.Frames[i] = Graphics.RenderImage(EfaFile![i], EfaFile.BlendingType);
+            else
+                Animation.Frames[i] = Graphics.RenderImage(EpfFile![i], Palette!);
+        }
+
+        PreviewElement?.Redraw();
+    }
+
     private enum ViewDirection
     {
         Up,
@@ -242,7 +263,10 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
             }
         }
 
-        ReRenderCurrentFrame();
+        if (moveAll)
+            ReRenderAllFrames();
+        else
+            ReRenderCurrentFrame();
     }
 
     private void MoveCenterPoint(int dx, int dy)
@@ -500,21 +524,31 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         float frameCenterX,
               frameCenterY;
 
+        int frameLeft,
+            frameTop;
+
         if (IsEfa)
         {
             var efaFrame = EfaFile![CurrentFrameIndex];
             frameCenterX = efaFrame.CenterX;
             frameCenterY = efaFrame.CenterY;
+            frameLeft = efaFrame.Left;
+            frameTop = efaFrame.Top;
         } else
         {
             var pt = CenterPoints![CurrentFrameIndex];
             frameCenterX = pt.X;
             frameCenterY = pt.Y;
+            var epfFrame = EpfFile![CurrentFrameIndex];
+            frameLeft = epfFrame.Left;
+            frameTop = epfFrame.Top;
         }
 
         // Position effect relative to origin (body center is at 0,0)
-        var left = -frameCenterX;
-        var top = -frameCenterY;
+        //when left/top are negative, the rendered image has no padding
+        //so we shift the draw position to compensate
+        var left = -frameCenterX + Math.Min(0, frameLeft);
+        var top = -frameCenterY + Math.Min(0, frameTop);
 
         // Draw effect frame
         using var paint = new SKPaint();
@@ -528,7 +562,7 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
 
         // Draw debug bounds if enabled
         if (ShowBoundsChk?.IsChecked == true)
-            DrawDebugBounds(canvas, left, top);
+            DrawDebugBounds(canvas, -frameCenterX, -frameCenterY);
     }
 
     private void DrawDebugBounds(SKCanvas canvas, float left, float top)
