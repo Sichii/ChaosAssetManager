@@ -51,6 +51,12 @@ public sealed partial class NPCEditorControl
         PopulateNPCList();
     }
 
+    private void NPCEditorControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+            PopulateNPCList();
+    }
+
     private void LoadNPC(string entryName, MpfFile mpfFile)
     {
         //dispose previous content

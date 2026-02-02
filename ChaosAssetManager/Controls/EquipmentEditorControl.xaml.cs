@@ -95,6 +95,15 @@ public partial class EquipmentEditorControl
                 });
     }
 
+    private void EquipmentEditorControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (!IsVisible || !PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+            return;
+
+        if (CurrentTypeLetter != default)
+            PopulateEntryList(CurrentTypeLetter);
+    }
+
     private void EquipmentType_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (EquipmentTypeCmb.SelectedItem is not ComboBoxItem { Tag: char typeLetter })

@@ -76,6 +76,12 @@ public sealed partial class EffectEditorControl
         PopulateEffectList();
     }
 
+    private void EffectEditorControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+            PopulateEffectList();
+    }
+
     private static Palette? GetPaletteForEffect(DataArchiveEntry entry, DataArchive archive)
     {
         if (!entry.TryGetNumericIdentifier(out var id))

@@ -40,6 +40,12 @@ public sealed partial class PanelSpriteEditorControl
         PopulatePageList();
     }
 
+    private void PanelSpriteEditorControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+            PopulatePageList();
+    }
+
     private void PopulatePageList()
     {
         PageListView.Items.Clear();
@@ -296,8 +302,15 @@ public sealed partial class PanelSpriteEditorControl
                 modifiedEpfs[pageId] = epf;
             }
 
-            //clear the frame
-            epf[slotInPage] = new EpfFrame { Data = [] };
+            //replace with a blank 1x1 frame to preserve slot indexes
+            epf[slotInPage] = new EpfFrame
+            {
+                Top = 0,
+                Left = 0,
+                Bottom = 1,
+                Right = 1,
+                Data = [0]
+            };
         }
 
         //check which palettes are still in use

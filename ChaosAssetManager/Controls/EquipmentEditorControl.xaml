@@ -13,7 +13,8 @@
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              FontFamily="{materialDesign:MaterialDesignFont}"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             Loaded="EquipmentEditorControl_OnLoaded">
+             Loaded="EquipmentEditorControl_OnLoaded"
+             IsVisibleChanged="EquipmentEditorControl_OnIsVisibleChanged">
     <Grid>
         <!-- Archive Path Not Configured Message -->
         <TextBlock x:Name="NotConfiguredMessage"
