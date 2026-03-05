@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
@@ -8,13 +9,19 @@ using Rectangle = Chaos.Geometry.Rectangle;
 
 namespace ChaosAssetManager.Helpers;
 
-public sealed class StructureRepository
+public sealed partial class StructureRepository
 {
     [JsonIgnore]
     private static readonly string PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "structures.json");
 
     [JsonIgnore]
     public static StructureRepository Instance { get; }
+
+    [JsonIgnore]
+    private int NextFgIndex;
+
+    [JsonIgnore]
+    private int NextBgIndex;
 
     public List<StructureDefinition> Structures { get; set; } = [];
 
@@ -35,7 +42,37 @@ public sealed class StructureRepository
             {
                 Instance = new StructureRepository();
             }
+
+        Instance.InitializeIndexes();
     }
+
+    private void InitializeIndexes()
+    {
+        var maxFg = 0;
+        var maxBg = 0;
+
+        foreach (var structure in Structures)
+        {
+            var match = IdPattern().Match(structure.Id);
+
+            if (!match.Success)
+                continue;
+
+            var prefix = match.Groups[1].Value;
+            var index = int.Parse(match.Groups[2].Value);
+
+            if (prefix == "FG")
+                maxFg = Math.Max(maxFg, index);
+            else if (prefix == "BG")
+                maxBg = Math.Max(maxBg, index);
+        }
+
+        NextFgIndex = maxFg + 1;
+        NextBgIndex = maxBg + 1;
+    }
+
+    [GeneratedRegex(@"^(FG|BG)_(\d+)_")]
+    private static partial Regex IdPattern();
 
     public void Save()
     {
@@ -219,13 +256,27 @@ public sealed class StructureRepository
         }
     }
 
+    /// <summary>
+    /// Generates a unique structure ID based on tile content, following the FG/BG naming convention
+    /// </summary>
+    public string GenerateId(StructureViewModel structure)
+    {
+        var isFg = structure.HasNonZeroForegroundTiles;
+        var prefix = isFg ? "FG" : "BG";
+        var index = isFg ? NextFgIndex++ : NextBgIndex++;
+        var minTileId = GetMinTileId(structure);
+
+        return $"{prefix}_{index}_{minTileId}";
+    }
+
     private static int GetMinTileId(StructureViewModel structure)
     {
         var allTileIds = structure.RawBackgroundTiles.Select(t => t.TileId)
                                   .Concat(structure.RawLeftForegroundTiles.Select(t => t.TileId))
                                   .Concat(structure.RawRightForegroundTiles.Select(t => t.TileId))
-                                  .Where(id => id > 0);
+                                  .Where(id => id > 0)
+                                  .ToList();
 
-        return allTileIds.Any() ? allTileIds.Min() : 0;
+        return allTileIds.Count > 0 ? allTileIds.Min() : 0;
     }
 }

@@ -10,19 +10,16 @@ using DALib.Definitions;
 using DALib.Drawing;
 using DALib.Extensions;
 using DALib.Utility;
-using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using SkiaSharp;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
 public sealed partial class TileImportControl
 {
+    public ObservableCollection<TileImportViewModel> TileViewModels { get; } = [];
     private bool IsForeground => ForegroundRadio.IsChecked == true;
     private bool IsSnow => SnowRadio.IsChecked == true;
-
-    public ObservableCollection<TileImportViewModel> TileViewModels { get; } = [];
-
-    private readonly record struct TileImportData(SKImage Image, TileFlags Flags);
 
     public TileImportControl()
     {
@@ -31,94 +28,11 @@ public sealed partial class TileImportControl
         PathHelper.ArchivesPathChanged += () => TileImportControl_OnLoaded(this, new RoutedEventArgs());
     }
 
-    /// <summary>
-    ///     Loads spliced tiles from the Tile Splicer tool
-    /// </summary>
-    public void LoadSplicedTiles(IEnumerable<SKImage> tiles)
-    {
-        //clear previous tiles
-        foreach (var vm in TileViewModels)
-            vm.Dispose();
-
-        TileViewModels.Clear();
-
-        //ensure we're in background mode (spliced tiles are always 56x27 background tiles)
-        BackgroundRadio.IsChecked = true;
-
-        var index = 0;
-
-        foreach (var tile in tiles)
-        {
-            TileViewModels.Add(
-                new TileImportViewModel
-                {
-                    Image = tile,
-                    FileName = $"spliced_{index:D4}.png",
-                    ShowFlags = false
-                });
-            index++;
-        }
-
-        UpdateStatus(index, 0);
-        UpdateInfoMessages();
-    }
-
-    private void TileImportControl_OnLoaded(object sender, RoutedEventArgs e)
-    {
-        var archivePath = PathHelper.Instance.ArchivesPath;
-
-        if (string.IsNullOrEmpty(archivePath) || !PathHelper.ArchivePathIsValid(archivePath))
-        {
-            NotConfiguredMessage.Visibility = Visibility.Visible;
-            MainContent.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            NotConfiguredMessage.Visibility = Visibility.Collapsed;
-            MainContent.Visibility = Visibility.Visible;
-        }
-
-        UpdateInfoMessages();
-    }
-
-    private void TileType_Changed(object sender, RoutedEventArgs e)
-    {
-        //ignore if not fully loaded yet
-        if (!IsLoaded)
-            return;
-
-        //clear tiles when switching type
-        foreach (var vm in TileViewModels)
-            vm.Dispose();
-
-        TileViewModels.Clear();
-        UpdateStatus(0, 0);
-        UpdateInfoMessages();
-    }
-
-    private void UpdateInfoMessages()
-    {
-        if (IsForeground)
-        {
-            InfoMessage.Text = "Select PNG images (28 pixels wide, any height) to import as foreground tiles (structures). " +
-                               "Images will be grouped into shared palettes. Set Wall/Transparent flags for each tile.";
-            BottomInfoMessage.Text = "Foreground tiles will be saved as HPF files in IA.dat. Tile flags will be saved to SOTP.dat.";
-        }
-        else
-        {
-            InfoMessage.Text = "Select PNG images (56x27 pixels) to import as background tiles (ground). " +
-                               "Images will be grouped into shared palettes.";
-            BottomInfoMessage.Text = "Background tiles will be appended to the existing tileset in SEO.dat.";
-        }
-    }
-
     private void BrowseBtn_OnClick(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
         {
-            Title = IsForeground
-                ? "Select PNG Tile Images (28 pixels wide)"
-                : "Select PNG Tile Images (56x27 pixels)",
+            Title = IsForeground ? "Select PNG Tile Images (28 pixels wide)" : "Select PNG Tile Images (56x27 pixels)",
             Filter = "PNG Images|*.png",
             Multiselect = true
         };
@@ -133,21 +47,15 @@ public sealed partial class TileImportControl
         TileViewModels.Clear();
 
         var validCount = 0;
-        var invalidCount = 0;
         var isForeground = IsForeground;
 
         foreach (var filePath in dialog.FileNames)
-        {
             try
             {
                 var image = SKImage.FromEncodedData(filePath);
 
                 if (image is null)
-                {
-                    invalidCount++;
-
                     continue;
-                }
 
                 //validate dimensions based on tile type
                 if (isForeground)
@@ -155,20 +63,17 @@ public sealed partial class TileImportControl
                     //foreground: must be 28 pixels wide, any height
                     if (image.Width != CONSTANTS.HPF_TILE_WIDTH)
                     {
-                        invalidCount++;
                         Snackbar.MessageQueue!.Enqueue(
                             $"Skipped {Path.GetFileName(filePath)}: Width must be 28 pixels (got {image.Width})");
                         image.Dispose();
 
                         continue;
                     }
-                }
-                else
+                } else
                 {
                     //background: must be exactly 56x27
                     if ((image.Width != CONSTANTS.TILE_WIDTH) || (image.Height != CONSTANTS.TILE_HEIGHT))
                     {
-                        invalidCount++;
                         Snackbar.MessageQueue!.Enqueue(
                             $"Skipped {Path.GetFileName(filePath)}: Must be 56x27 pixels (got {image.Width}x{image.Height})");
                         image.Dispose();
@@ -185,84 +90,69 @@ public sealed partial class TileImportControl
                         ShowFlags = isForeground
                     });
                 validCount++;
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
-                invalidCount++;
                 Snackbar.MessageQueue!.Enqueue($"Error loading {Path.GetFileName(filePath)}: {ex.Message}");
             }
-        }
 
-        UpdateStatus(validCount, invalidCount);
+        UpdateStatus(validCount);
     }
 
-    private void UpdateStatus(int validCount, int invalidCount)
-        => ImportBtn.IsEnabled = validCount > 0;
-
-    private async void ImportBtn_OnClick(object sender, RoutedEventArgs e)
+    private static HashSet<SKColor> GetUniqueColors(SKImage image)
     {
-        var archivePath = PathHelper.Instance.ArchivesPath;
+        using var bitmap = SKBitmap.FromImage(image);
+        var colors = new HashSet<SKColor>();
 
-        if (string.IsNullOrEmpty(archivePath) || !PathHelper.ArchivePathIsValid(archivePath))
+        for (var y = 0; y < bitmap.Height; y++)
         {
-            Snackbar.MessageQueue!.Enqueue("Please set a valid Archives Directory in Settings (gear icon)");
+            for (var x = 0; x < bitmap.Width; x++)
+            {
+                var pixel = bitmap.GetPixel(x, y);
 
-            return;
+                if (pixel.Alpha > 0)
+                    colors.Add(pixel.WithAlpha(255));
+            }
         }
 
-        if (TileViewModels.Count == 0)
-        {
-            Snackbar.MessageQueue!.Enqueue("No tiles to import");
-
-            return;
-        }
-
-        var isForeground = IsForeground;
-        var isSnow = IsSnow;
-
-        ImportBtn.IsEnabled = false;
-        BrowseBtn.IsEnabled = false;
-
-        try
-        {
-            //capture data before async operation
-            var tileData = TileViewModels.Select(vm => new TileImportData(vm.Image, vm.Flags))
-                                          .ToList();
-
-            string resultMessage;
-
-            if (isForeground)
-                resultMessage = await Task.Run(() => ImportForegroundTiles(archivePath, isSnow, tileData));
-            else
-                resultMessage = await Task.Run(() => ImportBackgroundTiles(archivePath, isSnow, tileData));
-
-            //clear the view models after successful import
-            foreach (var vm in TileViewModels)
-                vm.Dispose();
-
-            TileViewModels.Clear();
-            UpdateStatus(0, 0);
-
-            //clear render caches so new tiles are visible
-            MapEditorRenderUtil.Clear();
-
-            Snackbar.MessageQueue!.Enqueue(resultMessage);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.MessageQueue!.Enqueue($"Error: {ex.Message}");
-        }
-        finally
-        {
-            ImportBtn.IsEnabled = TileViewModels.Count > 0;
-            BrowseBtn.IsEnabled = true;
-        }
+        return colors;
     }
 
-    private static string ImportBackgroundTiles(
-        string archivePath,
-        bool isSnow,
-        List<TileImportData> tileData)
+    private static List<List<SKImage>> GroupImagesByColorCount(List<SKImage> images)
+    {
+        var groups = new List<List<SKImage>>();
+        var currentGroup = new List<SKImage>();
+        var currentColors = new HashSet<SKColor>();
+
+        foreach (var image in images)
+        {
+            var imageColors = GetUniqueColors(image);
+
+            var combinedColors = new HashSet<SKColor>(currentColors);
+
+            foreach (var color in imageColors)
+                combinedColors.Add(color);
+
+            if ((combinedColors.Count > CONSTANTS.COLORS_PER_PALETTE) && (currentGroup.Count > 0))
+            {
+                groups.Add(currentGroup);
+                currentGroup = [];
+                currentColors.Clear();
+
+                foreach (var color in imageColors)
+                    currentColors.Add(color);
+            } else
+                currentColors = combinedColors;
+
+            currentGroup.Add(image);
+        }
+
+        if (currentGroup.Count > 0)
+            groups.Add(currentGroup);
+
+        return groups;
+    }
+
+    private static string ImportBackgroundTiles(string archivePath, bool isSnow, List<TileImportData> tileData)
     {
         var seo = ArchiveCache.Seo;
         var tilesetName = isSnow ? "tileas" : "tilea";
@@ -275,7 +165,8 @@ public sealed partial class TileImportControl
         var paletteLookup = PaletteLookup.FromArchive("mpt", seo);
 
         //group images by color count to respect palette limits
-        var images = tileData.Select(td => td.Image).ToList();
+        var images = tileData.Select(td => td.Image)
+                             .ToList();
         var imageGroups = GroupImagesByColorCount(images);
 
         var tileIndex = startingIndex;
@@ -305,7 +196,7 @@ public sealed partial class TileImportControl
             paletteLookup.Palettes[paletteId] = newPalette;
 
             //patch new palette
-            seo.Patch($"mpt{paletteId:D3}.pal", newPalette);
+            seo.Patch($"mpt{paletteId:D4}.pal", newPalette);
             palettesCreated++;
         }
 
@@ -318,13 +209,69 @@ public sealed partial class TileImportControl
         //save SEO archive
         seo.Save(Path.Combine(archivePath, "seo.dat"));
 
-        return $"Imported {tileData.Count} background tiles to {tilesetName} (starting at index {startingIndex}, {palettesCreated} palettes)";
+        return
+            $"Imported {tileData.Count} background tiles to {tilesetName} (starting at index {startingIndex}, {palettesCreated} palettes)";
     }
 
-    private static string ImportForegroundTiles(
-        string archivePath,
-        bool isSnow,
-        List<TileImportData> tileData)
+    private async void ImportBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        var archivePath = PathHelper.Instance.ArchivesPath;
+
+        if (string.IsNullOrEmpty(archivePath) || !PathHelper.ArchivePathIsValid(archivePath))
+        {
+            Snackbar.MessageQueue!.Enqueue("Please set a valid Archives Directory in Settings (gear icon)");
+
+            return;
+        }
+
+        if (TileViewModels.Count == 0)
+        {
+            Snackbar.MessageQueue!.Enqueue("No tiles to import");
+
+            return;
+        }
+
+        var isForeground = IsForeground;
+        var isSnow = IsSnow;
+
+        ImportBtn.IsEnabled = false;
+        BrowseBtn.IsEnabled = false;
+
+        try
+        {
+            //capture data before async operation
+            var tileData = TileViewModels.Select(vm => new TileImportData(vm.Image, vm.Flags))
+                                         .ToList();
+
+            string resultMessage;
+
+            if (isForeground)
+                resultMessage = await Task.Run(() => ImportForegroundTiles(archivePath, isSnow, tileData));
+            else
+                resultMessage = await Task.Run(() => ImportBackgroundTiles(archivePath, isSnow, tileData));
+
+            //clear the view models after successful import
+            foreach (var vm in TileViewModels)
+                vm.Dispose();
+
+            TileViewModels.Clear();
+            UpdateStatus(0);
+
+            //clear render caches so new tiles are visible
+            MapEditorRenderUtil.Clear();
+
+            Snackbar.MessageQueue!.Enqueue(resultMessage);
+        } catch (Exception ex)
+        {
+            Snackbar.MessageQueue!.Enqueue($"Error: {ex.Message}");
+        } finally
+        {
+            ImportBtn.IsEnabled = TileViewModels.Count > 0;
+            BrowseBtn.IsEnabled = true;
+        }
+    }
+
+    private static string ImportForegroundTiles(string archivePath, bool isSnow, List<TileImportData> tileData)
     {
         var ia = ArchiveCache.Ia;
         var prefix = isSnow ? "sts" : "stc";
@@ -344,22 +291,12 @@ public sealed partial class TileImportControl
             startingIndex++;
 
         //group images by color count
-        var images = tileData.Select(td => td.Image).ToList();
-        var flags = tileData.Select(td => td.Flags).ToList();
+        var images = tileData.Select(td => td.Image)
+                             .ToList();
+
+        var flags = tileData.Select(td => td.Flags)
+                            .ToList();
         var imageGroups = GroupImagesByColorCount(images);
-
-        //track which images belong to which group for flag association
-        var imageToGroupIndex = new Dictionary<SKImage, int>();
-        var currentImageIndex = 0;
-
-        for (var groupIndex = 0; groupIndex < imageGroups.Count; groupIndex++)
-        {
-            foreach (var img in imageGroups[groupIndex])
-            {
-                imageToGroupIndex[img] = groupIndex;
-                currentImageIndex++;
-            }
-        }
 
         var tileIndex = startingIndex;
         var palettesCreated = 0;
@@ -402,7 +339,7 @@ public sealed partial class TileImportControl
 
             //add palette to lookup and patch
             paletteLookup.Palettes[paletteId] = palette;
-            ia.Patch($"{prefix}{paletteId:D3}.pal", palette);
+            ia.Patch($"{prefix}{paletteId:D4}.pal", palette);
             palettesCreated++;
         }
 
@@ -418,13 +355,93 @@ public sealed partial class TileImportControl
         return $"Imported {tileData.Count} foreground tiles as {prefix} (IDs: {startingIndex}-{tileIndex - 1}, {palettesCreated} palettes)";
     }
 
+    /// <summary>
+    ///     Loads spliced tiles from the Tile Splicer tool
+    /// </summary>
+    public void LoadSplicedTiles(IEnumerable<SKImage> tiles)
+    {
+        //clear previous tiles
+        foreach (var vm in TileViewModels)
+            vm.Dispose();
+
+        TileViewModels.Clear();
+
+        //ensure we're in background mode (spliced tiles are always 56x27 background tiles)
+        BackgroundRadio.IsChecked = true;
+
+        var index = 0;
+
+        foreach (var tile in tiles)
+        {
+            TileViewModels.Add(
+                new TileImportViewModel
+                {
+                    Image = tile,
+                    FileName = $"spliced_{index:D4}.png",
+                    ShowFlags = false
+                });
+            index++;
+        }
+
+        UpdateStatus(index);
+        UpdateInfoMessages();
+    }
+
+    private void TileImportControl_OnLoaded(object sender, RoutedEventArgs e)
+    {
+        var archivePath = PathHelper.Instance.ArchivesPath;
+
+        if (string.IsNullOrEmpty(archivePath) || !PathHelper.ArchivePathIsValid(archivePath))
+        {
+            NotConfiguredMessage.Visibility = Visibility.Visible;
+            MainContent.Visibility = Visibility.Collapsed;
+        } else
+        {
+            NotConfiguredMessage.Visibility = Visibility.Collapsed;
+            MainContent.Visibility = Visibility.Visible;
+        }
+
+        UpdateInfoMessages();
+    }
+
+    private void TileType_Changed(object sender, RoutedEventArgs e)
+    {
+        //ignore if not fully loaded yet
+        if (!IsLoaded)
+            return;
+
+        //clear tiles when switching type
+        foreach (var vm in TileViewModels)
+            vm.Dispose();
+
+        TileViewModels.Clear();
+        UpdateStatus(0);
+        UpdateInfoMessages();
+    }
+
+    private void UpdateInfoMessages()
+    {
+        if (IsForeground)
+        {
+            InfoMessage.Text = "Select PNG images (28 pixels wide, any height) to import as foreground tiles (structures). "
+                               + "Images will be grouped into shared palettes. Set Wall/Transparent flags for each tile.";
+            BottomInfoMessage.Text = "Foreground tiles will be saved as HPF files in IA.dat. Tile flags will be saved to SOTP.dat.";
+        } else
+        {
+            InfoMessage.Text = "Select PNG images (56x27 pixels) to import as background tiles (ground). "
+                               + "Images will be grouped into shared palettes.";
+            BottomInfoMessage.Text = "Background tiles will be appended to the existing tileset in SEO.dat.";
+        }
+    }
+
     private static void UpdateSotp(DataArchive ia, List<int> tileIds, List<TileFlags> flags)
     {
         //load existing SOTP data
         byte[] sotpData;
 
         if (ia.TryGetValue("sotp.dat", out var sotpEntry))
-            sotpData = sotpEntry.ToSpan().ToArray();
+            sotpData = sotpEntry.ToSpan()
+                                .ToArray();
         else
             sotpData = [];
 
@@ -441,67 +458,14 @@ public sealed partial class TileImportControl
         }
 
         //set flags for new tiles
-        for (var i = 0; i < tileIds.Count && i < flags.Count; i++)
+        for (var i = 0; (i < tileIds.Count) && (i < flags.Count); i++)
             sotpData[tileIds[i]] = (byte)flags[i];
 
         //patch and save
         ia.Patch("sotp.dat", new RawDataEntry(sotpData));
     }
 
-    private static List<List<SKImage>> GroupImagesByColorCount(List<SKImage> images)
-    {
-        var groups = new List<List<SKImage>>();
-        var currentGroup = new List<SKImage>();
-        var currentColors = new HashSet<SKColor>();
-
-        foreach (var image in images)
-        {
-            var imageColors = GetUniqueColors(image);
-
-            var combinedColors = new HashSet<SKColor>(currentColors);
-
-            foreach (var color in imageColors)
-                combinedColors.Add(color);
-
-            if ((combinedColors.Count > CONSTANTS.COLORS_PER_PALETTE) && (currentGroup.Count > 0))
-            {
-                groups.Add(currentGroup);
-                currentGroup = [];
-                currentColors.Clear();
-
-                foreach (var color in imageColors)
-                    currentColors.Add(color);
-            }
-            else
-                currentColors = combinedColors;
-
-            currentGroup.Add(image);
-        }
-
-        if (currentGroup.Count > 0)
-            groups.Add(currentGroup);
-
-        return groups;
-    }
-
-    private static HashSet<SKColor> GetUniqueColors(SKImage image)
-    {
-        using var bitmap = SKBitmap.FromImage(image);
-        var colors = new HashSet<SKColor>();
-
-        for (var y = 0; y < bitmap.Height; y++)
-        {
-            for (var x = 0; x < bitmap.Width; x++)
-            {
-                var pixel = bitmap.GetPixel(x, y);
-
-                if (pixel.Alpha > 0)
-                    colors.Add(pixel.WithAlpha(255));
-            }
-        }
-
-        return colors;
-    }
+    private void UpdateStatus(int validCount) => ImportBtn.IsEnabled = validCount > 0;
 
     //helper class for patching raw byte data
     private sealed class RawDataEntry(byte[] data) : ISavable
@@ -514,4 +478,6 @@ public sealed partial class TileImportControl
 
         public void Save(Stream stream) => stream.Write(data, 0, data.Length);
     }
+
+    private readonly record struct TileImportData(SKImage Image, TileFlags Flags);
 }

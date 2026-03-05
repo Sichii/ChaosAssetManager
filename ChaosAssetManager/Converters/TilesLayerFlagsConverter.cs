@@ -17,7 +17,7 @@ public sealed class TilesLayerFlagsConverter : IMultiValueConverter
         var editTileType = (LayerFlags)values[0];
         var viewModel = (MapEditorViewModel)values[1];
 
-        if (editTileType is LayerFlags.LeftForeground or LayerFlags.RightForeground)
+        if (editTileType.HasFlag(LayerFlags.LeftForeground) || editTileType.HasFlag(LayerFlags.RightForeground))
             return viewModel.ForegroundTiles;
 
         return viewModel.BackgroundTiles;

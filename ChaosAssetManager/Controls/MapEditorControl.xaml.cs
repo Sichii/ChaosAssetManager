@@ -13,12 +13,16 @@ using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using DALib.Drawing;
 using DALib.Extensions;
+using MaterialDesignThemes.Wpf;
 using SkiaSharp;
 using Button = System.Windows.Controls.Button;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MenuItem = System.Windows.Controls.MenuItem;
 using Rectangle = Chaos.Geometry.Rectangle;
 using DataGrid = System.Windows.Controls.DataGrid;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
+using Orientation = System.Windows.Controls.Orientation;
+using TextBox = System.Windows.Controls.TextBox;
 
 // ReSharper disable ClassCanBeSealed.Global
 
@@ -43,6 +47,24 @@ public partial class MapEditorControl
             PopulateTileViewModels();
 
         _ = UpdateLoop();
+    }
+
+    private void CreateStructureFromGrabBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        var tileGrab = ViewModel.TileGrab;
+
+        if (tileGrab is null || tileGrab.IsEmpty)
+        {
+            Snackbar.MessageQueue?.Enqueue("No tile selection. Use the Grab tool to select tiles first.");
+
+            return;
+        }
+
+        //convert tile grab to structure and open for editing
+        var structure = tileGrab.ToStructureViewModel();
+        structure.Id = StructureRepository.Instance.GenerateId(structure);
+
+        OpenStructureForEditing(structure);
     }
 
     private void DataGrid_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -102,19 +124,23 @@ public partial class MapEditorControl
         var listBoxItem = (ListBoxItem)e.AddedItems[0]!;
 
         if (listBoxItem.Name.EqualsI(nameof(EditBackgroundBtn)))
+        {
             ViewModel.EditingLayerFlags = LayerFlags.Background;
-        else if (listBoxItem.Name.EqualsI(nameof(EditLeftForegroundBtn)))
+            EntryPickerTabControl?.SelectedItem = TilesTabItem;
+        } else if (listBoxItem.Name.EqualsI(nameof(EditLeftForegroundBtn)))
         {
             if (ViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground) && (ViewModel.TileGrab?.HasRightForegroundTiles ?? false))
                 HandleLeftOrRightSwap();
 
             ViewModel.EditingLayerFlags = LayerFlags.LeftForeground;
+            EntryPickerTabControl?.SelectedItem = TilesTabItem;
         } else if (listBoxItem.Name.EqualsI(nameof(EditRightForegroundBtn)))
         {
             if (ViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground) && (ViewModel.TileGrab?.HasLeftForegroundTiles ?? false))
                 HandleLeftOrRightSwap();
 
             ViewModel.EditingLayerFlags = LayerFlags.RightForeground;
+            EntryPickerTabControl?.SelectedItem = TilesTabItem;
         } else if (listBoxItem.Name.EqualsI(nameof(EditForegroundBtn)))
             ViewModel.EditingLayerFlags = LayerFlags.Foreground;
         else if (listBoxItem.Name.EqualsI(nameof(EditAllBtn)))
@@ -251,6 +277,24 @@ public partial class MapEditorControl
         ViewModel.Maps.Add(viewer);
 
         MapViewerTabControl.SelectedItem = viewer;
+    }
+
+    public void LoadStructuresFromRepository()
+    {
+        ViewModel.ForegroundStructures.Clear();
+        ViewModel.BackgroundStructures.Clear();
+
+        foreach (var definition in StructureRepository.Instance.Structures)
+        {
+            var viewModel = StructureRepository.ToViewModel(definition);
+            viewModel.Initialize();
+
+            //categorize based on whether structure has non-zero foreground tiles
+            if (definition.HasForegroundTiles)
+                ViewModel.ForegroundStructures.Add(viewModel);
+            else
+                ViewModel.BackgroundStructures.Add(viewModel);
+        }
     }
 
     private void MapCloseBtn_OnClick(object sender, RoutedEventArgs e)
@@ -418,14 +462,14 @@ public partial class MapEditorControl
             return;
         }
 
-        if (!byte.TryParse(NewStructWidthTbx.Text, out var width) || width == 0 || width > 20)
+        if (!byte.TryParse(NewStructWidthTbx.Text, out var width) || (width == 0) || (width > 20))
         {
             ShowMessage("Invalid width (1-20)");
 
             return;
         }
 
-        if (!byte.TryParse(NewStructHeightTbx.Text, out var height) || height == 0 || height > 20)
+        if (!byte.TryParse(NewStructHeightTbx.Text, out var height) || (height == 0) || (height > 20))
         {
             ShowMessage("Invalid height (1-20)");
 
@@ -434,11 +478,19 @@ public partial class MapEditorControl
 
         var viewer = new MapViewerViewModel
         {
-            Bounds = new Rectangle(0, 0, width, height),
+            Bounds = new Rectangle(
+                0,
+                0,
+                width,
+                height),
             FromPath = "New Structure",
             PossibleBounds =
             [
-                new MapBounds { Width = width, Height = height }
+                new MapBounds
+                {
+                    Width = width,
+                    Height = height
+                }
             ],
             IsStructure = true,
             StructureId = "New Structure",
@@ -467,7 +519,7 @@ public partial class MapEditorControl
     public void OpenStructureForEditing(StructureViewModel structure)
     {
         //check if structure is already open
-        var existing = ViewModel.Maps.FirstOrDefault(m => m.IsStructure && m.StructureId == structure.Id);
+        var existing = ViewModel.Maps.FirstOrDefault(m => m.IsStructure && (m.StructureId == structure.Id));
 
         if (existing is not null)
         {
@@ -485,7 +537,11 @@ public partial class MapEditorControl
             FromPath = structure.Id ?? "Structure",
             PossibleBounds =
             [
-                new MapBounds { Width = structure.Bounds.Width, Height = structure.Bounds.Height }
+                new MapBounds
+                {
+                    Width = structure.Bounds.Width,
+                    Height = structure.Bounds.Height
+                }
             ],
             IsStructure = true,
             StructureId = structure.Id,
@@ -531,24 +587,6 @@ public partial class MapEditorControl
 
         ViewModel.Maps.Add(viewer);
         MapViewerTabControl.SelectedItem = viewer;
-    }
-
-    private void CreateStructureFromGrabBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        var tileGrab = ViewModel.TileGrab;
-
-        if (tileGrab is null || tileGrab.IsEmpty)
-        {
-            Snackbar.MessageQueue?.Enqueue("No tile selection. Use the Grab tool to select tiles first.");
-
-            return;
-        }
-
-        //convert tile grab to structure and open for editing
-        var structure = tileGrab.ToStructureViewModel();
-        structure.Id = "New Structure";
-
-        OpenStructureForEditing(structure);
     }
 
     private void PopulateTileViewModels()
@@ -603,24 +641,6 @@ public partial class MapEditorControl
 
         //load structures from repository
         LoadStructuresFromRepository();
-    }
-
-    public void LoadStructuresFromRepository()
-    {
-        ViewModel.ForegroundStructures.Clear();
-        ViewModel.BackgroundStructures.Clear();
-
-        foreach (var definition in StructureRepository.Instance.Structures)
-        {
-            var viewModel = StructureRepository.ToViewModel(definition);
-            viewModel.Initialize();
-
-            //categorize based on whether structure has non-zero foreground tiles
-            if (definition.HasForegroundTiles)
-                ViewModel.ForegroundStructures.Add(viewModel);
-            else
-                ViewModel.BackgroundStructures.Add(viewModel);
-        }
     }
 
     private void RedoBtn_OnClick(object sender, RoutedEventArgs e) => DoRedo();
@@ -718,109 +738,6 @@ public partial class MapEditorControl
         ShowMessage("Map saved successfully");
     }
 
-    private async Task SaveStructure(MapViewerViewModel viewer)
-    {
-        var structureId = viewer.StructureId ?? "New Structure";
-        var isNewStructure = string.IsNullOrEmpty(viewer.OriginalStructureId);
-
-        //prompt for id if it's a new structure
-        if (isNewStructure)
-        {
-            var idInput = new System.Windows.Controls.TextBox
-            {
-                Text = structureId,
-                Width = 200,
-                Margin = new Thickness(16)
-            };
-
-            var stackPanel = new StackPanel();
-
-            stackPanel.Children.Add(
-                new TextBlock
-                {
-                    Text = "Enter structure ID:",
-                    Margin = new Thickness(16, 16, 16, 0)
-                });
-
-            stackPanel.Children.Add(idInput);
-
-            stackPanel.Children.Add(
-                new StackPanel
-                {
-                    Orientation = System.Windows.Controls.Orientation.Horizontal,
-                    HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
-                    Margin = new Thickness(16),
-                    Children =
-                    {
-                        new Button
-                        {
-                            Content = "Cancel",
-                            Margin = new Thickness(0, 0, 8, 0),
-                            Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
-                            CommandParameter = false
-                        },
-                        new Button
-                        {
-                            Content = "Save",
-                            Style = (Style)FindResource("MaterialDesignFlatButton"),
-                            Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
-                            CommandParameter = true
-                        }
-                    }
-                });
-
-            var result = await MaterialDesignThemes.Wpf.DialogHost.Show(stackPanel, "RootDialog");
-
-            if (result is not true)
-                return;
-
-            structureId = idInput.Text;
-
-            if (string.IsNullOrWhiteSpace(structureId))
-            {
-                ShowMessage("Invalid structure ID");
-
-                return;
-            }
-
-            //check for duplicate id
-            if (StructureRepository.Instance.IdExists(structureId))
-            {
-                ShowMessage("A structure with that ID already exists");
-
-                return;
-            }
-        }
-
-        //create structure definition
-        var definition = new StructureDefinition
-        {
-            Id = structureId,
-            Width = viewer.Bounds.Width,
-            Height = viewer.Bounds.Height,
-            BackgroundTiles = viewer.RawBackgroundTiles.Select(t => t.TileId).ToArray(),
-            LeftForegroundTiles = viewer.RawLeftForegroundTiles.Select(t => t.TileId).ToArray(),
-            RightForegroundTiles = viewer.RawRightForegroundTiles.Select(t => t.TileId).ToArray()
-        };
-
-        //update the viewer with the id
-        viewer.StructureId = structureId;
-
-        //save to repository
-        if (isNewStructure)
-        {
-            StructureRepository.Instance.Add(definition);
-            viewer.OriginalStructureId = structureId; //now it's saved, track the id
-        }
-        else
-            StructureRepository.Instance.Update(viewer.OriginalStructureId!, definition);
-
-        //refresh the structure picker list
-        LoadStructuresFromRepository();
-
-        ShowMessage("Structure saved successfully");
-    }
-
     private void SaveRenderBtn_OnClick(object sender, RoutedEventArgs e)
     {
         if (MapViewerTabControl.SelectedItem is not MapViewerViewModel viewer)
@@ -859,6 +776,120 @@ public partial class MapEditorControl
             image.Encode(SKEncodedImageFormat.Png, 100)
                  .SaveTo(stream);
         }
+    }
+
+    private async Task SaveStructure(MapViewerViewModel viewer)
+    {
+        var structureId = viewer.StructureId ?? "New Structure";
+        var isNewStructure = string.IsNullOrEmpty(viewer.OriginalStructureId);
+
+        //prompt for id if it's a new structure
+        if (isNewStructure)
+        {
+            var idInput = new TextBox
+            {
+                Text = structureId,
+                Width = 200,
+                Margin = new Thickness(16)
+            };
+
+            var stackPanel = new StackPanel();
+
+            stackPanel.Children.Add(
+                new TextBlock
+                {
+                    Text = "Enter structure ID:",
+                    Margin = new Thickness(
+                        16,
+                        16,
+                        16,
+                        0)
+                });
+
+            stackPanel.Children.Add(idInput);
+
+            stackPanel.Children.Add(
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(16),
+                    Children =
+                    {
+                        new Button
+                        {
+                            Content = "Cancel",
+                            Margin = new Thickness(
+                                0,
+                                0,
+                                8,
+                                0),
+                            Command = DialogHost.CloseDialogCommand,
+                            CommandParameter = false
+                        },
+                        new Button
+                        {
+                            Content = "Save",
+                            Style = (Style)FindResource("MaterialDesignFlatButton"),
+                            Command = DialogHost.CloseDialogCommand,
+                            CommandParameter = true
+                        }
+                    }
+                });
+
+            var result = await DialogHost.Show(stackPanel, "RootDialog");
+
+            if (result is not true)
+                return;
+
+            structureId = idInput.Text;
+
+            if (string.IsNullOrWhiteSpace(structureId))
+            {
+                ShowMessage("Invalid structure ID");
+
+                return;
+            }
+
+            //check for duplicate id
+            if (StructureRepository.Instance.IdExists(structureId))
+            {
+                ShowMessage("A structure with that ID already exists");
+
+                return;
+            }
+        }
+
+        //create structure definition, null out collections that are all zeros
+        var bgTiles = viewer.RawBackgroundTiles.Select(t => t.TileId).ToArray();
+        var lfgTiles = viewer.RawLeftForegroundTiles.Select(t => t.TileId).ToArray();
+        var rfgTiles = viewer.RawRightForegroundTiles.Select(t => t.TileId).ToArray();
+
+        var definition = new StructureDefinition
+        {
+            Id = structureId,
+            Width = viewer.Bounds.Width,
+            Height = viewer.Bounds.Height,
+            BackgroundTiles = bgTiles.Any(id => id != 0) ? bgTiles : null,
+            LeftForegroundTiles = lfgTiles.Any(id => id != 0) ? lfgTiles : null,
+            RightForegroundTiles = rfgTiles.Any(id => id != 0) ? rfgTiles : null
+        };
+
+        //update the viewer with the id
+        viewer.StructureId = structureId;
+
+        //save to repository
+        if (isNewStructure)
+        {
+            StructureRepository.Instance.Add(definition);
+            viewer.OriginalStructureId = structureId; //now it's saved, track the id
+        } else
+            StructureRepository.Instance.Update(viewer.OriginalStructureId!, definition);
+
+        //refresh the structure picker list
+        LoadStructuresFromRepository();
+
+        ShowMessage("Structure saved successfully");
     }
 
     private void ShowMessage(string message, TimeSpan? time = null)

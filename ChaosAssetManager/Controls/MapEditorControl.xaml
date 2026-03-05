@@ -486,9 +486,11 @@
 
         <TabControl Grid.Row="2"
                     Grid.Column="1"
+                    x:Name="EntryPickerTabControl"
                     Style="{StaticResource MaterialDesignUniformTabControl}">
 
             <TabItem Header="Tiles"
+                     x:Name="TilesTabItem"
                      Style="{StaticResource MaterialDesignTabItem}">
                 <Grid>
                     <Grid.RowDefinitions>

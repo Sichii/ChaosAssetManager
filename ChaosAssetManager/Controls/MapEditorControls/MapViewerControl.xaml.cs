@@ -166,9 +166,13 @@ public partial class MapViewerControl : IDisposable
 
         if (!ViewModel.Bounds.Contains(point))
         {
+            //bounds may not be initialized yet
+            if ((ViewModel.Bounds.Width <= 0) || (ViewModel.Bounds.Height <= 0))
+                return new SKPoint(-1, -1);
+
             var clampedX = Math.Clamp(tileX, ViewModel.Bounds.Left, ViewModel.Bounds.Right);
             var clampedY = Math.Clamp(tileY, ViewModel.Bounds.Top, ViewModel.Bounds.Bottom);
-            
+
             //if the mouse is outside the map bounds, snap it to the closest edge
             point = new Point(clampedX, clampedY);
         }
@@ -565,11 +569,12 @@ public partial class MapViewerControl : IDisposable
         var isEditingLeftForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground);
         var isEditingRightForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground);
         var seededRandom = new Random(8675309);
+        var tileGrab = TileGrab;
 
-        if (TileGrab is not null)
+        if (tileGrab is not null)
         {
-            tglfgTiles = TileGrab.LeftForegroundTilesView;
-            tgrfgTiles = TileGrab.RightForegroundTilesView;
+            tglfgTiles = tileGrab.LeftForegroundTilesView;
+            tgrfgTiles = tileGrab.RightForegroundTilesView;
         }
 
         for (var y = 0; y < bounds.Height; y++)
@@ -702,9 +707,10 @@ public partial class MapViewerControl : IDisposable
             var bounds = ViewModel.Bounds;
             var tgbgTiles = new ListSegment2D<TileViewModel>();
             var isEditingBackground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.Background);
+            var tileGrab = TileGrab;
 
-            if (TileGrab is not null)
-                tgbgTiles = TileGrab.BackgroundTilesView;
+            if (tileGrab is not null)
+                tgbgTiles = tileGrab.BackgroundTilesView;
 
             for (var y = 0; y < bounds.Height; y++)
             {
@@ -868,11 +874,12 @@ public partial class MapViewerControl : IDisposable
         var tgrfgTiles = new ListSegment2D<TileViewModel>();
         var isEditingLeftForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground);
         var isEditingRightForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground);
+        var tileGrab = TileGrab;
 
-        if (TileGrab is not null)
+        if (tileGrab is not null)
         {
-            tglfgTiles = TileGrab.LeftForegroundTilesView;
-            tgrfgTiles = TileGrab.RightForegroundTilesView;
+            tglfgTiles = tileGrab.LeftForegroundTilesView;
+            tgrfgTiles = tileGrab.RightForegroundTilesView;
         }
 
         for (var y = 0; y < bounds.Height; y++)
@@ -1150,6 +1157,9 @@ public partial class MapViewerControl : IDisposable
         var leftButtonPressed = Mouse.LeftButton == MouseButtonState.Pressed;
         var mapPoint = mousePoint.HasValue ? ConvertMouseToTileCoordinates(mousePoint.Value) : new SKPoint(-1, -1);
 
+        if (mapPoint == new SKPoint(-1, -1))
+            return;
+
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.BackgroundChangePending)) && ViewModel.BackgroundChangePending)
             QueueBackgroundRender(mapPoint, leftButtonPressed);
 
@@ -1180,12 +1190,12 @@ public partial class MapViewerControl : IDisposable
                 // we just get a mix of old/new frames which is fine and will fix itself next render
                 RenderBackground(mapPoint, leftButtonPressed);
                 LastBackgroundRenderTime = DateTime.UtcNow;
-
-                Dispatcher.BeginInvoke(() =>
-                {
-                    Element.Redraw();
-                });
             }
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                Element.Redraw();
+            });
         });
     }
 
@@ -1207,12 +1217,12 @@ public partial class MapViewerControl : IDisposable
             {
                 RenderForeground(mapPoint, leftButtonPressed);
                 LastForegroundRenderTime = DateTime.UtcNow;
-
-                Dispatcher.BeginInvoke(() =>
-                {
-                    Element.Redraw();
-                });
             }
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                Element.Redraw();
+            });
         });
     }
 
@@ -1235,12 +1245,12 @@ public partial class MapViewerControl : IDisposable
                 // No lock needed - renders can run in parallel since they write to separate images
                 RenderTabMap(mapPoint, leftButtonPressed);
                 LastTabMapRenderTime = DateTime.UtcNow;
-
-                Dispatcher.BeginInvoke(() =>
-                {
-                    Element.Redraw();
-                });
             }
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                Element.Redraw();
+            });
         });
     }
 
@@ -1281,7 +1291,7 @@ public partial class MapViewerControl : IDisposable
 
         if ((ViewModel.Bounds.Width <= 0) || (ViewModel.Bounds.Height <= 0))
             return;
-        
+
         ViewModel.Refresh();
         ViewModel.BackgroundChangePending = false;
         ViewModel.ForegroundChangePending = false;
