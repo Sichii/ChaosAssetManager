@@ -594,7 +594,7 @@ public partial class MapViewerControl : IDisposable
             tgrfgTiles = tileGrab.RightForegroundTilesView;
         }
 
-        //build wall map for neighbor checks
+        //build wall map for neighbor checks, accounting for hover previews
         bool[,]? wallMap = null;
 
         if (MapEditorViewModel.ShowTabMap)
@@ -602,9 +602,36 @@ public partial class MapViewerControl : IDisposable
             wallMap = new bool[bounds.Width, bounds.Height];
 
             for (var y = 0; y < bounds.Height; y++)
+            {
                 for (var x = 0; x < bounds.Width; x++)
-                    wallMap[x, y] = MapEditorRenderUtil.IsWall(lfgTiles[x, y].TileId)
-                                    || MapEditorRenderUtil.IsWall(rfgTiles[x, y].TileId);
+                {
+                    var leftTile = lfgTiles[x, y];
+                    var rightTile = rfgTiles[x, y];
+                    var point = new Point(x, y);
+                    SKPaint? unusedPaint = null;
+
+                    if (isEditingLeftForeground)
+                        HandleLeftForegroundToolHover(
+                            point,
+                            mouseCoordinates,
+                            tglfgTiles,
+                            ref leftTile,
+                            ref unusedPaint,
+                            leftButtonPressed);
+
+                    if (isEditingRightForeground)
+                        HandleRightForegroundToolHover(
+                            point,
+                            mouseCoordinates,
+                            tgrfgTiles,
+                            ref rightTile,
+                            ref unusedPaint,
+                            leftButtonPressed);
+
+                    wallMap[x, y] = MapEditorRenderUtil.IsWall(leftTile.TileId)
+                                    || MapEditorRenderUtil.IsWall(rightTile.TileId);
+                }
+            }
         }
 
         for (var y = 0; y < bounds.Height; y++)
@@ -642,16 +669,8 @@ public partial class MapViewerControl : IDisposable
 
                 if (MapEditorViewModel.ShowTabMap && isWall)
                 {
-                    //fill the diamond
-                    var fillColor = SKColors.Snow.WithAlpha(50);
-
-                    for (var row = 0; row < DALIB_CONSTANTS.TILE_HEIGHT; row++)
-                    {
-                        var (startXBound, endXBound) = RenderUtil.GetTileRowBounds(row);
-
-                        for (var px = startXBound; px <= endXBound; px++)
-                            bitmap.SetPixel(tlx + px, tly + row, fillColor);
-                    }
+                    //draw pre-rendered filled diamond
+                    canvas.DrawImage(MapEditorRenderUtil.RenderTabWall(), tlx, tly);
 
                     //only draw edges where the neighbor is not a wall
                     var drawTopRight = y == 0 || !wallMap![x, y - 1];

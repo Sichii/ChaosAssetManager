@@ -227,13 +227,6 @@ public static class MapEditorRenderUtil
                 bitmap.SetPixel(x, row, fillColor);
         }
 
-        //draw the staircase outline on top
-        RenderUtil.DrawTileOutline(
-            bitmap,
-            0,
-            0,
-            SKColors.Snow);
-
         TabWallImage = SKImage.FromBitmap(bitmap);
 
         return TabWallImage;
