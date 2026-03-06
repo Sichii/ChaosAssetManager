@@ -89,6 +89,11 @@ public partial class MapViewerControl : IDisposable
         ChunkMgr?.Dispose();
         ChunkMgr = null;
 
+        MapEditorViewModel.PropertyChanged -= MapEditorViewModelOnPropertyChanged;
+
+        if (HistoricalTileGrab is not null)
+            HistoricalTileGrab.PropertyChanged -= TileGrabOnPropertyChanged;
+
         Element.Paint -= ElementOnPaint;
         Element.MouseMove -= ElementOnMouseMove;
         Element.MouseLeftButtonDown -= ElementOnMouseLeftButtonDown;

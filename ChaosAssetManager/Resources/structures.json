@@ -31805,6 +31805,1318 @@
       "RightForegroundTiles": [
         0
       ]
+    },
+    {
+      "Id": "FG_2149_11025",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11025
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2150_11026",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11026
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2151_11027",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11027
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2152_11028",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11028
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2153_11029",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11029
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2154_11030",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11030
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2155_11031",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11031
+      ],
+      "RightForegroundTiles": [
+        11032
+      ]
+    },
+    {
+      "Id": "FG_2156_11033",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11033
+      ],
+      "RightForegroundTiles": [
+        11034
+      ]
+    },
+    {
+      "Id": "FG_2157_11035",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11035
+      ],
+      "RightForegroundTiles": [
+        11036
+      ]
+    },
+    {
+      "Id": "FG_2158_11037",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11037
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2159_11038",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11038
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2160_11039",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11039
+      ],
+      "RightForegroundTiles": [
+        11040
+      ]
+    },
+    {
+      "Id": "FG_2161_11041",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11041
+      ],
+      "RightForegroundTiles": [
+        11042
+      ]
+    },
+    {
+      "Id": "FG_2162_11043",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11043
+      ],
+      "RightForegroundTiles": [
+        11044
+      ]
+    },
+    {
+      "Id": "FG_2163_11045",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11045
+      ],
+      "RightForegroundTiles": [
+        11046
+      ]
+    },
+    {
+      "Id": "FG_2164_11047",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11047
+      ],
+      "RightForegroundTiles": [
+        11048
+      ]
+    },
+    {
+      "Id": "FG_2165_11049",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11049
+      ],
+      "RightForegroundTiles": [
+        11050
+      ]
+    },
+    {
+      "Id": "FG_2166_11051",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11051
+      ],
+      "RightForegroundTiles": [
+        11052
+      ]
+    },
+    {
+      "Id": "FG_2167_11053",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11053
+      ],
+      "RightForegroundTiles": [
+        11054
+      ]
+    },
+    {
+      "Id": "FG_2168_11055",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11055
+      ],
+      "RightForegroundTiles": [
+        11056
+      ]
+    },
+    {
+      "Id": "FG_2169_11057",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11057
+      ],
+      "RightForegroundTiles": [
+        11058
+      ]
+    },
+    {
+      "Id": "FG_2170_11059",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11059
+      ],
+      "RightForegroundTiles": [
+        11060
+      ]
+    },
+    {
+      "Id": "FG_2171_11061",
+      "Width": 1,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        11061
+      ],
+      "RightForegroundTiles": [
+        11063,
+        11062
+      ]
+    },
+    {
+      "Id": "FG_2172_11064",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        11066,
+        11065,
+        11064
+      ]
+    },
+    {
+      "Id": "FG_2173_11067",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        0
+      ],
+      "RightForegroundTiles": [
+        11067
+      ]
+    },
+    {
+      "Id": "FG_2174_11068",
+      "Width": 2,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11068,
+        11069
+      ],
+      "RightForegroundTiles": [
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2175_11070",
+      "Width": 4,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11070,
+        11071,
+        11072,
+        11073
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2176_11074",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        0
+      ],
+      "RightForegroundTiles": [
+        11074
+      ]
+    },
+    {
+      "Id": "FG_2177_11075",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11075
+      ],
+      "RightForegroundTiles": [
+        11076
+      ]
+    },
+    {
+      "Id": "FG_2178_11077",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11077
+      ],
+      "RightForegroundTiles": [
+        11078
+      ]
+    },
+    {
+      "Id": "FG_2179_11075",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11075
+      ],
+      "RightForegroundTiles": [
+        11079
+      ]
+    },
+    {
+      "Id": "FG_2180_11078",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11080
+      ],
+      "RightForegroundTiles": [
+        11078
+      ]
+    },
+    {
+      "Id": "FG_2181_11081",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11081,
+        11082,
+        11083
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2182_11084",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        11086,
+        11085,
+        11084
+      ]
+    },
+    {
+      "Id": "FG_2183_11087",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11087
+      ],
+      "RightForegroundTiles": [
+        11088
+      ]
+    },
+    {
+      "Id": "FG_2184_11089",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        0
+      ],
+      "RightForegroundTiles": [
+        11089
+      ]
+    },
+    {
+      "Id": "FG_2185_11090",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        0
+      ],
+      "RightForegroundTiles": [
+        11090
+      ]
+    },
+    {
+      "Id": "FG_2186_11091",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        0
+      ],
+      "RightForegroundTiles": [
+        11091
+      ]
+    },
+    {
+      "Id": "FG_2187_11092",
+      "Width": 1,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        11093,
+        11092
+      ]
+    },
+    {
+      "Id": "FG_2188_11094",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        11095,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        11094,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2189_11096",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        11098,
+        11096,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        11099,
+        11097,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2190_11105",
+      "Width": 14,
+      "Height": 5,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11105,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11106,
+        11107,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11108,
+        11109,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11110,
+        11111,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11112,
+        11113,
+        11114
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2191_11115",
+      "Width": 4,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        11119,
+        11115,
+        0,
+        11117,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        11120,
+        11116,
+        0,
+        11118,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2192_11121",
+      "Width": 2,
+      "Height": 4,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        11125,
+        0,
+        0,
+        0,
+        11123,
+        11121,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        11126,
+        0,
+        0,
+        0,
+        11124,
+        11122,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2193_11127",
+      "Width": 6,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11127,
+        11128,
+        11129,
+        11130,
+        11131,
+        11132
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        11133
+      ]
+    },
+    {
+      "Id": "FG_2194_11134",
+      "Width": 8,
+      "Height": 8,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11148,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11146,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11144,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11142,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11140,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11138,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11136,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11134,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11147,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11145,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11143,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11141,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11139,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11137,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11135,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2195_11149",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        11150,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        11149,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2196_11151",
+      "Width": 4,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        11155,
+        11151,
+        0,
+        11153,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        11156,
+        11152,
+        0,
+        11154,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2197_11157",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        11159,
+        11158,
+        11157
+      ]
+    },
+    {
+      "Id": "FG_2198_11160",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        11160
+      ],
+      "RightForegroundTiles": [
+        11163,
+        11162,
+        11161
+      ]
+    },
+    {
+      "Id": "FG_2199_11164",
+      "Width": 1,
+      "Height": 6,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        11164
+      ],
+      "RightForegroundTiles": [
+        11170,
+        11169,
+        11168,
+        11167,
+        11166,
+        11165
+      ]
+    },
+    {
+      "Id": "FG_2200_11171",
+      "Width": 1,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11172,
+        11171
+      ],
+      "RightForegroundTiles": [
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2201_11173",
+      "Width": 1,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        11174,
+        11173
+      ],
+      "RightForegroundTiles": [
+        0,
+        0
+      ]
     }
   ]
 }

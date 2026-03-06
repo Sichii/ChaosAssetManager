@@ -305,9 +305,11 @@ public partial class MapEditorControl
         if (tabItemParent!.DataContext is not MapViewerViewModel viewer)
             return;
 
-        viewer.Control?.Dispose();
+        var control = viewer.Control;
 
         ViewModel.Maps.Remove(viewer);
+
+        control?.Dispose();
     }
 
     private void MapEditorControl_PreviewKeyDown(object sender, KeyEventArgs e)
