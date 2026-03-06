@@ -1,8 +1,11 @@
-﻿namespace ChaosAssetManager.Helpers;
+namespace ChaosAssetManager.Helpers;
 
 public readonly ref struct ListSegment2D<T>
 {
     private readonly IList<T> Origin;
+    private readonly int OffsetX;
+    private readonly int OffsetY;
+    private readonly int Stride;
     public int Width { get; }
     public int Height { get; }
 
@@ -10,8 +13,8 @@ public readonly ref struct ListSegment2D<T>
 
     public T this[int x, int y]
     {
-        get => Origin[y * Width + x];
-        set => Origin[y * Width + x] = value;
+        get => Origin[(OffsetY + y) * Stride + OffsetX + x];
+        set => Origin[(OffsetY + y) * Stride + OffsetX + x] = value;
     }
 
     public ListSegment2D(IList<T> origin, int width)
@@ -23,8 +26,26 @@ public readonly ref struct ListSegment2D<T>
             throw new ArgumentException("The span's length must be evenly divisible by the width.", nameof(width));
 
         Origin = origin;
+        Stride = width;
+        OffsetX = 0;
+        OffsetY = 0;
         Width = width;
         Height = origin.Count / width;
+    }
+
+    public ListSegment2D(
+        ListSegment2D<T> source,
+        int offsetX,
+        int offsetY,
+        int width,
+        int height)
+    {
+        Origin = source.Origin;
+        Stride = source.Stride;
+        OffsetX = source.OffsetX + offsetX;
+        OffsetY = source.OffsetY + offsetY;
+        Width = width;
+        Height = height;
     }
 
     public ref struct RowEnumerator
@@ -40,7 +61,8 @@ public readonly ref struct ListSegment2D<T>
 
         public bool MoveNext() => ++_currentRow < _parent.Height;
 
-        public readonly ListSegment<T> Current => new(_parent.Origin, _currentRow * _parent.Width, _parent.Width);
+        public readonly ListSegment<T> Current
+            => new(_parent.Origin, (_parent.OffsetY + _currentRow) * _parent.Stride + _parent.OffsetX, _parent.Width);
 
         public readonly RowEnumerator GetEnumerator() => this;
     }

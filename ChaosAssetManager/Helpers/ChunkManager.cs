@@ -14,46 +14,31 @@ public sealed class MapChunk : IDisposable
     public SKImage? BackgroundImage { get; set; }
     public bool ForegroundDirty { get; set; } = true;
     public SKImage? ForegroundImage { get; set; }
+
+    //pixel bounds extended upward for foreground sprites
+    public SKRectI ForegroundPixelBounds { get; set; }
+
+    //pixel bounds in full map space (for background/tabmap layer)
+    public SKRectI PixelBounds { get; set; }
     public bool TabMapDirty { get; set; } = true;
     public SKImage? TabMapImage { get; set; }
     public int ChunkX { get; }
     public int ChunkY { get; }
 
-    //pixel bounds extended upward for foreground sprites
-    public SKRectI ForegroundPixelBounds { get; }
-
-    //pixel bounds in full map space (for background/tabmap layer)
-    public SKRectI PixelBounds { get; }
-    public int TileEndX { get; }
-    public int TileEndY { get; }
-
     //tile range this chunk covers
-    public int TileStartX { get; }
-    public int TileStartY { get; }
+    public SKRectI TileBounds { get; }
 
     public MapChunk(
         int chunkX,
         int chunkY,
-        int tileStartX,
-        int tileStartY,
-        int tileEndX,
-        int tileEndY,
-        int mapWidth,
+        SKRectI tileBounds,
         int mapHeight)
     {
         ChunkX = chunkX;
         ChunkY = chunkY;
-        TileStartX = tileStartX;
-        TileStartY = tileStartY;
-        TileEndX = tileEndX;
-        TileEndY = tileEndY;
+        TileBounds = tileBounds;
 
-        PixelBounds = ComputePixelBounds(
-            tileStartX,
-            tileStartY,
-            tileEndX,
-            tileEndY,
-            mapHeight);
+        PixelBounds = ComputePixelBounds(tileBounds, mapHeight);
         ForegroundPixelBounds = ComputeForegroundPixelBounds(PixelBounds);
     }
 
@@ -78,36 +63,23 @@ public sealed class MapChunk : IDisposable
                 baseBounds.Right,
                 baseBounds.Bottom);
 
-    /// <summary>
-    ///     Computes the pixel bounding box for tiles in the given range using the isometric formula.
-    /// </summary>
-    private static SKRectI ComputePixelBounds(
-        int startX,
-        int startY,
-        int endX,
-        int endY,
-        int mapHeight)
+    private static SKRectI ComputePixelBounds(SKRectI tb, int mapHeight)
     {
-        //pixel position formula from the rendering code:
-        //pixelX(x, y) = (mapHeight - 1 - y) * HALF_TILE_WIDTH + x * HALF_TILE_WIDTH
-        //pixelY(x, y) = FOREGROUND_PADDING + y * HALF_TILE_HEIGHT + x * HALF_TILE_HEIGHT
-
         var minPixelX = int.MaxValue;
         var minPixelY = int.MaxValue;
         var maxPixelX = int.MinValue;
         var maxPixelY = int.MinValue;
 
-        //check all 4 corner tiles to find the bounding box
         int[] xs =
         [
-            startX,
-            endX
+            tb.Left,
+            tb.Right
         ];
 
         int[] ys =
         [
-            startY,
-            endY
+            tb.Top,
+            tb.Bottom
         ];
 
         foreach (var x in xs)
@@ -120,7 +92,6 @@ public sealed class MapChunk : IDisposable
                 minPixelX = Math.Min(minPixelX, px);
                 minPixelY = Math.Min(minPixelY, py);
 
-                //tile occupies TILE_WIDTH x TILE_HEIGHT from its origin
                 maxPixelX = Math.Max(maxPixelX, px + DALIB_CONSTANTS.TILE_WIDTH);
                 maxPixelY = Math.Max(maxPixelY, py + DALIB_CONSTANTS.TILE_HEIGHT);
             }
@@ -131,17 +102,6 @@ public sealed class MapChunk : IDisposable
             minPixelY,
             maxPixelX,
             maxPixelY);
-    }
-
-    public bool IsDirty(LayerFlags layer)
-    {
-        if (layer.HasFlag(LayerFlags.Background) && BackgroundDirty)
-            return true;
-
-        if ((layer.HasFlag(LayerFlags.LeftForeground) || layer.HasFlag(LayerFlags.RightForeground)) && ForegroundDirty)
-            return true;
-
-        return false;
     }
 }
 
@@ -167,19 +127,16 @@ public sealed class ChunkManager : IDisposable
         {
             for (var cx = 0; cx < ChunksWide; cx++)
             {
-                var tileStartX = cx * CHUNK_SIZE;
-                var tileStartY = cy * CHUNK_SIZE;
-                var tileEndX = Math.Min(tileStartX + CHUNK_SIZE - 1, mapWidth - 1);
-                var tileEndY = Math.Min(tileStartY + CHUNK_SIZE - 1, mapHeight - 1);
+                var tileBounds = new SKRectI(
+                    cx * CHUNK_SIZE,
+                    cy * CHUNK_SIZE,
+                    Math.Min(cx * CHUNK_SIZE + CHUNK_SIZE - 1, mapWidth - 1),
+                    Math.Min(cy * CHUNK_SIZE + CHUNK_SIZE - 1, mapHeight - 1));
 
                 Chunks[cx, cy] = new MapChunk(
                     cx,
                     cy,
-                    tileStartX,
-                    tileStartY,
-                    tileEndX,
-                    tileEndY,
-                    mapWidth,
+                    tileBounds,
                     mapHeight);
             }
         }

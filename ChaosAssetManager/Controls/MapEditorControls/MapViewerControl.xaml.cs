@@ -45,8 +45,8 @@ public partial class MapViewerControl : IDisposable
     private DateTime LastRequestedForegroundRenderTime = DateTime.MinValue;
     private DateTime LastRequestedTabMapRenderTime = DateTime.MinValue;
     private DateTime LastTabMapRenderTime = DateTime.MinValue;
-    private SKPoint LatestMapPoint = new(-1, -1);
     private bool LatestLeftButtonPressed;
+    private SKPoint LatestMapPoint = new(-1, -1);
     private Task? TabMapRenderTask;
 
     private TileGrabViewModel? HistoricalTileGrab { get; set; }
@@ -692,10 +692,10 @@ public partial class MapViewerControl : IDisposable
         canvas.Translate(-chunkBounds.Left, -chunkBounds.Top);
 
         //build wall map for the chunk region + 1 tile border for neighbor checks
-        var wallStartX = Math.Max(0, chunk.TileStartX - 1);
-        var wallStartY = Math.Max(0, chunk.TileStartY - 1);
-        var wallEndX = Math.Min(bounds.Width - 1, chunk.TileEndX + 1);
-        var wallEndY = Math.Min(bounds.Height - 1, chunk.TileEndY + 1);
+        var wallStartX = Math.Max(0, chunk.TileBounds.Left - 1);
+        var wallStartY = Math.Max(0, chunk.TileBounds.Top - 1);
+        var wallEndX = Math.Min(bounds.Width - 1, chunk.TileBounds.Right + 1);
+        var wallEndY = Math.Min(bounds.Height - 1, chunk.TileBounds.Bottom + 1);
         bool[,]? wallMap = null;
 
         if (MapEditorViewModel.ShowTabMap)
@@ -734,9 +734,9 @@ public partial class MapViewerControl : IDisposable
             }
         }
 
-        for (var y = chunk.TileStartY; y <= chunk.TileEndY; y++)
+        for (var y = chunk.TileBounds.Top; y <= chunk.TileBounds.Bottom; y++)
         {
-            for (var x = chunk.TileStartX; x <= chunk.TileEndX; x++)
+            for (var x = chunk.TileBounds.Left; x <= chunk.TileBounds.Right; x++)
             {
                 var leftTileViewModel = lfgTiles[x, y];
                 var rightTileViewModel = rfgTiles[x, y];
@@ -878,9 +878,9 @@ public partial class MapViewerControl : IDisposable
             //offset so tiles draw at local chunk coords
             canvas.Translate(-chunkBounds.Left, -chunkBounds.Top);
 
-            for (var y = chunk.TileStartY; y <= chunk.TileEndY; y++)
+            for (var y = chunk.TileBounds.Top; y <= chunk.TileBounds.Bottom; y++)
             {
-                for (var x = chunk.TileStartX; x <= chunk.TileEndX; x++)
+                for (var x = chunk.TileBounds.Left; x <= chunk.TileBounds.Right; x++)
                 {
                     var point = new Point(x, y);
                     var tileViewModel = bgTiles[x, y];
@@ -1070,9 +1070,9 @@ public partial class MapViewerControl : IDisposable
         //offset so tiles draw at local chunk coords
         canvas.Translate(-fgBounds.Left, -fgBounds.Top);
 
-        for (var y = chunk.TileStartY; y <= chunk.TileEndY; y++)
+        for (var y = chunk.TileBounds.Top; y <= chunk.TileBounds.Bottom; y++)
         {
-            for (var x = chunk.TileStartX; x <= chunk.TileEndX; x++)
+            for (var x = chunk.TileBounds.Left; x <= chunk.TileBounds.Right; x++)
             {
                 var leftTileViewModel = lfgTiles[x, y];
                 var rightTileViewModel = rfgTiles[x, y];
@@ -1392,13 +1392,10 @@ public partial class MapViewerControl : IDisposable
 
                 var dirtyVisible = ChunkMgr.GetDirtyVisibleBackgroundChunks(viewRect);
 
-                //if nothing is dirty but a render was requested, mark all visible chunks dirty
+                //if nothing is dirty but a render was requested, re-render all visible chunks
                 //this handles external triggers (layer toggles, undo/redo) that don't mark chunks
                 if (dirtyVisible.Count == 0)
-                {
-                    ChunkMgr.MarkAllDirty(LayerFlags.Background);
-                    dirtyVisible = ChunkMgr.GetDirtyVisibleBackgroundChunks(viewRect);
-                }
+                    dirtyVisible = ChunkMgr.GetVisibleChunks(viewRect);
 
                 //clear all dirty flags upfront so new flags set during rendering survive
                 foreach (var chunk in dirtyVisible)
@@ -1443,11 +1440,10 @@ public partial class MapViewerControl : IDisposable
 
                 var dirtyVisible = ChunkMgr.GetDirtyVisibleForegroundChunks(viewRect);
 
+                //if nothing is dirty but a render was requested, re-render all visible chunks
+                //this handles external triggers (layer toggles, undo/redo) that don't mark chunks
                 if (dirtyVisible.Count == 0)
-                {
-                    ChunkMgr.MarkAllDirty(LayerFlags.Foreground);
-                    dirtyVisible = ChunkMgr.GetDirtyVisibleForegroundChunks(viewRect);
-                }
+                    dirtyVisible = ChunkMgr.GetVisibleChunks(viewRect);
 
                 //clear all dirty flags upfront so new flags set during rendering survive
                 foreach (var chunk in dirtyVisible)
@@ -1492,11 +1488,10 @@ public partial class MapViewerControl : IDisposable
 
                 var dirtyVisible = ChunkMgr.GetDirtyVisibleTabMapChunks(viewRect);
 
+                //if nothing is dirty but a render was requested, re-render all visible chunks
+                //this handles external triggers (layer toggles, undo/redo) that don't mark chunks
                 if (dirtyVisible.Count == 0)
-                {
-                    ChunkMgr.MarkAllDirty(LayerFlags.Foreground);
-                    dirtyVisible = ChunkMgr.GetDirtyVisibleTabMapChunks(viewRect);
-                }
+                    dirtyVisible = ChunkMgr.GetVisibleChunks(viewRect);
 
                 //clear all dirty flags upfront so new flags set during rendering survive
                 foreach (var chunk in dirtyVisible)
