@@ -10,6 +10,8 @@ using ChaosAssetManager.Model;
 using SkiaSharp;
 using Rectangle = Chaos.Geometry.Rectangle;
 
+// ReSharper disable ConvertToAutoProperty
+
 #pragma warning disable CS8618, CS9264
 
 namespace ChaosAssetManager.ViewModel;
@@ -83,6 +85,7 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         set => SetField(ref field, value);
     }
 
+    public ChunkManager? ChunkMgr { get; set; }
     public SKMatrix? ViewerTransform { get; set; }
 
     public static MapViewerViewModel Empty { get; } = new()
@@ -114,22 +117,96 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
     public MapViewerViewModel()
     {
-        RawBackgroundTiles.CollectionChanged += (_, _) => BackgroundChangePending = true;
-        RawLeftForegroundTiles.CollectionChanged += (_, _) => ForegroundChangePending = true;
-        RawRightForegroundTiles.CollectionChanged += (_, _) => ForegroundChangePending = true;
+        RawBackgroundTiles.CollectionChanged += (_, _) =>
+        {
+            ChunkMgr?.MarkAllDirty(LayerFlags.Background);
+            BackgroundChangePending = true;
+        };
+
+        RawLeftForegroundTiles.CollectionChanged += (_, _) =>
+        {
+            ChunkMgr?.MarkAllDirty(LayerFlags.LeftForeground);
+            ForegroundChangePending = true;
+        };
+
+        RawRightForegroundTiles.CollectionChanged += (_, _) =>
+        {
+            ChunkMgr?.MarkAllDirty(LayerFlags.RightForeground);
+            ForegroundChangePending = true;
+        };
     }
 
     /// <inheritdoc />
     public void Update(TimeSpan delta)
     {
-        foreach (var tile in RawBackgroundTiles)
+        var bgDirtied = false;
+        var fgDirtied = false;
+
+        for (var i = 0; i < RawBackgroundTiles.Count; i++)
+        {
+            var tile = RawBackgroundTiles[i];
             tile.Update(delta);
 
-        foreach (var tile in RawLeftForegroundTiles)
+            if (tile.FrameChanged)
+            {
+                tile.FrameChanged = false;
+
+                if (ChunkMgr is not null)
+                {
+                    var x = i % Bounds.Width;
+                    var y = i / Bounds.Width;
+                    ChunkMgr.MarkDirty(x, y, LayerFlags.Background);
+                }
+
+                bgDirtied = true;
+            }
+        }
+
+        for (var i = 0; i < RawLeftForegroundTiles.Count; i++)
+        {
+            var tile = RawLeftForegroundTiles[i];
             tile.Update(delta);
 
-        foreach (var tile in RawRightForegroundTiles)
+            if (tile.FrameChanged)
+            {
+                tile.FrameChanged = false;
+
+                if (ChunkMgr is not null)
+                {
+                    var x = i % Bounds.Width;
+                    var y = i / Bounds.Width;
+                    ChunkMgr.MarkDirty(x, y, LayerFlags.LeftForeground);
+                }
+
+                fgDirtied = true;
+            }
+        }
+
+        for (var i = 0; i < RawRightForegroundTiles.Count; i++)
+        {
+            var tile = RawRightForegroundTiles[i];
             tile.Update(delta);
+
+            if (tile.FrameChanged)
+            {
+                tile.FrameChanged = false;
+
+                if (ChunkMgr is not null)
+                {
+                    var x = i % Bounds.Width;
+                    var y = i / Bounds.Width;
+                    ChunkMgr.MarkDirty(x, y, LayerFlags.RightForeground);
+                }
+
+                fgDirtied = true;
+            }
+        }
+
+        if (bgDirtied)
+            BackgroundChangePending = true;
+
+        if (fgDirtied)
+            ForegroundChangePending = true;
     }
 
     public void AddAction(

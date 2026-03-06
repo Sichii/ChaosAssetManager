@@ -11,7 +11,7 @@ public sealed partial class SKGLElementPlus : IDisposable
 {
     private readonly SKGLElement Element;
     private readonly Lock Sync;
-    private bool IsPanning;
+    public bool IsPanning { get; private set; }
     private SKPoint LastPanPoint;
     public MouseButton DragButton { get; set; } = MouseButton.Left;
     public SKMatrix Matrix { get; set; }

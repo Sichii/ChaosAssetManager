@@ -14,6 +14,7 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
     private static readonly DateTime Origin = DateTime.FromOADate(50);
     private readonly Lock Sync = new();
+    private int _currentFrameIndex;
 
     public Animation? Animation
     {
@@ -23,9 +24,13 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 
     public int CurrentFrameIndex
     {
-        get;
-        set => SetField(ref field, value);
+        get => _currentFrameIndex;
+        set => SetField(ref _currentFrameIndex, value);
     }
+
+    //set during Update() when animation frame advances, cleared by ChunkManager dirty marking
+    //does not raise PropertyChanged to avoid triggering ObservingCollection.CollectionChanged
+    public bool FrameChanged { get; set; }
 
     public IIntervalTimer? FrameTimer { get; set; }
 
@@ -101,7 +106,11 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
         FrameTimer.Update(delta);
 
         if (FrameTimer.IntervalElapsed)
-            CurrentFrameIndex = (CurrentFrameIndex + 1) % Animation.Frames.Count;
+        {
+            //directly set the backing field to avoid PropertyChanged / ObservingCollection churn
+            _currentFrameIndex = (_currentFrameIndex + 1) % Animation.Frames.Count;
+            FrameChanged = true;
+        }
     }
 
     public TileViewModel Clone()
@@ -128,7 +137,9 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
         if (Animation is null)
             return;
 
-        if (FrameTimer is null)
+        //only create a timer for multi-frame animations
+        //single-frame tiles don't need to tick and would just waste CPU marking dirty
+        if (FrameTimer is null && Animation.Frames.Count > 1)
         {
             FrameTimer = new IntervalTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs), false);
             FrameTimer.SetOrigin(Origin);
