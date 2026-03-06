@@ -20,7 +20,7 @@ namespace ChaosAssetManager.Helpers;
 
 public static partial class RenderUtil
 {
-    private static SKShader? GridShader;
+    private static readonly Dictionary<int, SKShader> GridShaders = new();
 
     private static IDictionary<int, Palette>? MpfPaletteLookup;
     private static PaletteLookup? StcPaletteLookup;
@@ -59,7 +59,7 @@ public static partial class RenderUtil
     {
         using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, CONSTANTS.TILE_HEIGHT + 1);
 
-        var color = new SKColor(80, 80, 80);
+        var color = new SKColor(160, 160, 160);
 
         //even row tile at origin
         DrawTileOutline(
@@ -113,9 +113,14 @@ public static partial class RenderUtil
         SKCanvas canvas,
         float canvasWidth,
         float canvasHeight,
-        int scale = 2)
+        int scale = 2,
+        SKBlendMode blendMode = SKBlendMode.SrcOver)
     {
-        GridShader ??= CreateGridShader(scale);
+        if (!GridShaders.TryGetValue(scale, out var gridShader))
+        {
+            gridShader = CreateGridShader(scale);
+            GridShaders[scale] = gridShader;
+        }
 
         //get the inverse of the current canvas matrix to find visible world area
         var matrix = canvas.TotalMatrix;
@@ -140,7 +145,8 @@ public static partial class RenderUtil
 
         //draw a rect covering the visible area with the grid shader
         using var paint = new SKPaint();
-        paint.Shader = GridShader;
+        paint.Shader = gridShader;
+        paint.BlendMode = blendMode;
 
         canvas.DrawRect(
             minX,
@@ -258,7 +264,11 @@ public static partial class RenderUtil
     /// <summary>
     ///     Pre-loads the grid shader to avoid delay on first render.
     /// </summary>
-    public static void Preload() => GridShader ??= CreateGridShader(2);
+    public static void Preload()
+    {
+        if (!GridShaders.ContainsKey(2))
+            GridShaders[2] = CreateGridShader(2);
+    }
 
     public static Animation? RenderBmp(DataArchiveEntry entry)
     {
@@ -615,8 +625,10 @@ public static partial class RenderUtil
 
     public static void Reset()
     {
-        GridShader?.Dispose();
-        GridShader = null;
+        foreach (var shader in GridShaders.Values)
+            shader.Dispose();
+
+        GridShaders.Clear();
         MpfPaletteLookup = null;
         StcPaletteLookup = null;
         StsPaletteLookup = null;

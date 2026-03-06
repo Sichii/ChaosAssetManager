@@ -30114,10 +30114,7 @@
       "Id": "FG_2060_10702",
       "Width": 2,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10702,
         10703
@@ -30131,11 +30128,7 @@
       "Id": "FG_2061_10704",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10704,
         10705,
@@ -30151,11 +30144,7 @@
       "Id": "FG_2062_10708",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30171,11 +30160,7 @@
       "Id": "FG_2063_10712",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10712,
         10713,
@@ -30191,11 +30176,7 @@
       "Id": "FG_2064_10716",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30211,10 +30192,7 @@
       "Id": "FG_2065_10720",
       "Width": 2,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10720,
         10721
@@ -30228,10 +30206,7 @@
       "Id": "FG_2066_10723",
       "Width": 1,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10723
@@ -30245,10 +30220,7 @@
       "Id": "FG_2067_10726",
       "Width": 2,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10726,
         10727
@@ -30262,10 +30234,7 @@
       "Id": "FG_2068_10729",
       "Width": 1,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10729
@@ -30279,12 +30248,7 @@
       "Id": "FG_2069_10732",
       "Width": 2,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30302,11 +30266,7 @@
       "Id": "FG_2070_10736",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10736,
         10737,
@@ -30322,11 +30282,7 @@
       "Id": "FG_2071_10740",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30342,11 +30298,7 @@
       "Id": "FG_2072_10744",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10744,
         10745,
@@ -30362,11 +30314,7 @@
       "Id": "FG_2073_10748",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30382,10 +30330,7 @@
       "Id": "FG_2074_10752",
       "Width": 2,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10752,
         10753
@@ -30399,10 +30344,7 @@
       "Id": "FG_2075_10755",
       "Width": 1,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10755
@@ -30416,12 +30358,7 @@
       "Id": "FG_2076_10758",
       "Width": 2,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10760,
@@ -30439,28 +30376,7 @@
       "Id": "FG_2077_10762",
       "Width": 4,
       "Height": 5,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30510,12 +30426,7 @@
       "Id": "FG_2078_10770",
       "Width": 2,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10772,
@@ -30533,11 +30444,7 @@
       "Id": "FG_2079_10774",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10774,
         10775,
@@ -30553,11 +30460,7 @@
       "Id": "FG_2080_10778",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10778,
         10779,
@@ -30573,11 +30476,7 @@
       "Id": "FG_2081_10782",
       "Width": 3,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10782,
         10783,
@@ -30593,11 +30492,7 @@
       "Id": "FG_2082_10786",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30613,11 +30508,7 @@
       "Id": "FG_2083_10790",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30633,11 +30524,7 @@
       "Id": "FG_2084_10794",
       "Width": 1,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30653,10 +30540,7 @@
       "Id": "FG_2085_10798",
       "Width": 1,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10798
@@ -30670,10 +30554,7 @@
       "Id": "FG_2086_10801",
       "Width": 2,
       "Height": 1,
-      "BackgroundTiles": [
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         10801,
         10802
@@ -30687,17 +30568,7 @@
       "Id": "FG_2087_10804",
       "Width": 3,
       "Height": 3,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30725,20 +30596,7 @@
       "Id": "FG_2088_10810",
       "Width": 6,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30772,20 +30630,7 @@
       "Id": "FG_2089_10818",
       "Width": 2,
       "Height": 6,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         0,
@@ -30819,12 +30664,7 @@
       "Id": "FG_2090_10826",
       "Width": 2,
       "Height": 2,
-      "BackgroundTiles": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "BackgroundTiles": null,
       "LeftForegroundTiles": [
         0,
         10828,
@@ -30835,6 +30675,1134 @@
         0,
         0,
         10827,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2091_10829",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10829,
+        10830,
+        10831
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10832
+      ]
+    },
+    {
+      "Id": "FG_2092_10833",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10833,
+        10834,
+        10835
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10836
+      ]
+    },
+    {
+      "Id": "FG_2093_10837",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        10837
+      ],
+      "RightForegroundTiles": [
+        10840,
+        10839,
+        10838
+      ]
+    },
+    {
+      "Id": "FG_2094_10841",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        10841
+      ],
+      "RightForegroundTiles": [
+        10844,
+        10843,
+        10842
+      ]
+    },
+    {
+      "Id": "FG_2095_10845",
+      "Width": 4,
+      "Height": 1,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10845,
+        10846,
+        10847,
+        10848
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        10849
+      ]
+    },
+    {
+      "Id": "FG_2096_10850",
+      "Width": 4,
+      "Height": 1,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10850,
+        10851,
+        10852,
+        10853
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        10854
+      ]
+    },
+    {
+      "Id": "FG_2097_10855",
+      "Width": 1,
+      "Height": 4,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        10855
+      ],
+      "RightForegroundTiles": [
+        10859,
+        10858,
+        10857,
+        10856
+      ]
+    },
+    {
+      "Id": "FG_2098_10860",
+      "Width": 1,
+      "Height": 4,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        10860
+      ],
+      "RightForegroundTiles": [
+        10864,
+        10863,
+        10862,
+        10861
+      ]
+    },
+    {
+      "Id": "FG_2099_10865",
+      "Width": 3,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        10871,
+        10865,
+        10869,
+        0
+      ],
+      "RightForegroundTiles": [
+        10868,
+        0,
+        0,
+        10867,
+        0,
+        10872,
+        10866,
+        10870,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2100_10873",
+      "Width": 3,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10877,
+        10878,
+        10879,
+        0,
+        0,
+        10875,
+        0,
+        10873,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10880,
+        0,
+        0,
+        10876,
+        0,
+        10874,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2101_10881",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10883,
+        10882,
+        10881
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2102_10884",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        10884
+      ],
+      "RightForegroundTiles": [
+        10885
+      ]
+    },
+    {
+      "Id": "FG_2103_10886",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        10888,
+        10887,
+        10886
+      ]
+    },
+    {
+      "Id": "FG_2104_10889",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        10891,
+        10890,
+        10889
+      ]
+    },
+    {
+      "Id": "FG_2105_10892",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": null,
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        10894,
+        10893,
+        10892
+      ]
+    },
+    {
+      "Id": "FG_2106_10895",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        10895
+      ],
+      "RightForegroundTiles": [
+        10896
+      ]
+    },
+    {
+      "Id": "FG_2107_10896",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        10897,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10896,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2108_10898",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10898,
+        10899,
+        10900
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2109_10901",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        10901
+      ],
+      "RightForegroundTiles": [
+        10902
+      ]
+    },
+    {
+      "Id": "FG_2110_10903",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10903,
+        10904,
+        10905
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2111_10906",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10906,
+        10907,
+        10908
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2112_10909",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10909,
+        10910,
+        10911
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2113_10895",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        10895
+      ],
+      "RightForegroundTiles": [
+        10912
+      ]
+    },
+    {
+      "Id": "FG_2114_10895",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        10895,
+        0,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10912,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2115_10913",
+      "Width": 5,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10913,
+        10914,
+        10915,
+        10916,
+        10917
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        10920,
+        0,
+        0,
+        0,
+        0,
+        10919,
+        0,
+        0,
+        0,
+        0,
+        10918
+      ]
+    },
+    {
+      "Id": "FG_2116_10921",
+      "Width": 3,
+      "Height": 5,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10921,
+        10922,
+        10923
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10928,
+        0,
+        0,
+        10927,
+        0,
+        0,
+        10926,
+        0,
+        0,
+        10925,
+        0,
+        0,
+        10924
+      ]
+    },
+    {
+      "Id": "FG_2117_10929",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        10929
+      ],
+      "RightForegroundTiles": [
+        10932,
+        10931,
+        10930
+      ]
+    },
+    {
+      "Id": "FG_2118_10933",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        10935,
+        10933,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        10936,
+        10934,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2119_10937",
+      "Width": 2,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        10939,
+        10937,
+        0
+      ],
+      "RightForegroundTiles": [
+        0,
+        10940,
+        10938,
+        0
+      ]
+    },
+    {
+      "Id": "FG_2120_10941",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10941,
+        10942,
+        10943
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10944
+      ]
+    },
+    {
+      "Id": "FG_2121_10945",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10945,
+        10946,
+        10947
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10948
+      ]
+    },
+    {
+      "Id": "FG_2122_10949",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        10949
+      ],
+      "RightForegroundTiles": [
+        10952,
+        10951,
+        10950
+      ]
+    },
+    {
+      "Id": "FG_2123_10953",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10953,
+        10954,
+        10955
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10956
+      ]
+    },
+    {
+      "Id": "FG_2124_10957",
+      "Width": 3,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        10957,
+        10958,
+        10959
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10961,
+        0,
+        0,
+        10960
+      ]
+    },
+    {
+      "Id": "FG_2125_10962",
+      "Width": 2,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        10962,
+        10963
+      ],
+      "RightForegroundTiles": [
+        0,
+        10966,
+        0,
+        10965,
+        0,
+        10964
+      ]
+    },
+    {
+      "Id": "FG_2126_10967",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10967,
+        10968,
+        10969
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10970
+      ]
+    },
+    {
+      "Id": "FG_2127_10971",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        10971
+      ],
+      "RightForegroundTiles": [
+        10974,
+        10973,
+        10972
+      ]
+    },
+    {
+      "Id": "FG_2128_10975",
+      "Width": 3,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10975,
+        10976,
+        10977
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10980,
+        0,
+        0,
+        10979,
+        0,
+        0,
+        10978
+      ]
+    },
+    {
+      "Id": "FG_2129_10981",
+      "Width": 3,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10981,
+        10982,
+        10983
+      ],
+      "RightForegroundTiles": [
+        0,
+        0,
+        10984
+      ]
+    },
+    {
+      "Id": "FG_2130_10985",
+      "Width": 1,
+      "Height": 3,
+      "BackgroundTiles": [
+        0,
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        0,
+        10985
+      ],
+      "RightForegroundTiles": [
+        10988,
+        10987,
+        10986
+      ]
+    },
+    {
+      "Id": "FG_2131_10989",
+      "Width": 2,
+      "Height": 1,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        10989,
+        10990
+      ],
+      "RightForegroundTiles": [
+        0,
+        10991
+      ]
+    },
+    {
+      "Id": "FG_2132_10992",
+      "Width": 1,
+      "Height": 2,
+      "BackgroundTiles": [
+        0,
+        0
+      ],
+      "LeftForegroundTiles": [
+        0,
+        10992
+      ],
+      "RightForegroundTiles": [
+        10994,
+        10993
+      ]
+    },
+    {
+      "Id": "FG_2133_10995",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        10995
+      ],
+      "RightForegroundTiles": [
+        10996
+      ]
+    },
+    {
+      "Id": "FG_2134_10997",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        10997
+      ],
+      "RightForegroundTiles": [
+        10998
+      ]
+    },
+    {
+      "Id": "FG_2135_10999",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        10999
+      ],
+      "RightForegroundTiles": [
+        11000
+      ]
+    },
+    {
+      "Id": "FG_2136_11001",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11001
+      ],
+      "RightForegroundTiles": [
+        11002
+      ]
+    },
+    {
+      "Id": "FG_2137_11003",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11003
+      ],
+      "RightForegroundTiles": [
+        11004
+      ]
+    },
+    {
+      "Id": "FG_2138_11005",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11005
+      ],
+      "RightForegroundTiles": [
+        11006
+      ]
+    },
+    {
+      "Id": "FG_2139_11007",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11007
+      ],
+      "RightForegroundTiles": [
+        11008
+      ]
+    },
+    {
+      "Id": "FG_2140_11009",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11009
+      ],
+      "RightForegroundTiles": [
+        11010
+      ]
+    },
+    {
+      "Id": "FG_2141_11011",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11011
+      ],
+      "RightForegroundTiles": [
+        11012
+      ]
+    },
+    {
+      "Id": "FG_2142_11013",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11013
+      ],
+      "RightForegroundTiles": [
+        11014
+      ]
+    },
+    {
+      "Id": "FG_2143_11015",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11015
+      ],
+      "RightForegroundTiles": [
+        11016
+      ]
+    },
+    {
+      "Id": "FG_2144_11017",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11017
+      ],
+      "RightForegroundTiles": [
+        11018
+      ]
+    },
+    {
+      "Id": "FG_2145_11019",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11019
+      ],
+      "RightForegroundTiles": [
+        11020
+      ]
+    },
+    {
+      "Id": "FG_2146_11021",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11021
+      ],
+      "RightForegroundTiles": [
+        11022
+      ]
+    },
+    {
+      "Id": "FG_2147_11023",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11023
+      ],
+      "RightForegroundTiles": [
+        0
+      ]
+    },
+    {
+      "Id": "FG_2148_11024",
+      "Width": 1,
+      "Height": 1,
+      "BackgroundTiles": [
+        0
+      ],
+      "LeftForegroundTiles": [
+        11024
+      ],
+      "RightForegroundTiles": [
         0
       ]
     }

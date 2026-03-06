@@ -532,6 +532,25 @@ public partial class MapViewerControl : IDisposable
                 visibleRectInt.Top,
                 paint);
 
+        if (MapEditorViewModel.ShowGrid)
+        {
+            //translate so the grid shader aligns with tile centers
+            var gridOriginX = ViewModel.Bounds.Height * DALIB_CONSTANTS.HALF_TILE_WIDTH;
+            var gridOriginY = FOREGROUND_PADDING + DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+
+            canvas.Save();
+            canvas.Translate(gridOriginX, gridOriginY);
+
+            RenderUtil.DrawIsometricGrid(
+                canvas,
+                e.Info.Width,
+                e.Info.Height,
+                1,
+                SKBlendMode.Difference);
+
+            canvas.Restore();
+        }
+
         if (tmSubset is not null)
             canvas.DrawImage(
                 tmSubset,
@@ -564,8 +583,6 @@ public partial class MapViewerControl : IDisposable
         var bounds = ViewModel.Bounds;
         var tglfgTiles = new ListSegment2D<TileViewModel>();
         var tgrfgTiles = new ListSegment2D<TileViewModel>();
-        var tabWallImage = MapEditorRenderUtil.RenderTabWall();
-        var tileOutline = MapEditorRenderUtil.RenderTileOutline();
         var isEditingLeftForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.LeftForeground);
         var isEditingRightForeground = MapEditorViewModel.EditingLayerFlags.HasFlag(LayerFlags.RightForeground);
         var seededRandom = new Random(8675309);
@@ -575,6 +592,19 @@ public partial class MapViewerControl : IDisposable
         {
             tglfgTiles = tileGrab.LeftForegroundTilesView;
             tgrfgTiles = tileGrab.RightForegroundTilesView;
+        }
+
+        //build wall map for neighbor checks
+        bool[,]? wallMap = null;
+
+        if (MapEditorViewModel.ShowTabMap)
+        {
+            wallMap = new bool[bounds.Width, bounds.Height];
+
+            for (var y = 0; y < bounds.Height; y++)
+                for (var x = 0; x < bounds.Width; x++)
+                    wallMap[x, y] = MapEditorRenderUtil.IsWall(lfgTiles[x, y].TileId)
+                                    || MapEditorRenderUtil.IsWall(rfgTiles[x, y].TileId);
         }
 
         for (var y = 0; y < bounds.Height; y++)
@@ -605,30 +635,41 @@ public partial class MapViewerControl : IDisposable
                         ref rightForegroundPaint,
                         leftButtonPressed);
 
-                var isWall = MapEditorRenderUtil.IsWall(leftTileViewModel.TileId) || MapEditorRenderUtil.IsWall(rightTileViewModel.TileId);
-                var paint = leftForegroundPaint ?? rightForegroundPaint;
-
-                var gridPaint = new SKPaint
-                {
-                    BlendMode = SKBlendMode.Hue
-                };
+                var isWall = wallMap is not null && wallMap[x, y];
 
                 var tlx = fgInitialDrawX + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
                 var tly = fgInitialDrawY + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
 
                 if (MapEditorViewModel.ShowTabMap && isWall)
-                    canvas.DrawImage(
-                        tabWallImage,
-                        tlx,
-                        tly,
-                        paint);
+                {
+                    //fill the diamond
+                    var fillColor = SKColors.Snow.WithAlpha(50);
 
-                if (MapEditorViewModel.ShowGrid)
-                    canvas.DrawImage(
-                        tileOutline,
-                        tlx,
-                        tly,
-                        gridPaint);
+                    for (var row = 0; row < DALIB_CONSTANTS.TILE_HEIGHT; row++)
+                    {
+                        var (startXBound, endXBound) = RenderUtil.GetTileRowBounds(row);
+
+                        for (var px = startXBound; px <= endXBound; px++)
+                            bitmap.SetPixel(tlx + px, tly + row, fillColor);
+                    }
+
+                    //only draw edges where the neighbor is not a wall
+                    var drawTopRight = y == 0 || !wallMap![x, y - 1];
+                    var drawBottomRight = x == bounds.Width - 1 || !wallMap![x + 1, y];
+                    var drawBottomLeft = y == bounds.Height - 1 || !wallMap![x, y + 1];
+                    var drawTopLeft = x == 0 || !wallMap![x - 1, y];
+
+                    if (drawTopRight || drawBottomRight || drawBottomLeft || drawTopLeft)
+                        MapEditorRenderUtil.DrawTileOutlineEdges(
+                            bitmap,
+                            tlx,
+                            tly,
+                            SKColors.Snow,
+                            drawTopRight,
+                            drawBottomRight,
+                            drawBottomLeft,
+                            drawTopLeft);
+                }
 
                 if (MapEditorViewModel.ShowForegroundGrid)
                 {

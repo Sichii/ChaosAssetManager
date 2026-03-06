@@ -861,18 +861,36 @@ public partial class MapEditorControl
         }
 
         //create structure definition, null out collections that are all zeros
-        var bgTiles = viewer.RawBackgroundTiles.Select(t => t.TileId).ToArray();
-        var lfgTiles = viewer.RawLeftForegroundTiles.Select(t => t.TileId).ToArray();
-        var rfgTiles = viewer.RawRightForegroundTiles.Select(t => t.TileId).ToArray();
+        var bgTiles = viewer.RawBackgroundTiles
+                            .Select(t => t.TileId)
+                            .ToArray();
+
+        var lfgTiles = viewer.RawLeftForegroundTiles
+                             .Select(t => t.TileId)
+                             .ToArray();
+
+        var rfgTiles = viewer.RawRightForegroundTiles
+                             .Select(t => t.TileId)
+                             .ToArray();
+        var isFg = (lfgTiles.Length > 0) || (rfgTiles.Length > 0);
+
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
+        if (isFg && (bgTiles.Length == 0))
+            bgTiles = null;
+        else if (!isFg)
+        {
+            lfgTiles = null;
+            rfgTiles = null;
+        }
 
         var definition = new StructureDefinition
         {
             Id = structureId,
             Width = viewer.Bounds.Width,
             Height = viewer.Bounds.Height,
-            BackgroundTiles = bgTiles.Any(id => id != 0) ? bgTiles : null,
-            LeftForegroundTiles = lfgTiles.Any(id => id != 0) ? lfgTiles : null,
-            RightForegroundTiles = rfgTiles.Any(id => id != 0) ? rfgTiles : null
+            BackgroundTiles = bgTiles,
+            LeftForegroundTiles = lfgTiles,
+            RightForegroundTiles = rfgTiles
         };
 
         //update the viewer with the id

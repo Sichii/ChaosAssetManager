@@ -215,39 +215,148 @@ public static class MapEditorRenderUtil
         if (TabWallImage is not null)
             return TabWallImage;
 
-        using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, 28);
-        using var canvas = new SKCanvas(bitmap);
+        using var bitmap = new SKBitmap(CONSTANTS.TILE_WIDTH, CONSTANTS.TILE_HEIGHT + 1);
+        var fillColor = SKColors.Snow.WithAlpha(50);
 
-        Span<Point> vertices =
-        [
-            new(CONSTANTS.HALF_TILE_WIDTH, 0),
-            new(CONSTANTS.TILE_WIDTH, CONSTANTS.HALF_TILE_HEIGHT),
-            new(CONSTANTS.HALF_TILE_WIDTH, 28),
-            new(0, CONSTANTS.HALF_TILE_HEIGHT)
-        ];
+        //fill the diamond row by row using tile row bounds
+        for (var row = 0; row < CONSTANTS.TILE_HEIGHT; row++)
+        {
+            (var startX, var endX) = RenderUtil.GetTileRowBounds(row);
 
-        using var path = new SKPath();
-        path.MoveTo(vertices[0].X, vertices[0].Y);
+            for (var x = startX; x <= endX; x++)
+                bitmap.SetPixel(x, row, fillColor);
+        }
 
-        foreach (var vertex in vertices[1..])
-            path.LineTo(vertex.X, vertex.Y);
-
-        path.Close();
-
-        using var fill = new SKPaint();
-        fill.Color = SKColors.Snow.WithAlpha(128);
-        fill.Style = SKPaintStyle.Fill;
-
-        using var outline = new SKPaint();
-        outline.Color = SKColors.DimGray;
-        outline.Style = SKPaintStyle.Stroke;
-
-        canvas.DrawPath(path, fill);
-        canvas.DrawPath(path, outline);
+        //draw the staircase outline on top
+        RenderUtil.DrawTileOutline(
+            bitmap,
+            0,
+            0,
+            SKColors.Snow);
 
         TabWallImage = SKImage.FromBitmap(bitmap);
 
         return TabWallImage;
+    }
+
+    /// <summary>
+    ///     Draws only the specified edges of an isometric tile outline (staircase diamond).
+    ///     Edges: topRight = top-to-right, bottomRight = right-to-bottom, bottomLeft = bottom-to-left, topLeft = left-to-top.
+    /// </summary>
+    public static void DrawTileOutlineEdges(
+        SKBitmap bitmap,
+        int tileLeft,
+        int tileTop,
+        SKColor color,
+        bool topRight,
+        bool bottomRight,
+        bool bottomLeft,
+        bool topLeft)
+    {
+        using var canvas = new SKCanvas(bitmap);
+        using var paint = new SKPaint();
+        paint.Color = color;
+        paint.Style = SKPaintStyle.Stroke;
+
+        var rightTwo = new SKPoint(2, 0);
+        var leftTwo = new SKPoint(-2, 0);
+        var downOne = new SKPoint(0, 1);
+        var upOne = new SKPoint(0, -1);
+
+        var startPoint = new SKPoint(tileLeft + 28, tileTop);
+
+        if (topRight)
+        {
+            using var path = new SKPath();
+            var pt = startPoint;
+            path.MoveTo(pt);
+
+            for (var i = 0; i < CONSTANTS.HALF_TILE_HEIGHT; i++)
+            {
+                path.LineTo(pt += rightTwo);
+                path.MoveTo(pt += downOne);
+            }
+
+            canvas.DrawPath(path, paint);
+        }
+
+        //advance start point past top-right edge
+        startPoint += new SKPoint(CONSTANTS.HALF_TILE_WIDTH, CONSTANTS.HALF_TILE_HEIGHT);
+        startPoint += new SKPoint(-2, -1); //correction
+
+        //bridge the right corner notch when either adjacent edge is drawn
+        if (topRight || bottomRight)
+        {
+            using var path = new SKPath();
+            var pt = startPoint;
+            path.MoveTo(pt);
+            path.LineTo(pt + rightTwo);
+
+            canvas.DrawPath(path, paint);
+        }
+
+        if (bottomRight)
+        {
+            using var path = new SKPath();
+            var pt = startPoint;
+            path.MoveTo(pt);
+
+            for (var i = 0; i < (CONSTANTS.HALF_TILE_HEIGHT - 1); i++)
+            {
+                path.MoveTo(pt += downOne);
+                path.LineTo(pt += leftTwo);
+            }
+
+            canvas.DrawPath(path, paint);
+        }
+
+        //advance past bottom-right edge
+        startPoint += new SKPoint(-CONSTANTS.HALF_TILE_WIDTH + 2, CONSTANTS.HALF_TILE_HEIGHT - 1);
+
+        if (bottomLeft)
+        {
+            using var path = new SKPath();
+            var pt = startPoint;
+            path.MoveTo(pt);
+
+            for (var i = 0; i < CONSTANTS.HALF_TILE_HEIGHT; i++)
+            {
+                path.LineTo(pt += leftTwo);
+                path.MoveTo(pt += upOne);
+            }
+
+            canvas.DrawPath(path, paint);
+        }
+
+        //advance past bottom-left edge
+        startPoint += new SKPoint(-CONSTANTS.HALF_TILE_WIDTH, -CONSTANTS.HALF_TILE_HEIGHT);
+        startPoint += new SKPoint(2, 1); //correction
+
+        //bridge the left corner notch when either adjacent edge is drawn
+        if (bottomLeft || topLeft)
+        {
+            using var path = new SKPath();
+            var pt = startPoint;
+            path.MoveTo(pt);
+            path.LineTo(pt + leftTwo);
+
+            canvas.DrawPath(path, paint);
+        }
+
+        if (topLeft)
+        {
+            using var path = new SKPath();
+            var pt = startPoint;
+            path.MoveTo(pt);
+
+            for (var i = 0; i < (CONSTANTS.HALF_TILE_HEIGHT - 1); i++)
+            {
+                path.MoveTo(pt += upOne);
+                path.LineTo(pt += rightTwo);
+            }
+
+            canvas.DrawPath(path, paint);
+        }
     }
 
     public static SKImage RenderTileOutline()
