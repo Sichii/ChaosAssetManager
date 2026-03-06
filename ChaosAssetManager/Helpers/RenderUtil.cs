@@ -107,6 +107,57 @@ public static partial class RenderUtil
     }
 
     /// <summary>
+    ///     Creates a diamond-shaped clip path for the map boundary using the same 2:1 staircase pattern as tile outlines.
+    /// </summary>
+    public static SKPath CreateIsometricDiamondPath(int mapWidth, int mapHeight, int foregroundPadding)
+    {
+        var path = new SKPath();
+        float x = mapHeight * CONSTANTS.HALF_TILE_WIDTH;
+        float y = foregroundPadding;
+
+        path.MoveTo(x, y);
+
+        //step order on each edge must match the tile outline pattern
+        //so the boundary pixels fall inside the clip
+
+        //top-right edge: horizontal then vertical
+        var trSteps = mapWidth * CONSTANTS.HALF_TILE_HEIGHT;
+
+        for (var i = 0; i < trSteps; i++)
+        {
+            path.LineTo(x += 2, y);
+            path.LineTo(x, ++y);
+        }
+
+        //bottom-right edge: vertical then horizontal
+        var brSteps = mapHeight * CONSTANTS.HALF_TILE_HEIGHT;
+
+        for (var i = 0; i < brSteps; i++)
+        {
+            path.LineTo(x, ++y);
+            path.LineTo(x -= 2, y);
+        }
+
+        //bottom-left edge: horizontal then vertical
+        for (var i = 0; i < trSteps; i++)
+        {
+            path.LineTo(x -= 2, y);
+            path.LineTo(x, --y);
+        }
+
+        //top-left edge: vertical then horizontal
+        for (var i = 0; i < brSteps; i++)
+        {
+            path.LineTo(x, --y);
+            path.LineTo(x += 2, y);
+        }
+
+        path.Close();
+
+        return path;
+    }
+
+    /// <summary>
     ///     Draws an isometric grid on the canvas that covers the visible area using a shader for infinite tiling.
     /// </summary>
     public static void DrawIsometricGrid(

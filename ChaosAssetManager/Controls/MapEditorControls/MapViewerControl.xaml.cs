@@ -597,11 +597,22 @@ public partial class MapViewerControl : IDisposable
 
         if (MapEditorViewModel.ShowGrid)
         {
-            //translate so the grid shader aligns with tile centers
-            var gridOriginX = ViewModel.Bounds.Height * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-            var gridOriginY = FOREGROUND_PADDING + DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+            var mapW = ViewModel.Bounds.Width;
+            var mapH = ViewModel.Bounds.Height;
+            var hw = DALIB_CONSTANTS.HALF_TILE_WIDTH;
+            var hh = DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+
+            //clip to the diamond boundary of the map using a staircase path
+            //that matches the tile outline's 2:1 pixel pattern
+            using var clipPath = RenderUtil.CreateIsometricDiamondPath(mapW, mapH, FOREGROUND_PADDING);
 
             canvas.Save();
+            canvas.ClipPath(clipPath);
+
+            //translate so the grid shader aligns with tile centers
+            var gridOriginX = mapH * hw;
+            var gridOriginY = FOREGROUND_PADDING + hh;
+
             canvas.Translate(gridOriginX, gridOriginY);
 
             RenderUtil.DrawIsometricGrid(
