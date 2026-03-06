@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Chaos.Collections.Synchronized;
 using Chaos.Extensions.Common;
 using Chaos.Extensions.Geometry;
 using Chaos.Geometry;
@@ -32,7 +33,7 @@ public partial class MapViewerControl : IDisposable
     private readonly ConcurrentQueue<SKImage> PendingTextureDisposals = new();
 
     //tracks which chunks the previous mouse hover affected, so we can un-dirty them
-    private readonly HashSet<MapChunk> PreviousHoverChunks = [];
+    private readonly SynchronizedHashSet<MapChunk> PreviousHoverChunks = [];
     private readonly Lock RenderSync = new();
 
     private Task? BackgroundRenderTask;
@@ -44,6 +45,8 @@ public partial class MapViewerControl : IDisposable
     private DateTime LastRequestedForegroundRenderTime = DateTime.MinValue;
     private DateTime LastRequestedTabMapRenderTime = DateTime.MinValue;
     private DateTime LastTabMapRenderTime = DateTime.MinValue;
+    private SKPoint LatestMapPoint = new(-1, -1);
+    private bool LatestLeftButtonPressed;
     private Task? TabMapRenderTask;
 
     private TileGrabViewModel? HistoricalTileGrab { get; set; }
@@ -573,7 +576,6 @@ public partial class MapViewerControl : IDisposable
 
         using var paint = new SKPaint();
         paint.IsAntialias = false;
-        
 
         //draw background chunks
         foreach (var chunk in visibleChunks)
@@ -830,8 +832,6 @@ public partial class MapViewerControl : IDisposable
             chunk.TabMapImage = image;
         }
 
-        chunk.TabMapDirty = false;
-
         if (oldImage is not null)
             PendingTextureDisposals.Enqueue(oldImage);
     }
@@ -904,8 +904,6 @@ public partial class MapViewerControl : IDisposable
             oldImage = chunk.BackgroundImage;
             chunk.BackgroundImage = image;
         }
-
-        chunk.BackgroundDirty = false;
 
         if (oldImage is not null)
             PendingTextureDisposals.Enqueue(oldImage);
@@ -1117,8 +1115,6 @@ public partial class MapViewerControl : IDisposable
             oldImage = chunk.ForegroundImage;
             chunk.ForegroundImage = image;
         }
-
-        chunk.ForegroundDirty = false;
 
         if (oldImage is not null)
             PendingTextureDisposals.Enqueue(oldImage);
@@ -1338,17 +1334,21 @@ public partial class MapViewerControl : IDisposable
         var leftButtonPressed = Mouse.LeftButton == MouseButtonState.Pressed;
         var mapPoint = mousePoint.HasValue ? ConvertMouseToTileCoordinates(mousePoint.Value) : new SKPoint(-1, -1);
 
+        //update shared state so background render loops always use the latest coordinates
+        LatestMapPoint = mapPoint;
+        LatestLeftButtonPressed = leftButtonPressed;
+
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.BackgroundChangePending)) && ViewModel.BackgroundChangePending)
-            QueueBackgroundRender(mapPoint, leftButtonPressed);
+            QueueBackgroundRender();
 
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.ForegroundChangePending)) && ViewModel.ForegroundChangePending)
-            QueueForegroundRender(mapPoint, leftButtonPressed);
+            QueueForegroundRender();
 
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.TabMapChangePending)) && ViewModel.TabMapChangePending)
-            QueueTabMapRender(mapPoint, leftButtonPressed);
+            QueueTabMapRender();
     }
 
-    private void QueueBackgroundRender(SKPoint mapPoint, bool leftButtonPressed)
+    private void QueueBackgroundRender()
     {
         var now = DateTime.UtcNow;
 
@@ -1370,6 +1370,10 @@ public partial class MapViewerControl : IDisposable
             {
                 LastBackgroundRenderTime = DateTime.UtcNow;
 
+                //read latest mouse state so hover preview stays current
+                var mapPoint = LatestMapPoint;
+                var leftButtonPressed = LatestLeftButtonPressed;
+
                 var dirtyVisible = ChunkMgr.GetDirtyVisibleBackgroundChunks(viewRect);
 
                 //if nothing is dirty but a render was requested, mark all visible chunks dirty
@@ -1379,6 +1383,10 @@ public partial class MapViewerControl : IDisposable
                     ChunkMgr.MarkAllDirty(LayerFlags.Background);
                     dirtyVisible = ChunkMgr.GetDirtyVisibleBackgroundChunks(viewRect);
                 }
+
+                //clear all dirty flags upfront so new flags set during rendering survive
+                foreach (var chunk in dirtyVisible)
+                    chunk.BackgroundDirty = false;
 
                 foreach (var chunk in dirtyVisible)
                     RenderBackgroundChunk(chunk, mapPoint, leftButtonPressed);
@@ -1391,7 +1399,7 @@ public partial class MapViewerControl : IDisposable
         });
     }
 
-    private void QueueForegroundRender(SKPoint mapPoint, bool leftButtonPressed)
+    private void QueueForegroundRender()
     {
         var now = DateTime.UtcNow;
 
@@ -1413,6 +1421,10 @@ public partial class MapViewerControl : IDisposable
             {
                 LastForegroundRenderTime = DateTime.UtcNow;
 
+                //read latest mouse state so hover preview stays current
+                var mapPoint = LatestMapPoint;
+                var leftButtonPressed = LatestLeftButtonPressed;
+
                 var dirtyVisible = ChunkMgr.GetDirtyVisibleForegroundChunks(viewRect);
 
                 if (dirtyVisible.Count == 0)
@@ -1420,6 +1432,10 @@ public partial class MapViewerControl : IDisposable
                     ChunkMgr.MarkAllDirty(LayerFlags.Foreground);
                     dirtyVisible = ChunkMgr.GetDirtyVisibleForegroundChunks(viewRect);
                 }
+
+                //clear all dirty flags upfront so new flags set during rendering survive
+                foreach (var chunk in dirtyVisible)
+                    chunk.ForegroundDirty = false;
 
                 foreach (var chunk in dirtyVisible)
                     RenderForegroundChunk(chunk, mapPoint, leftButtonPressed);
@@ -1432,7 +1448,7 @@ public partial class MapViewerControl : IDisposable
         });
     }
 
-    private void QueueTabMapRender(SKPoint mapPoint, bool leftButtonPressed)
+    private void QueueTabMapRender()
     {
         var now = DateTime.UtcNow;
 
@@ -1454,6 +1470,10 @@ public partial class MapViewerControl : IDisposable
             {
                 LastTabMapRenderTime = DateTime.UtcNow;
 
+                //read latest mouse state so hover preview stays current
+                var mapPoint = LatestMapPoint;
+                var leftButtonPressed = LatestLeftButtonPressed;
+
                 var dirtyVisible = ChunkMgr.GetDirtyVisibleTabMapChunks(viewRect);
 
                 if (dirtyVisible.Count == 0)
@@ -1461,6 +1481,10 @@ public partial class MapViewerControl : IDisposable
                     ChunkMgr.MarkAllDirty(LayerFlags.Foreground);
                     dirtyVisible = ChunkMgr.GetDirtyVisibleTabMapChunks(viewRect);
                 }
+
+                //clear all dirty flags upfront so new flags set during rendering survive
+                foreach (var chunk in dirtyVisible)
+                    chunk.TabMapDirty = false;
 
                 foreach (var chunk in dirtyVisible)
                     RenderTabMapChunk(chunk, mapPoint, leftButtonPressed);
