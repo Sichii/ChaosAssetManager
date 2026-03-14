@@ -4,11 +4,14 @@ using System.Windows;
 using System.Windows.Controls;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.ViewModel;
-using DALib.Data;
 using DALib.Drawing;
 using MaterialDesignThemes.Wpf;
 using SkiaSharp;
+using Button = System.Windows.Controls.Button;
+using Graphics = DALib.Drawing.Graphics;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using ListViewItem = System.Windows.Controls.ListViewItem;
+using Orientation = System.Windows.Controls.Orientation;
 
 namespace ChaosAssetManager.Controls;
 
@@ -24,165 +27,14 @@ public sealed partial class PanelSpriteEditorControl
         PathHelper.ArchivesPathChanged += () => PanelSpriteEditorControl_OnLoaded(this, new RoutedEventArgs());
     }
 
-    private void PanelSpriteEditorControl_OnLoaded(object sender, RoutedEventArgs e)
+    private void ClearSpriteGrid()
     {
-        if (!PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
-        {
-            MainContent.Visibility = Visibility.Collapsed;
-            NotConfiguredMessage.Visibility = Visibility.Visible;
+        SpriteGrid.ItemsSource = null;
 
-            return;
-        }
+        foreach (var vm in SpriteViewModels)
+            vm.Dispose();
 
-        NotConfiguredMessage.Visibility = Visibility.Collapsed;
-        MainContent.Visibility = Visibility.Visible;
-
-        PopulatePageList();
-    }
-
-    private void PanelSpriteEditorControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-    {
-        if (IsVisible && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
-            PopulatePageList();
-    }
-
-    private void PopulatePageList()
-    {
-        PageListView.Items.Clear();
-        ClearSpriteGrid();
-
-        var legend = ArchiveCache.Legend;
-
-        var entries = legend.GetEntries("item", ".epf")
-                            .Where(entry => entry.TryGetNumericIdentifier(out var id, 3) && (id >= 1))
-                            .OrderBy(entry => entry.TryGetNumericIdentifier(out var id, 3) ? id : int.MaxValue)
-                            .ToList();
-
-        foreach (var entry in entries)
-        {
-            if (!entry.TryGetNumericIdentifier(out var pageId, 3))
-                continue;
-
-            PageListView.Items.Add(
-                new ListViewItem
-                {
-                    Content = entry.EntryName,
-                    Tag = pageId
-                });
-        }
-
-        PageCountLabel.Text = $"Pages ({entries.Count})";
-    }
-
-    private void Page_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (PageListView.SelectedItem is not ListViewItem { Tag: int pageId })
-            return;
-
-        LoadPage(pageId);
-    }
-
-    private void LoadPage(int pageId)
-    {
-        ClearSpriteGrid();
-        DeleteBtn.IsEnabled = false;
-        InfoLabel.Text = "Select a page to view its sprites";
-
-        var legend = ArchiveCache.Legend;
-        var entryName = $"item{pageId:D3}.epf";
-
-        if (!legend.Contains(entryName))
-            return;
-
-        try
-        {
-            var epf = EpfFile.FromEntry(legend[entryName]);
-            var paletteLookup = PaletteLookup.FromArchive("itempal", "item", legend);
-            var pageIndex = pageId - 1;
-
-            for (var slot = 0; slot < ITEMS_PER_PAGE; slot++)
-            {
-                var globalId = pageIndex * ITEMS_PER_PAGE + slot + 1;
-                var frame = epf.ElementAtOrDefault(slot);
-
-                var isEmpty = (frame is null)
-                              || (frame.Data.Length == 0)
-                              || (frame.PixelWidth <= 1)
-                              || (frame.PixelHeight <= 1)
-                              || frame.Data.All(b => b == 0);
-
-                SKImage? image = null;
-
-                if (!isEmpty)
-                {
-                    try
-                    {
-                        var palette = paletteLookup.GetPaletteForId(globalId);
-                        image = DALib.Drawing.Graphics.RenderImage(frame!, palette);
-                    }
-                    catch
-                    {
-                        isEmpty = true;
-                    }
-                }
-
-                SpriteViewModels.Add(
-                    new PanelSpriteViewModel
-                    {
-                        GlobalId = globalId,
-                        SlotIndex = slot,
-                        Image = image,
-                        IsEmpty = isEmpty
-                    });
-            }
-
-            SpriteGrid.ItemsSource = SpriteViewModels;
-            InfoLabel.Text = $"Page {pageId} — {SpriteViewModels.Count(vm => !vm.IsEmpty)} sprites";
-        }
-        catch (Exception ex)
-        {
-            Snackbar.MessageQueue!.Enqueue($"Error loading page: {ex.Message}");
-        }
-    }
-
-    private void SpriteGrid_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        var selectedItems = SpriteGrid.SelectedItems
-                                      .OfType<PanelSpriteViewModel>()
-                                      .Where(vm => !vm.IsEmpty)
-                                      .ToList();
-
-        DeleteBtn.IsEnabled = selectedItems.Count > 0;
-
-        if (selectedItems.Count == 1)
-        {
-            var vm = selectedItems[0];
-
-            try
-            {
-                var legend = ArchiveCache.Legend;
-                var paletteLookup = PaletteLookup.FromArchive("itempal", "item", legend);
-                var paletteNumber = paletteLookup.Table.GetPaletteNumber(vm.GlobalId);
-
-                InfoLabel.Text = $"Sprite #{vm.GlobalId}  |  Slot: {vm.SlotIndex}  |  Palette: item{paletteNumber:D3}.pal";
-            }
-            catch
-            {
-                InfoLabel.Text = $"Sprite #{vm.GlobalId}  |  Slot: {vm.SlotIndex}";
-            }
-        }
-        else if (selectedItems.Count > 1)
-            InfoLabel.Text = $"{selectedItems.Count} sprites selected";
-        else
-        {
-            //reset info if only empty slots are selected or nothing
-            var currentPage = PageListView.SelectedItem is ListViewItem { Tag: int pid } ? pid : -1;
-
-            if (currentPage > 0)
-                InfoLabel.Text = $"Page {currentPage} — {SpriteViewModels.Count(vm => !vm.IsEmpty)} sprites";
-            else
-                InfoLabel.Text = "Select a page to view its sprites";
-        }
+        SpriteViewModels.Clear();
     }
 
     private async void Delete_OnClick(object sender, RoutedEventArgs e)
@@ -205,25 +57,33 @@ public sealed partial class PanelSpriteEditorControl
             new TextBlock
             {
                 Text = msg,
-                Margin = new Thickness(16, 16, 16, 0)
+                Margin = new Thickness(
+                    16,
+                    16,
+                    16,
+                    0)
             });
 
         dialogContent.Children.Add(
             new StackPanel
             {
-                Orientation = System.Windows.Controls.Orientation.Horizontal,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(16),
                 Children =
                 {
-                    new System.Windows.Controls.Button
+                    new Button
                     {
                         Content = "Cancel",
-                        Margin = new Thickness(0, 0, 8, 0),
+                        Margin = new Thickness(
+                            0,
+                            0,
+                            8,
+                            0),
                         Command = DialogHost.CloseDialogCommand,
                         CommandParameter = false
                     },
-                    new System.Windows.Controls.Button
+                    new Button
                     {
                         Content = "Delete",
                         Style = (Style)FindResource("MaterialDesignFlatButton"),
@@ -245,9 +105,7 @@ public sealed partial class PanelSpriteEditorControl
 
             var removedPages = DeleteSprites(ids);
 
-            var label = ids.Count == 1
-                ? $"Deleted Sprite #{ids[0]}"
-                : $"Deleted {ids.Count} sprites";
+            var label = ids.Count == 1 ? $"Deleted Sprite #{ids[0]}" : $"Deleted {ids.Count} sprites";
 
             Snackbar.MessageQueue!.Enqueue(label);
 
@@ -256,12 +114,10 @@ public sealed partial class PanelSpriteEditorControl
                 PopulatePageList();
             else if (PageListView.SelectedItem is ListViewItem { Tag: int currentPageId })
                 LoadPage(currentPageId);
-        }
-        catch (IOException)
+        } catch (IOException)
         {
             Snackbar.MessageQueue!.Enqueue("Failed to save archive! Close the game and try again.");
-        }
-        catch (Exception ex)
+        } catch (Exception ex)
         {
             Snackbar.MessageQueue!.Enqueue($"Error: {ex.Message}");
         }
@@ -281,7 +137,7 @@ public sealed partial class PanelSpriteEditorControl
 
         foreach (var spriteId in spriteIds)
         {
-            var pageId = ((spriteId - 1) / ITEMS_PER_PAGE) + 1;
+            var pageId = (spriteId - 1) / ITEMS_PER_PAGE + 1;
             var slotInPage = (spriteId - 1) % ITEMS_PER_PAGE;
 
             //get palette number before removing
@@ -348,10 +204,7 @@ public sealed partial class PanelSpriteEditorControl
                     var frame = entryEpf[slot];
 
                     //skip empty frames
-                    if ((frame.Data.Length == 0)
-                        || (frame.PixelWidth <= 1)
-                        || (frame.PixelHeight <= 1)
-                        || frame.Data.All(b => b == 0))
+                    if ((frame.Data.Length == 0) || (frame.PixelWidth <= 1) || (frame.PixelHeight <= 1) || frame.Data.All(b => b == 0))
                         continue;
 
                     var palNum = palettes.Table.GetPaletteNumber(id);
@@ -392,10 +245,7 @@ public sealed partial class PanelSpriteEditorControl
             {
                 var frame = epf[slot];
 
-                if ((frame.Data.Length > 0)
-                    && (frame.PixelWidth > 1)
-                    && (frame.PixelHeight > 1)
-                    && !frame.Data.All(b => b == 0))
+                if ((frame.Data.Length > 0) && (frame.PixelWidth > 1) && (frame.PixelHeight > 1) && !frame.Data.All(b => b == 0))
                 {
                     allEmpty = false;
 
@@ -410,8 +260,7 @@ public sealed partial class PanelSpriteEditorControl
                     legend.Remove(legend[epfEntryName]);
 
                 removedPages.Add(pageId);
-            }
-            else
+            } else
                 legend.Patch(epfEntryName, epf);
         }
 
@@ -425,13 +274,158 @@ public sealed partial class PanelSpriteEditorControl
         return removedPages;
     }
 
-    private void ClearSpriteGrid()
+    private void LoadPage(int pageId)
     {
-        SpriteGrid.ItemsSource = null;
+        ClearSpriteGrid();
+        DeleteBtn.IsEnabled = false;
+        InfoLabel.Text = "Select a page to view its sprites";
 
-        foreach (var vm in SpriteViewModels)
-            vm.Dispose();
+        var legend = ArchiveCache.Legend;
+        var entryName = $"item{pageId:D3}.epf";
 
-        SpriteViewModels.Clear();
+        if (!legend.Contains(entryName))
+            return;
+
+        try
+        {
+            var epf = EpfFile.FromEntry(legend[entryName]);
+            var paletteLookup = PaletteLookup.FromArchive("itempal", "item", legend);
+            var pageIndex = pageId - 1;
+
+            for (var slot = 0; slot < ITEMS_PER_PAGE; slot++)
+            {
+                var globalId = pageIndex * ITEMS_PER_PAGE + slot + 1;
+                var frame = epf.ElementAtOrDefault(slot);
+
+                var isEmpty = frame is null
+                              || (frame.Data.Length == 0)
+                              || (frame.PixelWidth <= 1)
+                              || (frame.PixelHeight <= 1)
+                              || frame.Data.All(b => b == 0);
+
+                SKImage? image = null;
+
+                if (!isEmpty)
+                    try
+                    {
+                        var palette = paletteLookup.GetPaletteForId(globalId);
+                        image = Graphics.RenderImage(frame!, palette);
+                    } catch
+                    {
+                        isEmpty = true;
+                    }
+
+                SpriteViewModels.Add(
+                    new PanelSpriteViewModel
+                    {
+                        GlobalId = globalId,
+                        SlotIndex = slot,
+                        Image = image,
+                        IsEmpty = isEmpty
+                    });
+            }
+
+            SpriteGrid.ItemsSource = SpriteViewModels;
+            InfoLabel.Text = $"Page {pageId} — {SpriteViewModels.Count(vm => !vm.IsEmpty)} sprites";
+        } catch (Exception ex)
+        {
+            Snackbar.MessageQueue!.Enqueue($"Error loading page: {ex.Message}");
+        }
+    }
+
+    private void Page_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (PageListView.SelectedItem is not ListViewItem { Tag: int pageId })
+            return;
+
+        LoadPage(pageId);
+    }
+
+    private void PanelSpriteEditorControl_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible && PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+            PopulatePageList();
+    }
+
+    private void PanelSpriteEditorControl_OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+        {
+            MainContent.Visibility = Visibility.Collapsed;
+            NotConfiguredMessage.Visibility = Visibility.Visible;
+
+            return;
+        }
+
+        NotConfiguredMessage.Visibility = Visibility.Collapsed;
+        MainContent.Visibility = Visibility.Visible;
+
+        PopulatePageList();
+    }
+
+    private void PopulatePageList()
+    {
+        PageListView.Items.Clear();
+        ClearSpriteGrid();
+
+        var legend = ArchiveCache.Legend;
+
+        var entries = legend.GetEntries("item", ".epf")
+                            .Where(entry => entry.TryGetNumericIdentifier(out var id, 3) && (id >= 1))
+                            .OrderBy(entry => entry.TryGetNumericIdentifier(out var id, 3) ? id : int.MaxValue)
+                            .ToList();
+
+        foreach (var entry in entries)
+        {
+            if (!entry.TryGetNumericIdentifier(out var pageId, 3))
+                continue;
+
+            PageListView.Items.Add(
+                new ListViewItem
+                {
+                    Content = entry.EntryName,
+                    Tag = pageId
+                });
+        }
+
+        PageCountLabel.Text = $"Pages ({entries.Count})";
+    }
+
+    private void SpriteGrid_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var selectedItems = SpriteGrid.SelectedItems
+                                      .OfType<PanelSpriteViewModel>()
+                                      .Where(vm => !vm.IsEmpty)
+                                      .ToList();
+
+        DeleteBtn.IsEnabled = selectedItems.Count > 0;
+
+        if (selectedItems.Count == 1)
+        {
+            var vm = selectedItems[0];
+
+            try
+            {
+                var legend = ArchiveCache.Legend;
+                var paletteLookup = PaletteLookup.FromArchive("itempal", "item", legend);
+                var paletteNumber = paletteLookup.Table.GetPaletteNumber(vm.GlobalId);
+
+                InfoLabel.Text = $"Sprite #{vm.GlobalId}  |  Slot: {vm.SlotIndex}  |  Palette: item{paletteNumber:D3}.pal";
+            } catch
+            {
+                InfoLabel.Text = $"Sprite #{vm.GlobalId}  |  Slot: {vm.SlotIndex}";
+            }
+        } else if (selectedItems.Count > 1)
+            InfoLabel.Text = $"{selectedItems.Count} sprites selected";
+        else
+        {
+            //reset info if only empty slots are selected or nothing
+            var currentPage = PageListView.SelectedItem is ListViewItem { Tag: int pid } ? pid : -1;
+
+            if (currentPage > 0)
+                InfoLabel.Text = $"Page {currentPage} — {SpriteViewModels.Count(vm => !vm.IsEmpty)} sprites";
+            else
+                InfoLabel.Text = "Select a page to view its sprites";
+        }
     }
 }

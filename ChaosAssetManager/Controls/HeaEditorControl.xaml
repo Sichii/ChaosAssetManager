@@ -1,0 +1,270 @@
+<UserControl x:Class="ChaosAssetManager.Controls.HeaEditorControl"
+             x:Name="Self"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:heaEditorControls="clr-namespace:ChaosAssetManager.Controls.HeaEditorControls"
+             mc:Ignorable="d"
+             d:DesignHeight="900"
+             d:DesignWidth="1400"
+             Background="{DynamicResource MaterialDesignPaper}"
+             TextElement.FontWeight="Medium"
+             TextElement.FontSize="14"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             FontFamily="{materialDesign:MaterialDesignFont}"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             Focusable="True"
+             PreviewKeyDown="HeaEditorControl_OnPreviewKeyDown"
+             PreviewKeyUp="HeaEditorControl_OnPreviewKeyUp">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0"
+              VerticalAlignment="Top"
+              HorizontalAlignment="Stretch"
+              materialDesign:MenuAssist.TopLevelMenuItemHeight="30">
+            <MenuItem x:Name="NewBtn"
+                      Header="FromMapId"
+                      SubmenuOpened="NewBtn_OnSubmenuOpened">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Map ID: " />
+                    <TextBox Grid.Column="1"
+                             x:Name="MapIdTbx"
+                             Width="60"
+                             TabIndex="0"
+                             KeyDown="MapIdTbx_OnKeyDown" />
+                </Grid>
+                <Grid>
+                    <Button Content="Load"
+                            TabIndex="1"
+                            Click="LoadBtn_OnClick" />
+                </Grid>
+            </MenuItem>
+            <MenuItem x:Name="SaveBtn"
+                      Header="Save"
+                      Click="SaveBtn_OnClick"
+                      ToolTip="Saves the current light map to seo.dat" />
+        </Menu>
+
+        <!-- Toolbar -->
+        <ToolBarTray Grid.Row="1"
+                     Style="{StaticResource MaterialDesignToolBarTray}">
+            <ToolBar Style="{StaticResource MaterialDesignToolBar}"
+                     MaxHeight="45">
+
+                <Button x:Name="UndoBtn"
+                        Click="UndoBtn_OnClick"
+                        ToolTip="Undo (Ctrl+Z)"
+                        Style="{StaticResource MaterialDesignToolButton}">
+                    <materialDesign:PackIcon Kind="Undo" />
+                </Button>
+                <Button x:Name="RedoBtn"
+                        Click="RedoBtn_OnClick"
+                        ToolTip="Redo (Ctrl+Y)"
+                        Style="{StaticResource MaterialDesignToolButton}">
+                    <materialDesign:PackIcon Kind="Redo" />
+                </Button>
+                <Separator />
+
+                <TextBlock Text="Size: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ComboBox x:Name="DimensionsCmbx"
+                          MinWidth="170"
+                          ItemsSource="{Binding ViewModel.PossibleBounds}"
+                          SelectedItem="{Binding ViewModel.SelectedBounds}"
+                          IsEnabled="{Binding ViewModel.IsDimensionsSelectorEnabled}"
+                          SelectionChanged="DimensionsCmbx_OnSelectionChanged"
+                          ToolTip="Map dimensions" />
+                <Separator />
+
+                <TextBlock Text="Tools: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ListBox SelectedIndex="0"
+                         x:Name="ToolsLbx"
+                         materialDesign:ListBoxAssist.IsToggle="True"
+                         materialDesign:ListBoxAssist.CanUserToggleSelectedItem="True"
+                         SelectionChanged="ToolType_OnSelectionChanged">
+                    <ListBoxItem x:Name="DrawToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Draw light (left click to stamp)">
+                        <materialDesign:PackIcon Kind="Pencil" />
+                    </ListBoxItem>
+                    <ListBoxItem x:Name="EraseToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Erase light (left click to erase)">
+                        <materialDesign:PackIcon Kind="Eraser" />
+                    </ListBoxItem>
+                </ListBox>
+                <Separator />
+
+                <TextBlock Text="Shape: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <ComboBox x:Name="BrushShapeCmbx"
+                          MinWidth="100"
+                          SelectedIndex="0"
+                          IsEditable="True"
+                          IsReadOnly="True"
+                          SelectionChanged="BrushShape_OnSelectionChanged">
+                    <ComboBoxItem Content="Circle" />
+                    <ComboBoxItem Content="Rectangle" />
+                    <ComboBoxItem Content="Line" />
+                </ComboBox>
+                <Separator />
+
+                <TextBlock Text="Radius: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <Slider x:Name="RadiusSlider"
+                        MinWidth="80"
+                        Minimum="5"
+                        Maximum="120"
+                        Value="{Binding ViewModel.BrushRadius}"
+                        VerticalAlignment="Center"
+                        ToolTip="Brush radius in pixels (5-120)" />
+                <TextBlock Text="{Binding ViewModel.BrushRadius}"
+                           VerticalAlignment="Center"
+                           MinWidth="20"
+                           Margin="5, 0" />
+                <Separator />
+
+                <heaEditorControls:RadialAngleSelector x:Name="RotationSelector"
+                                                       Angle="{Binding ViewModel.BrushRotation}"
+                                                       VerticalAlignment="Center"
+                                                       ToolTip="Brush rotation (drag to rotate, or Ctrl+Scroll)" />
+                <TextBlock Text="{Binding ViewModel.BrushRotation, StringFormat={}{0:F0}°}"
+                           VerticalAlignment="Center"
+                           MinWidth="25"
+                           Margin="3, 0" />
+                <Separator />
+
+                <TextBlock Text="Intensity: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <Slider x:Name="IntensitySlider"
+                        MinWidth="80"
+                        Minimum="1"
+                        Maximum="255"
+                        Value="{Binding ViewModel.BrushIntensity}"
+                        VerticalAlignment="Center"
+                        ToolTip="Brush center intensity (1-255)" />
+                <TextBlock Text="{Binding ViewModel.BrushIntensity}"
+                           VerticalAlignment="Center"
+                           MinWidth="20"
+                           Margin="5, 0" />
+                <Separator />
+
+                <TextBlock Text="Darkness: "
+                           VerticalAlignment="Center"
+                           Margin="0, 0, 5, 0" />
+                <Slider x:Name="OpacitySlider"
+                        MinWidth="100"
+                        Minimum="0"
+                        Maximum="255"
+                        Value="{Binding ViewModel.DarknessOpacity}"
+                        VerticalAlignment="Center"
+                        ToolTip="Darkness overlay opacity (0-255)"
+                        ValueChanged="OpacitySlider_OnValueChanged" />
+                <TextBlock Text="{Binding ViewModel.DarknessOpacity}"
+                           VerticalAlignment="Center"
+                           MinWidth="30"
+                           Margin="5, 0" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- Viewer + Prefabs Panel -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <heaEditorControls:HeaViewerControl Grid.Column="0"
+                                                x:Name="ViewerControl"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch" />
+
+            <!-- Light Prefabs Sidebar -->
+            <Border Grid.Column="1"
+                    Width="240"
+                    BorderThickness="1,0,0,0"
+                    BorderBrush="{DynamicResource MaterialDesignDivider}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Light Prefabs"
+                               FontWeight="Bold"
+                               Margin="8,4" />
+                    <Button Grid.Row="1"
+                            x:Name="ExtractPrefabsBtn"
+                            Content="Extract from Current"
+                            Click="ExtractPrefabsBtn_OnClick"
+                            Margin="4"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            ToolTip="Extract unique light patterns from the currently loaded HEA" />
+                    <ListBox Grid.Row="2"
+                             x:Name="PrefabsControl"
+                             SelectionMode="Single"
+                             SelectionChanged="PrefabsControl_OnSelectionChanged"
+                             HorizontalContentAlignment="Stretch"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <heaEditorControls:LightPrefabPickerEntry />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status Bar -->
+        <materialDesign:ColorZone Grid.Row="3"
+                                  materialDesign:ColorZoneAssist.Mode="SecondaryDark">
+            <Grid>
+                <TextBlock Text="{Binding ViewModel.MousePositionText}"
+                           HorizontalAlignment="Left"
+                           Margin="20, 0" />
+
+                <TextBlock Text="{Binding ViewModel.StatusText}"
+                           HorizontalAlignment="Right"
+                           Margin="20, 0" />
+            </Grid>
+        </materialDesign:ColorZone>
+
+        <materialDesign:Snackbar Name="Snackbar"
+                                 Grid.RowSpan="99"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Margin="0"
+                                 MessageQueue="{materialDesign:MessageQueue}" />
+    </Grid>
+</UserControl>

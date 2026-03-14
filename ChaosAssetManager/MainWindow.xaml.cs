@@ -40,6 +40,7 @@ public partial class MainWindow : Window
         _navContentMap["MapEditorNav"] = MapEditorView;
         _navContentMap["BgTileSplicerNav"] = BgTileSplicerView;
         _navContentMap["PanelSpriteEditorNav"] = PanelSpriteEditorView;
+        _navContentMap["HeaEditorNav"] = HeaEditorView;
 
         PathHelper.ArchivesPathChanged += UpdateArchivePathLabel;
     }
@@ -168,7 +169,8 @@ public partial class MainWindow : Window
             || (navButton == NPCEditorNav)
             || (navButton == MetaFileEditorNav)
             || (navButton == MapEditorNav)
-            || (navButton == PanelSpriteEditorNav))
+            || (navButton == PanelSpriteEditorNav)
+            || (navButton == HeaEditorNav))
             EditorsExpander.IsExpanded = true;
     }
 

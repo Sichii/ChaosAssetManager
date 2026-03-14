@@ -23,3 +23,16 @@ public enum ActionType
     Draw,
     Erase
 }
+
+public enum HeaToolType
+{
+    Draw,
+    Erase
+}
+
+public enum HeaBrushShape
+{
+    Circle,
+    Rectangle,
+    Line
+}

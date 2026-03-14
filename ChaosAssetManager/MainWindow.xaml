@@ -244,6 +244,12 @@
                                          GroupName="Navigation"
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="HeaEditorNav"
+                                         Content="Light Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
                         </StackPanel>
                     </Expander>
 
@@ -280,6 +286,8 @@
                                                Visibility="Collapsed" />
                 <controls:PanelSpriteEditorControl x:Name="PanelSpriteEditorView"
                                                     Visibility="Collapsed" />
+                <controls:HeaEditorControl x:Name="HeaEditorView"
+                                           Visibility="Collapsed" />
             </Grid>
         </Grid>
 

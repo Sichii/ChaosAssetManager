@@ -1,7 +1,6 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Data;
 using Chaos.Extensions.Common;
-using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
 using DALib.Drawing;
@@ -54,15 +53,14 @@ public sealed partial class TileViewerControl : IDisposable
                                         .Select(i => (int)i)
                                         .ToList();
 
-        var transformer = tileIndexes.Select(
-            index =>
-            {
-                var tile = Tileset[index];
-                var palette = PaletteLookup.GetPaletteForId(index + 1);
-                var image = Graphics.RenderTile(tile, palette);
+        var transformer = tileIndexes.Select(index =>
+        {
+            var tile = Tileset[index];
+            var palette = PaletteLookup.GetPaletteForId(index + 1);
+            var image = Graphics.RenderTile(tile, palette);
 
-                return image;
-            });
+            return image;
+        });
 
         var frames = new SKImageCollection(transformer);
 
