@@ -179,18 +179,12 @@
                 <TextBlock Text="Darkness: "
                            VerticalAlignment="Center"
                            Margin="0, 0, 5, 0" />
-                <Slider x:Name="OpacitySlider"
-                        MinWidth="100"
-                        Minimum="0"
-                        Maximum="255"
-                        Value="{Binding ViewModel.DarknessOpacity}"
-                        VerticalAlignment="Center"
-                        ToolTip="Darkness overlay opacity (0-255)"
-                        ValueChanged="OpacitySlider_OnValueChanged" />
-                <TextBlock Text="{Binding ViewModel.DarknessOpacity}"
-                           VerticalAlignment="Center"
-                           MinWidth="30"
-                           Margin="5, 0" />
+                <ComboBox x:Name="DarknessCmbx"
+                          MinWidth="120"
+                          ItemsSource="{Binding ViewModel.DarknessLayers}"
+                          SelectedItem="{Binding ViewModel.SelectedDarknessLayer}"
+                          SelectionChanged="DarknessCmbx_OnSelectionChanged"
+                          ToolTip="Darkness layer preset" />
             </ToolBar>
         </ToolBarTray>
 

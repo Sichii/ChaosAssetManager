@@ -14,6 +14,7 @@ Equipment Editor (.epf khan files)
 NPC Editor (.mpf)  
 Map Editor (.map)
 Panel Sprite Editor (.epf legend files)
+Light Editor (.hea)
 
 # Importers
 

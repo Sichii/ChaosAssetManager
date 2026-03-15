@@ -1,13 +1,12 @@
-using DALib.Drawing;
 using SkiaSharp;
 
 namespace ChaosAssetManager.Helpers;
 
 public sealed class DarknessChunk : IDisposable
 {
+    public SKBitmap? Bitmap { get; set; }
     public bool Dirty { get; set; } = true;
     public SKImage? Image { get; set; }
-    public SKBitmap? Bitmap { get; set; }
     public int ChunkX { get; }
     public int ChunkY { get; }
 
@@ -36,10 +35,10 @@ public sealed class DarknessChunkManager : IDisposable
     public const int CHUNK_SIZE = 256;
 
     public DarknessChunk[,] Chunks { get; }
-    public int ChunksWide { get; }
     public int ChunksHigh { get; }
-    public int GridWidth { get; }
+    public int ChunksWide { get; }
     public int GridHeight { get; }
+    public int GridWidth { get; }
 
     public DarknessChunkManager(int gridWidth, int gridHeight)
     {
@@ -61,7 +60,11 @@ public sealed class DarknessChunkManager : IDisposable
                 Chunks[cx, cy] = new DarknessChunk(
                     cx,
                     cy,
-                    new SKRectI(px0, py0, px1, py1));
+                    new SKRectI(
+                        px0,
+                        py0,
+                        px1,
+                        py1));
             }
         }
     }
@@ -71,7 +74,8 @@ public sealed class DarknessChunkManager : IDisposable
     {
         for (var cy = 0; cy < ChunksHigh; cy++)
             for (var cx = 0; cx < ChunksWide; cx++)
-                Chunks[cx, cy].Dispose();
+                Chunks[cx, cy]
+                    .Dispose();
     }
 
     /// <summary>
@@ -87,7 +91,11 @@ public sealed class DarknessChunkManager : IDisposable
     /// <summary>
     ///     Marks all chunks overlapping a pixel-space rectangle as dirty
     /// </summary>
-    public void MarkRangeDirty(int x0, int y0, int x1, int y1)
+    public void MarkRangeDirty(
+        int x0,
+        int y0,
+        int x1,
+        int y1)
     {
         var startCx = Math.Max(0, x0 / CHUNK_SIZE);
         var startCy = Math.Max(0, y0 / CHUNK_SIZE);
@@ -99,10 +107,67 @@ public sealed class DarknessChunkManager : IDisposable
                 Chunks[cx, cy].Dirty = true;
     }
 
+    private static void RebuildChunk(
+        DarknessChunk chunk,
+        byte[,] lightGrid,
+        byte darknessAlpha,
+        SKColor darknessColor)
+    {
+        var bounds = chunk.PixelBounds;
+        var w = bounds.Width;
+        var h = bounds.Height;
+
+        //reuse or create bitmap
+        if (chunk.Bitmap is null || (chunk.Bitmap.Width != w) || (chunk.Bitmap.Height != h))
+        {
+            chunk.Bitmap?.Dispose();
+
+            chunk.Bitmap = new SKBitmap(
+                w,
+                h,
+                SKColorType.Bgra8888,
+                SKAlphaType.Unpremul);
+        }
+
+        using var pixMap = chunk.Bitmap.PeekPixels();
+        var pixelBuffer = pixMap.GetPixelSpan<SKColor>();
+        var r = darknessColor.Red;
+        var g = darknessColor.Green;
+        var b = darknessColor.Blue;
+
+        for (var ly = 0; ly < h; ly++)
+        {
+            var gy = bounds.Top + ly;
+
+            for (var lx = 0; lx < w; lx++)
+            {
+                var gx = bounds.Left + lx;
+
+                //convert light grid value (0-255) back to 0-32 space
+                var lightValue = (lightGrid[gy, gx] * 32 + 127) / 255;
+
+                //floor clamp: light can only brighten above ambient darkness
+                var effective = Math.Max(darknessAlpha, lightValue);
+
+                //scale to 0-255 and invert: bright = transparent, dark = opaque
+                var alpha = (byte)(255 - effective * 255 / 32);
+
+                pixelBuffer[ly * w + lx] = new SKColor(
+                    r,
+                    g,
+                    b,
+                    alpha);
+            }
+        }
+
+        chunk.Image?.Dispose();
+        chunk.Image = SKImage.FromBitmap(chunk.Bitmap);
+    }
+
     /// <summary>
     ///     Rebuilds any dirty chunks from the light grid
     /// </summary>
-    public void RebuildDirtyChunks(byte[,] lightGrid, byte opacity)
+    public void RebuildDirtyChunks(byte[,] lightGrid, byte darknessAlpha, SKColor darknessColor)
     {
         for (var cy = 0; cy < ChunksHigh; cy++)
             for (var cx = 0; cx < ChunksWide; cx++)
@@ -112,51 +177,12 @@ public sealed class DarknessChunkManager : IDisposable
                 if (!chunk.Dirty)
                     continue;
 
-                RebuildChunk(chunk, lightGrid, opacity);
+                RebuildChunk(
+                    chunk,
+                    lightGrid,
+                    darknessAlpha,
+                    darknessColor);
                 chunk.Dirty = false;
             }
-    }
-
-    private static void RebuildChunk(DarknessChunk chunk, byte[,] lightGrid, byte opacity)
-    {
-        var bounds = chunk.PixelBounds;
-        var w = bounds.Width;
-        var h = bounds.Height;
-
-        //reuse or create bitmap
-        if (chunk.Bitmap is null || chunk.Bitmap.Width != w || chunk.Bitmap.Height != h)
-        {
-            chunk.Bitmap?.Dispose();
-            chunk.Bitmap = new SKBitmap(w, h, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-        }
-
-        using var pixMap = chunk.Bitmap.PeekPixels();
-        var pixelBuffer = pixMap.GetPixelSpan<SKColor>();
-        var darkColor = new SKColor(0, 0, 0, opacity);
-
-        for (var ly = 0; ly < h; ly++)
-        {
-            var gy = bounds.Top + ly;
-
-            for (var lx = 0; lx < w; lx++)
-            {
-                var gx = bounds.Left + lx;
-                var value = lightGrid[gy, gx];
-
-                if (value == 0)
-                {
-                    pixelBuffer[ly * w + lx] = darkColor;
-
-                    continue;
-                }
-
-                var lightRatio = Math.Min(1.0f, (float)value / HeaFile.MAX_LIGHT_VALUE);
-                var alpha = (byte)(opacity * (1.0f - lightRatio));
-                pixelBuffer[ly * w + lx] = new SKColor(0, 0, 0, alpha);
-            }
-        }
-
-        chunk.Image?.Dispose();
-        chunk.Image = SKImage.FromBitmap(chunk.Bitmap);
     }
 }

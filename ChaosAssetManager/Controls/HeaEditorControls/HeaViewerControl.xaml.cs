@@ -9,7 +9,6 @@ using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using DALib.Data;
-using DALib.Drawing;
 using DALib.Extensions;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
@@ -44,10 +43,12 @@ public partial class HeaViewerControl : IDisposable
     private LightBrush? CachedBrush;
     private string? CachedBrushKey;
 
-    private SKImage? CachedBrushPreview;
     private DarknessChunkManager? DarknessChunkManager;
     private int GridHeight;
     private int GridWidth;
+
+    //reusable buffer for brush preview snapshot to avoid per-frame allocation
+    private byte[,]? BrushPreviewSnapshot;
 
     private bool IsDrawing;
     private int[,]? LfgTileIds;
@@ -143,44 +144,6 @@ public partial class HeaViewerControl : IDisposable
         Redraw();
     }
 
-    /// <summary>
-    ///     Builds a white image with alpha proportional to brush intensity. When drawn with DstOut blend mode, this erases
-    ///     darkness proportionally, showing exactly how the stamped light will look
-    /// </summary>
-    private static SKImage BuildBrushCutoutImage(LightBrush brush)
-    {
-        var w = brush.Width;
-        var h = brush.Height;
-
-        using var bitmap = new SKBitmap(
-            w,
-            h,
-            SKColorType.Bgra8888,
-            SKAlphaType.Unpremul);
-        using var pixMap = bitmap.PeekPixels();
-        var buf = pixMap.GetPixelSpan<SKColor>();
-        buf.Fill(SKColors.Transparent);
-
-        for (var by = 0; by < h; by++)
-            for (var bx = 0; bx < w; bx++)
-            {
-                var intensity = brush.Intensities[by, bx];
-
-                if (intensity == 0)
-                    continue;
-
-                var alpha = (byte)Math.Min(255, intensity * 255 / HeaFile.MAX_LIGHT_VALUE);
-
-                buf[by * w + bx] = new SKColor(
-                    255,
-                    255,
-                    255,
-                    alpha);
-            }
-
-        return SKImage.FromBitmap(bitmap);
-    }
-
     public void CenterOnMap()
         =>
 
@@ -243,12 +206,13 @@ public partial class HeaViewerControl : IDisposable
     }
 
     /// <summary>
-    ///     Draws the brush preview using DstOut to cut through darkness. Must be called inside a SaveLayer so it only affects
-    ///     the darkness, not the map.
+    ///     Previews the brush stamp by temporarily applying it to the light grid
+    ///     and rebuilding the affected darkness chunks
     /// </summary>
     private void DrawBrushPreview(SKCanvas canvas)
     {
-        if (SkElement is null || ViewModel is null || (ViewModel.SelectedTool != HeaToolType.Draw))
+        if (SkElement is null || ViewModel is null || LightGrid is null
+            || DarknessChunkManager is null || (ViewModel.SelectedTool != HeaToolType.Draw))
             return;
 
         var mousePoint = SkElement.GetMousePoint();
@@ -259,17 +223,49 @@ public partial class HeaViewerControl : IDisposable
         var pt = mousePoint.Value;
         EnsureBrushCached();
 
-        if (CachedBrush is null || CachedBrushPreview is null)
+        if (CachedBrush is null)
             return;
 
-        using var cutoutPaint = new SKPaint();
-        cutoutPaint.BlendMode = SKBlendMode.DstOut;
+        //convert from map-space to light grid-space
+        var px = (int)pt.X - OVERLAY_OFFSET_X;
+        var py = (int)pt.Y - OVERLAY_OFFSET_Y;
 
-        canvas.DrawImage(
-            CachedBrushPreview,
-            pt.X - CachedBrush.CenterX,
-            pt.Y - CachedBrush.CenterY,
-            cutoutPaint);
+        var brushExtent = Math.Max(CachedBrush.Width, CachedBrush.Height) / 2 + 1;
+        var x0 = Math.Max(0, px - brushExtent);
+        var y0 = Math.Max(0, py - brushExtent);
+        var x1 = Math.Min(GridWidth - 1, px + brushExtent);
+        var y1 = Math.Min(GridHeight - 1, py + brushExtent);
+
+        if (x0 > x1 || y0 > y1)
+            return;
+
+        var w = x1 - x0 + 1;
+        var h = y1 - y0 + 1;
+
+        //snapshot the light grid region under the brush (reuse buffer)
+        if (BrushPreviewSnapshot is null || (BrushPreviewSnapshot.GetLength(0) < h) || (BrushPreviewSnapshot.GetLength(1) < w))
+            BrushPreviewSnapshot = new byte[h, w];
+
+        for (var sy = 0; sy < h; sy++)
+            for (var sx = 0; sx < w; sx++)
+                BrushPreviewSnapshot[sy, sx] = LightGrid[y0 + sy, x0 + sx];
+
+        //temporarily stamp into the light grid
+        CachedBrush.Stamp(LightGrid, px, py);
+
+        //rebuild affected darkness chunks
+        var layer = CurrentDarknessLayer;
+
+        DarknessChunkManager.MarkRangeDirty(x0, y0, x1, y1);
+        DarknessChunkManager.RebuildDirtyChunks(LightGrid, layer.Alpha, layer.Color);
+
+        //restore the light grid from snapshot
+        for (var sy = 0; sy < h; sy++)
+            for (var sx = 0; sx < w; sx++)
+                LightGrid[y0 + sy, x0 + sx] = BrushPreviewSnapshot[sy, sx];
+
+        //mark chunks dirty again so next frame (or actual stamp) rebuilds from real data
+        DarknessChunkManager.MarkRangeDirty(x0, y0, x1, y1);
     }
 
     private void EnsureBrushCached()
@@ -283,8 +279,6 @@ public partial class HeaViewerControl : IDisposable
             return;
 
         CachedBrushKey = key;
-        CachedBrushPreview?.Dispose();
-        CachedBrushPreview = null;
 
         if (ViewModel.SelectedPrefabBrush is not null)
             CachedBrush = ViewModel.SelectedPrefabBrush;
@@ -294,8 +288,6 @@ public partial class HeaViewerControl : IDisposable
                 ViewModel.BrushRadius,
                 ViewModel.BrushRotation,
                 ViewModel.BrushIntensity);
-
-        CachedBrushPreview = BuildBrushCutoutImage(CachedBrush);
     }
 
     private string GetBrushCacheKey()
@@ -350,8 +342,6 @@ public partial class HeaViewerControl : IDisposable
 
     public void InvalidateBrushPreview()
     {
-        CachedBrushPreview?.Dispose();
-        CachedBrushPreview = null;
         CachedBrush = null;
         CachedBrushKey = null;
     }
@@ -500,7 +490,7 @@ public partial class HeaViewerControl : IDisposable
             if ((gx >= 0) && (gx < GridWidth) && (gy >= 0) && (gy < GridHeight))
             {
                 var lightVal = LightGrid?[gy, gx] ?? 0;
-                ViewModel.MousePositionText = $"({gx}, {gy}) Light: {lightVal}/{HeaFile.MAX_LIGHT_VALUE}";
+                ViewModel.MousePositionText = $"({gx}, {gy}) Light: {lightVal}/255";
             } else
                 ViewModel.MousePositionText = $"({gx}, {gy})";
         }
@@ -556,10 +546,11 @@ public partial class HeaViewerControl : IDisposable
                         paint);
         }
 
-        //draw darkness overlay + brush preview in an isolated layer
-        //so the DstOut cutout only affects the darkness, not the map underneath
-        canvas.SaveLayer();
+        //temporarily stamp the brush into the light grid and rebuild affected
+        //darkness chunks so the preview shows the exact result of stamping
+        DrawBrushPreview(canvas);
 
+        //draw darkness overlay
         if (DarknessChunkManager is not null)
             for (var cy = 0; cy < DarknessChunkManager.ChunksHigh; cy++)
                 for (var cx = 0; cx < DarknessChunkManager.ChunksWide; cx++)
@@ -577,11 +568,6 @@ public partial class HeaViewerControl : IDisposable
                     if (chunk.Image is not null)
                         canvas.DrawImage(chunk.Image, chunk.PixelBounds.Left + OVERLAY_OFFSET_X, chunk.PixelBounds.Top + OVERLAY_OFFSET_Y);
                 }
-
-        //apply brush cutout (DstOut punches through darkness only, not the map)
-        DrawBrushPreview(canvas);
-
-        canvas.Restore();
     }
 
     private void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -698,6 +684,9 @@ public partial class HeaViewerControl : IDisposable
         });
     }
 
+    private DarknessLayer CurrentDarknessLayer
+        => ViewModel?.SelectedDarknessLayer ?? DarknessLayer.Defaults[0];
+
     /// <summary>
     ///     Rebuilds the entire darkness overlay from scratch using chunks
     /// </summary>
@@ -706,12 +695,12 @@ public partial class HeaViewerControl : IDisposable
         if (LightGrid is null)
             return;
 
-        var opacity = ViewModel?.DarknessOpacity ?? 128;
+        var layer = CurrentDarknessLayer;
 
         DarknessChunkManager?.Dispose();
         DarknessChunkManager = new DarknessChunkManager(GridWidth, GridHeight);
         DarknessChunkManager.MarkAllDirty();
-        DarknessChunkManager.RebuildDirtyChunks(LightGrid, opacity);
+        DarknessChunkManager.RebuildDirtyChunks(LightGrid, layer.Alpha, layer.Color);
     }
 
     /// <summary>
@@ -726,7 +715,7 @@ public partial class HeaViewerControl : IDisposable
             return;
         }
 
-        var opacity = ViewModel?.DarknessOpacity ?? 128;
+        var layer = CurrentDarknessLayer;
 
         var x0 = Math.Max(0, centerX - brushRadius);
         var y0 = Math.Max(0, centerY - brushRadius);
@@ -738,7 +727,7 @@ public partial class HeaViewerControl : IDisposable
             y0,
             x1,
             y1);
-        DarknessChunkManager.RebuildDirtyChunks(LightGrid, opacity);
+        DarknessChunkManager.RebuildDirtyChunks(LightGrid, layer.Alpha, layer.Color);
     }
 
     public void Redo()

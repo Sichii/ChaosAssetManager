@@ -139,8 +139,8 @@ public partial class LightPrefabPickerEntry
                     continue;
                 }
 
-                //map light value to grayscale (brighter = more light)
-                var gray = (byte)(value * 255 / HeaFile.MAX_LIGHT_VALUE);
+                //map light value (0-32) to grayscale (brighter = more light)
+                var gray = (byte)((value * 255 + HeaFile.MAX_LIGHT_VALUE / 2) / HeaFile.MAX_LIGHT_VALUE);
 
                 pixelBuffer[y * prefab.Width + x] = new SKColor(
                     gray,

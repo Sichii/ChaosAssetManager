@@ -10,6 +10,7 @@ using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using DALib.Data;
 using DALib.Drawing;
+using SkiaSharp;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 // ReSharper disable ClassCanBeSealed.Global
@@ -215,7 +216,7 @@ public partial class HeaEditorControl
                 var scanline = hea.DecodeScanline(layer, y);
 
                 for (var x = 0; x < layerWidth; x++)
-                    lightGrid[y, xOffset + x] = scanline[x];
+                    lightGrid[y, xOffset + x] = (byte)Math.Min(255, (scanline[x] * 255 + HeaFile.MAX_LIGHT_VALUE / 2) / HeaFile.MAX_LIGHT_VALUE);
             }
         }
 
@@ -344,7 +345,7 @@ public partial class HeaEditorControl
                     MapIdTbx.SelectAll();
                 });
 
-    private void OpacitySlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void DarknessCmbx_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!ViewModel.IsMapLoaded)
             return;
@@ -395,64 +396,17 @@ public partial class HeaEditorControl
             var scanW = lightGrid.GetLength(1);
             var scanH = lightGrid.GetLength(0);
 
-            //build HeaFile from the light grid
-            var hea = new HeaFile
-            {
-                ScreenWidth = 640,
-                ScreenHeight = 480,
-                TileWidth = tileW,
-                TileHeight = tileH,
-                ScanlineWidth = scanW,
-                ScanlineCount = scanH,
-                LayerCount = (int)Math.Ceiling(scanW / (double)HeaFile.LAYER_STRIP_WIDTH)
-            };
+            //convert the light grid to an SKImage (alpha = light intensity)
+            using var bitmap = new SKBitmap(scanW, scanH, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+            using var pixMap = bitmap.PeekPixels();
+            var pixels = pixMap.GetPixelSpan<SKColor>();
 
-            //build thresholds
-            hea.Thresholds = new int[hea.LayerCount];
+            for (var y = 0; y < scanH; y++)
+                for (var x = 0; x < scanW; x++)
+                    pixels[y * scanW + x] = new SKColor(255, 255, 255, lightGrid[y, x]);
 
-            for (var i = 0; i < hea.LayerCount; i++)
-                hea.Thresholds[i] = i * HeaFile.LAYER_STRIP_WIDTH;
-
-            //RLE encode each scanline per layer
-            using var rleStream = new MemoryStream();
-            using var rleWriter = new BinaryWriter(rleStream);
-
-            var scanlineOffsets = new int[hea.LayerCount * scanH];
-            var wordOffset = 0;
-
-            for (var layer = 0; layer < hea.LayerCount; layer++)
-            {
-                var layerWidth = hea.GetLayerWidth(layer);
-                var xOffset = hea.Thresholds[layer];
-
-                for (var y = 0; y < scanH; y++)
-                {
-                    var tableIndex = layer * scanH + y;
-                    scanlineOffsets[tableIndex] = wordOffset;
-
-                    //RLE encode this scanline
-                    var x = 0;
-
-                    while (x < layerWidth)
-                    {
-                        var value = lightGrid[y, xOffset + x];
-                        var count = 1;
-
-                        while (((x + count) < layerWidth) && (lightGrid[y, xOffset + x + count] == value) && (count < 255))
-                            count++;
-
-                        rleWriter.Write(value);
-                        rleWriter.Write((byte)count);
-                        wordOffset++;
-
-                        x += count;
-                    }
-                }
-            }
-
-            rleWriter.Flush();
-            hea.ScanlineOffsets = scanlineOffsets;
-            hea.RleData = rleStream.ToArray();
+            using var image = SKImage.FromBitmap(bitmap);
+            var hea = HeaFile.FromImage(image, tileW, tileH);
 
             //patch into seo.dat
             var seoDat = ArchiveCache.Seo;

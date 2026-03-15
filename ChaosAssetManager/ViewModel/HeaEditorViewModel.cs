@@ -23,7 +23,7 @@ public class HeaEditorViewModel : NotifyPropertyChangedBase
     {
         get;
         set => SetField(ref field, value);
-    } = 0x20;
+    } = 255;
 
     public int BrushRadius
     {
@@ -43,11 +43,13 @@ public class HeaEditorViewModel : NotifyPropertyChangedBase
         set => SetField(ref field, value);
     }
 
-    public byte DarknessOpacity
+    public DarknessLayer[] DarknessLayers { get; } = DarknessLayer.Defaults;
+
+    public DarknessLayer SelectedDarknessLayer
     {
         get;
         set => SetField(ref field, value);
-    } = 128;
+    } = DarknessLayer.Defaults[0];
 
     public string StatusText
     {

@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChaosAssetManager.Model;
+using DALib.Drawing;
 
 namespace ChaosAssetManager.Helpers;
 
@@ -244,7 +245,7 @@ public sealed class LightPrefabRepository
             var data = new byte[h * w];
 
             foreach (var (px, py) in pixels)
-                data[(py - minY) * w + (px - minX)] = grid[py, px];
+                data[(py - minY) * w + (px - minX)] = (byte)((grid[py, px] * HeaFile.MAX_LIGHT_VALUE + 127) / 255);
 
             //deduplicate by dimensions + max value
             var maxVal = data.Max();

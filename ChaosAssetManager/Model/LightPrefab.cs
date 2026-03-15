@@ -1,3 +1,5 @@
+using DALib.Drawing;
+
 namespace ChaosAssetManager.Model;
 
 /// <summary>
@@ -23,7 +25,7 @@ public sealed class LightPrefab
 
         for (var y = 0; y < Height; y++)
             for (var x = 0; x < Width; x++)
-                intensities[y, x] = Data[y * Width + x];
+                intensities[y, x] = (byte)Math.Min(255, (Data[y * Width + x] * 255 + HeaFile.MAX_LIGHT_VALUE / 2) / HeaFile.MAX_LIGHT_VALUE);
 
         return new LightBrush { Intensities = intensities };
     }
