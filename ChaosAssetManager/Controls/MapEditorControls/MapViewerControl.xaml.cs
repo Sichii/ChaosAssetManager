@@ -711,26 +711,46 @@ public partial class MapViewerControl : IDisposable
     {
         if (chunk.BackgroundImage is { IsTextureBacked: false } rasterBg)
         {
-            chunk.BackgroundImage = rasterBg.ToTextureImage(grContext);
-            rasterBg.Dispose();
+            var gpuImage = rasterBg.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.BackgroundImage = gpuImage;
+                rasterBg.Dispose();
+            }
         }
 
         if (chunk.ForegroundImage is { IsTextureBacked: false } rasterFg)
         {
-            chunk.ForegroundImage = rasterFg.ToTextureImage(grContext);
-            rasterFg.Dispose();
+            var gpuImage = rasterFg.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.ForegroundImage = gpuImage;
+                rasterFg.Dispose();
+            }
         }
 
         if (chunk.ScreenBlendForegroundImage is { IsTextureBacked: false } rasterScreenFg)
         {
-            chunk.ScreenBlendForegroundImage = rasterScreenFg.ToTextureImage(grContext);
-            rasterScreenFg.Dispose();
+            var gpuImage = rasterScreenFg.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.ScreenBlendForegroundImage = gpuImage;
+                rasterScreenFg.Dispose();
+            }
         }
 
         if (chunk.TabMapImage is { IsTextureBacked: false } rasterTab)
         {
-            chunk.TabMapImage = rasterTab.ToTextureImage(grContext);
-            rasterTab.Dispose();
+            var gpuImage = rasterTab.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.TabMapImage = gpuImage;
+                rasterTab.Dispose();
+            }
         }
     }
 

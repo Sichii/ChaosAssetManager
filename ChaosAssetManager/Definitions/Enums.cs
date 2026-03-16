@@ -27,7 +27,8 @@ public enum ActionType
 public enum HeaToolType
 {
     Draw,
-    Erase
+    Erase,
+    ForegroundErase
 }
 
 public enum HeaBrushShape

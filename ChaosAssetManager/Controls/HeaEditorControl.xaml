@@ -116,6 +116,14 @@
                                  ToolTip="Erase light (left click to erase)">
                         <materialDesign:PackIcon Kind="Eraser" />
                     </ListBoxItem>
+                    <ListBoxItem x:Name="ForegroundEraseToolBtn"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0,5"
+                                 BorderThickness="1"
+                                 ToolTip="Erase light under a foreground tile (click a foreground)">
+                        <materialDesign:PackIcon Kind="ImageFilterHdr" />
+                    </ListBoxItem>
                 </ListBox>
                 <Separator />
 
@@ -139,11 +147,11 @@
                            Margin="0, 0, 5, 0" />
                 <Slider x:Name="RadiusSlider"
                         MinWidth="80"
-                        Minimum="5"
+                        Minimum="1"
                         Maximum="120"
                         Value="{Binding ViewModel.BrushRadius}"
                         VerticalAlignment="Center"
-                        ToolTip="Brush radius in pixels (5-120)" />
+                        ToolTip="Brush radius in pixels (1-120)" />
                 <TextBlock Text="{Binding ViewModel.BrushRadius}"
                            VerticalAlignment="Center"
                            MinWidth="20"

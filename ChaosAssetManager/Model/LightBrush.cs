@@ -19,12 +19,14 @@ public sealed class LightBrush
     public byte[,] Intensities { get; init; } = null!;
 
     /// <summary>
-    ///     Creates a circular radial falloff brush
+    ///     Creates a circular brush. Intensity controls edge softness:
+    ///     255 = hard flat fill, lower = softer falloff from center
     /// </summary>
-    public static LightBrush CreateRadial(int radius, byte centerIntensity)
+    public static LightBrush CreateRadial(int radius, byte intensity)
     {
         var diameter = 2 * radius + 1;
         var intensities = new byte[diameter, diameter];
+        var softness = (255 - intensity) / 255.0;
 
         for (var dy = -radius; dy <= radius; dy++)
             for (var dx = -radius; dx <= radius; dx++)
@@ -34,8 +36,8 @@ public sealed class LightBrush
                 if (dist > radius)
                     continue;
 
-                var falloff = 1.0 - dist / radius;
-                var value = (byte)(centerIntensity * falloff);
+                var normalizedDist = dist / radius;
+                var value = (byte)(255 * (1.0 - normalizedDist * softness));
                 intensities[dy + radius, dx + radius] = value;
             }
 
@@ -43,13 +45,15 @@ public sealed class LightBrush
     }
 
     /// <summary>
-    ///     Creates a rectangular brush with radial falloff from center
+    ///     Creates a rectangular brush. Intensity controls edge softness:
+    ///     255 = hard flat fill, lower = softer falloff from center
     /// </summary>
-    public static LightBrush CreateRectangle(int halfW, int halfH, byte centerIntensity)
+    public static LightBrush CreateRectangle(int halfW, int halfH, byte intensity)
     {
         var width = 2 * halfW + 1;
         var height = 2 * halfH + 1;
         var intensities = new byte[height, width];
+        var softness = (255 - intensity) / 255.0;
 
         for (var dy = -halfH; dy <= halfH; dy++)
             for (var dx = -halfW; dx <= halfW; dx++)
@@ -62,8 +66,7 @@ public sealed class LightBrush
                 if (dist > 1.0)
                     continue;
 
-                var falloff = 1.0 - dist;
-                var value = (byte)(centerIntensity * falloff);
+                var value = (byte)(255 * (1.0 - dist * softness));
                 intensities[dy + halfH, dx + halfW] = value;
             }
 
@@ -169,7 +172,7 @@ public sealed class LightBrush
     }
 
     /// <summary>
-    ///     Erases light within the brush footprint (sets to 0)
+    ///     Erases light using the brush intensity pattern (subtractive blending)
     /// </summary>
     public void Erase(byte[,] lightGrid, int centerX, int centerY)
     {
@@ -179,7 +182,9 @@ public sealed class LightBrush
         for (var by = 0; by < Height; by++)
             for (var bx = 0; bx < Width; bx++)
             {
-                if (Intensities[by, bx] == 0)
+                var intensity = Intensities[by, bx];
+
+                if (intensity == 0)
                     continue;
 
                 var gx = centerX - CenterX + bx;
@@ -188,7 +193,9 @@ public sealed class LightBrush
                 if (gx < 0 || gx >= gridW || gy < 0 || gy >= gridH)
                     continue;
 
-                lightGrid[gy, gx] = 0;
+                //subtract brush intensity from grid, clamped to 0
+                var current = lightGrid[gy, gx];
+                lightGrid[gy, gx] = current <= intensity ? (byte)0 : (byte)(current - intensity);
             }
     }
 

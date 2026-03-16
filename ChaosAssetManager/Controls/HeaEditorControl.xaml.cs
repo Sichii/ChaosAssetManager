@@ -449,6 +449,8 @@ public partial class HeaEditorControl
             ViewModel.SelectedTool = HeaToolType.Draw;
         else if (listBoxItem.Name.EqualsI(nameof(EraseToolBtn)))
             ViewModel.SelectedTool = HeaToolType.Erase;
+        else if (listBoxItem.Name.EqualsI(nameof(ForegroundEraseToolBtn)))
+            ViewModel.SelectedTool = HeaToolType.ForegroundErase;
     }
 
     private void UndoBtn_OnClick(object sender, RoutedEventArgs e) => ViewerControl.Undo();

@@ -50,6 +50,14 @@ public partial class HeaViewerControl : IDisposable
     //reusable buffer for brush preview snapshot to avoid per-frame allocation
     private byte[,]? BrushPreviewSnapshot;
 
+    //cached foreground erase preview to avoid recomputing on every paint
+    private SKPoint? CachedFgEraseMousePoint;
+    private bool[,]? CachedFgEraseMask;
+    private int CachedFgEraseMapX;
+    private int CachedFgEraseMapY;
+    private int CachedFgEraseMaskW;
+    private int CachedFgEraseMaskH;
+
     private bool IsDrawing;
     private int[,]? LfgTileIds;
     private readonly System.Diagnostics.Stopwatch MapAnimationStopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -174,6 +182,11 @@ public partial class HeaViewerControl : IDisposable
                     var mapCenterY = (TileW + TileH) * DALIB_CONSTANTS.HALF_TILE_HEIGHT / 2f;
 
                     SkElement.Matrix = SKMatrix.CreateTranslation(viewW / 2f - mapCenterX, viewH / 2f - mapCenterY);
+
+                    //render initial visible chunks synchronously to avoid all race conditions
+                    //between async tasks, viewport tracking, and GL context readiness
+                    RenderInitialVisibleChunks();
+
                     Focus();
                     Redraw();
                 });
@@ -221,7 +234,8 @@ public partial class HeaViewerControl : IDisposable
     private void DrawBrushPreview(SKCanvas canvas)
     {
         if (SkElement is null || ViewModel is null || LightGrid is null
-            || DarknessChunkManager is null || (ViewModel.SelectedTool != HeaToolType.Draw))
+            || DarknessChunkManager is null
+            || (ViewModel.SelectedTool != HeaToolType.Draw && ViewModel.SelectedTool != HeaToolType.Erase))
             return;
 
         var mousePoint = SkElement.GetMousePoint();
@@ -259,8 +273,11 @@ public partial class HeaViewerControl : IDisposable
             for (var sx = 0; sx < w; sx++)
                 BrushPreviewSnapshot[sy, sx] = LightGrid[y0 + sy, x0 + sx];
 
-        //temporarily stamp into the light grid
-        CachedBrush.Stamp(LightGrid, px, py);
+        //temporarily apply the brush into the light grid
+        if (ViewModel.SelectedTool == HeaToolType.Draw)
+            CachedBrush.Stamp(LightGrid, px, py);
+        else
+            CachedBrush.Erase(LightGrid, px, py);
 
         //rebuild affected darkness chunks
         var layer = CurrentDarknessLayer;
@@ -345,6 +362,8 @@ public partial class HeaViewerControl : IDisposable
     {
         CachedBrush = null;
         CachedBrushKey = null;
+        CachedFgEraseMousePoint = null;
+        CachedFgEraseMask = null;
     }
 
     /// <summary>
@@ -390,21 +409,10 @@ public partial class HeaViewerControl : IDisposable
                 }
 
             //create chunk manager and mark all chunks dirty
+            //renders are NOT queued here — CenterOnMap sets the correct viewport,
+            //and OnPaint's dirty check will queue renders once the viewport is valid
             MapChunkManager = new ChunkManager(width, height);
             MapChunkManager.MarkAllDirty(LayerFlags.All);
-
-            //initialize viewport rect; OnPaint will update it once layout is ready,
-            //but the first render needs a valid rect to determine visible chunks
-            var viewRect = GetCurrentViewRect();
-
-            LatestMapViewRect = new SKRect(
-                viewRect.Left,
-                viewRect.Top + MapViewerControl.FOREGROUND_PADDING,
-                viewRect.Right,
-                viewRect.Bottom + MapViewerControl.FOREGROUND_PADDING);
-
-            QueueMapBackgroundRender();
-            QueueMapForegroundRender();
 
             //start animation timer for map tile animations
             MapAnimationTimer?.Stop();
@@ -459,6 +467,15 @@ public partial class HeaViewerControl : IDisposable
         //don't draw while panning
         if (SkElement.IsPanning)
             return;
+
+        //foreground erase is a single-click action, not a drag stroke
+        if (ViewModel.SelectedTool == HeaToolType.ForegroundErase)
+        {
+            ApplyForegroundEraseAtMouse();
+            Focus();
+
+            return;
+        }
 
         //start a new stroke — snapshot the entire grid before any changes
         //we'll compute the affected region during the stroke and snapshot just that region on mouse up
@@ -648,9 +665,12 @@ public partial class HeaViewerControl : IDisposable
                         screenBlendPaint);
         }
 
-        //temporarily stamp the brush into the light grid and rebuild affected
-        //darkness chunks so the preview shows the exact result of stamping
-        DrawBrushPreview(canvas);
+        //temporarily apply the tool into the light grid and rebuild affected
+        //darkness chunks so the preview shows the exact result
+        if (ViewModel?.SelectedTool == HeaToolType.ForegroundErase)
+            DrawForegroundErasePreview(canvas);
+        else
+            DrawBrushPreview(canvas);
 
         //draw darkness overlay
         if (DarknessChunkManager is not null)
@@ -663,8 +683,12 @@ public partial class HeaViewerControl : IDisposable
                     if (grContext is not null && chunk.Image is { IsTextureBacked: false } rasterImg)
                     {
                         var gpuImage = rasterImg.ToTextureImage(grContext);
-                        rasterImg.Dispose();
-                        chunk.Image = gpuImage;
+
+                        if (gpuImage is not null)
+                        {
+                            rasterImg.Dispose();
+                            chunk.Image = gpuImage;
+                        }
                     }
 
                     if (chunk.Image is not null)
@@ -700,7 +724,7 @@ public partial class HeaViewerControl : IDisposable
         if (mods.HasFlag(ModifierKeys.Shift))
         {
             var delta = e.Delta > 0 ? 2 : -2;
-            ViewModel.BrushRadius = Math.Clamp(ViewModel.BrushRadius + delta, 5, 120);
+            ViewModel.BrushRadius = Math.Clamp(ViewModel.BrushRadius + delta, 1, 120);
             InvalidateBrushPreview();
             Redraw();
             e.Handled = true;
@@ -723,20 +747,35 @@ public partial class HeaViewerControl : IDisposable
     {
         if (chunk.BackgroundImage is { IsTextureBacked: false } rasterBg)
         {
-            chunk.BackgroundImage = rasterBg.ToTextureImage(grContext);
-            rasterBg.Dispose();
+            var gpuImage = rasterBg.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.BackgroundImage = gpuImage;
+                rasterBg.Dispose();
+            }
         }
 
         if (chunk.ForegroundImage is { IsTextureBacked: false } rasterFg)
         {
-            chunk.ForegroundImage = rasterFg.ToTextureImage(grContext);
-            rasterFg.Dispose();
+            var gpuImage = rasterFg.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.ForegroundImage = gpuImage;
+                rasterFg.Dispose();
+            }
         }
 
         if (chunk.ScreenBlendForegroundImage is { IsTextureBacked: false } rasterScreenBlend)
         {
-            chunk.ScreenBlendForegroundImage = rasterScreenBlend.ToTextureImage(grContext);
-            rasterScreenBlend.Dispose();
+            var gpuImage = rasterScreenBlend.ToTextureImage(grContext);
+
+            if (gpuImage is not null)
+            {
+                chunk.ScreenBlendForegroundImage = gpuImage;
+                rasterScreenBlend.Dispose();
+            }
         }
     }
 
@@ -782,6 +821,44 @@ public partial class HeaViewerControl : IDisposable
 
             Dispatcher.BeginInvoke(Redraw);
         });
+    }
+
+    /// <summary>
+    ///     Renders all visible dirty map chunks synchronously on the UI thread.
+    ///     Called once after CenterOnMap sets the correct matrix and layout is complete,
+    ///     guaranteeing a valid viewport with no async race conditions
+    /// </summary>
+    private void RenderInitialVisibleChunks()
+    {
+        if (MapChunkManager is null)
+            return;
+
+        var viewRect = GetCurrentViewRect();
+
+        var chunkViewRect = new SKRect(
+            viewRect.Left,
+            viewRect.Top + MapViewerControl.FOREGROUND_PADDING,
+            viewRect.Right,
+            viewRect.Bottom + MapViewerControl.FOREGROUND_PADDING);
+
+        LatestMapViewRect = chunkViewRect;
+
+        var visibleChunks = MapChunkManager.GetVisibleChunks(chunkViewRect);
+
+        foreach (var chunk in visibleChunks)
+        {
+            if (chunk.BackgroundDirty && BgTileIds is not null)
+            {
+                chunk.BackgroundDirty = false;
+                RenderMapBackgroundChunk(chunk);
+            }
+
+            if (chunk.ForegroundDirty && LfgTileIds is not null && RfgTileIds is not null)
+            {
+                chunk.ForegroundDirty = false;
+                RenderMapForegroundChunk(chunk);
+            }
+        }
     }
 
     private DarknessLayer CurrentDarknessLayer
@@ -1066,5 +1143,380 @@ public partial class HeaViewerControl : IDisposable
             Math.Max(action.Width, action.Height) / 2 + 1);
 
         Redraw();
+    }
+
+    /// <summary>
+    ///     Describes a foreground tile image and its position in map-space
+    /// </summary>
+    private readonly struct ForegroundHit(SKImage image, int mapX, int mapY, int tileX, int tileY, bool isRight)
+    {
+        public SKImage Image { get; } = image;
+
+        //top-left corner of this foreground image in map-space (FOREGROUND_PADDING already removed)
+        public int MapX { get; } = mapX;
+        public int MapY { get; } = mapY;
+        public int TileX { get; } = tileX;
+        public int TileY { get; } = tileY;
+        public bool IsRight { get; } = isRight;
+    }
+
+    /// <summary>
+    ///     Collects all foreground tile images that overlap a given map-space point,
+    ///     ordered back-to-front (standard isometric draw order)
+    /// </summary>
+    private List<ForegroundHit> CollectForegroundsAtPoint(int mapX, int mapY)
+    {
+        var hits = new List<ForegroundHit>();
+
+        if (LfgTileIds is null || RfgTileIds is null)
+            return hits;
+
+        var tileW = TileW;
+        var tileH = TileH;
+        var elapsed = MapAnimationStopwatch.Elapsed;
+
+        //iterate in draw order (back-to-front)
+        for (var y = 0; y < tileH; y++)
+            for (var x = 0; x < tileW; x++)
+            {
+                var (drawX, drawY) = MapEditorRenderUtil.GetTileDrawPosition(x, y, MapTileHeight);
+
+                var lfgId = LfgTileIds[x, y];
+
+                if (lfgId.IsRenderedTileIndex())
+                {
+                    var anim = MapEditorRenderUtil.RenderAnimatedForeground(lfgId);
+                    var frame = MapEditorRenderUtil.GetAnimationFrame(anim, elapsed);
+
+                    if (frame is not null)
+                    {
+                        //map-space position (subtract FOREGROUND_PADDING since OnPaint does the same)
+                        var imgX = drawX;
+                        var imgY = drawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - frame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT
+                                   - MapEditorRenderUtil.FOREGROUND_PADDING;
+
+                        if (mapX >= imgX && mapX < imgX + frame.Width && mapY >= imgY && mapY < imgY + frame.Height)
+                            hits.Add(new ForegroundHit(frame, imgX, imgY, x, y, false));
+                    }
+                }
+
+                var rfgId = RfgTileIds[x, y];
+
+                if (rfgId.IsRenderedTileIndex())
+                {
+                    var anim = MapEditorRenderUtil.RenderAnimatedForeground(rfgId);
+                    var frame = MapEditorRenderUtil.GetAnimationFrame(anim, elapsed);
+
+                    if (frame is not null)
+                    {
+                        var imgX = drawX + DALIB_CONSTANTS.HALF_TILE_WIDTH;
+                        var imgY = drawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - frame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT
+                                   - MapEditorRenderUtil.FOREGROUND_PADDING;
+
+                        if (mapX >= imgX && mapX < imgX + frame.Width && mapY >= imgY && mapY < imgY + frame.Height)
+                            hits.Add(new ForegroundHit(frame, imgX, imgY, x, y, true));
+                    }
+                }
+            }
+
+        return hits;
+    }
+
+    /// <summary>
+    ///     Reads a pixel from an SKImage, returns true if the pixel is non-transparent
+    /// </summary>
+    private static bool IsOpaquePixel(SKImage image, int localX, int localY)
+    {
+        if (localX < 0 || localX >= image.Width || localY < 0 || localY >= image.Height)
+            return false;
+
+        using var bitmap = SKBitmap.FromImage(image);
+        var color = bitmap.GetPixel(localX, localY);
+
+        return color.Alpha > 0;
+    }
+
+    /// <summary>
+    ///     Hit-tests foregrounds at a map-space point, returning the topmost foreground
+    ///     with a non-transparent pixel and its index in the draw-order list.
+    ///     Returns null if nothing was hit
+    /// </summary>
+    private (ForegroundHit hit, int index)? HitTestForeground(int mapX, int mapY)
+    {
+        var fgs = CollectForegroundsAtPoint(mapX, mapY);
+
+        //front-to-back (reverse of draw order)
+        for (var i = fgs.Count - 1; i >= 0; i--)
+        {
+            var fg = fgs[i];
+            var localX = mapX - fg.MapX;
+            var localY = mapY - fg.MapY;
+
+            if (IsOpaquePixel(fg.Image, localX, localY))
+                return (fg, i);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     Computes the visible mask for a foreground at the given draw-order index.
+    ///     A pixel is visible if it is opaque AND not covered by any foreground drawn after it
+    /// </summary>
+    private bool[,] ComputeVisibleMask(ForegroundHit target, int targetIndex, List<ForegroundHit> allFgs)
+    {
+        var w = target.Image.Width;
+        var h = target.Image.Height;
+        var mask = new bool[h, w];
+
+        //read target pixels
+        using var targetBitmap = SKBitmap.FromImage(target.Image);
+
+        for (var py = 0; py < h; py++)
+            for (var px = 0; px < w; px++)
+                mask[py, px] = targetBitmap.GetPixel(px, py).Alpha > 0;
+
+        //subtract pixels covered by foregrounds drawn after the target (higher index = drawn later = on top)
+        for (var i = targetIndex + 1; i < allFgs.Count; i++)
+        {
+            var fg = allFgs[i];
+
+            //compute overlap region in target-local coords
+            var overlapLeft = Math.Max(0, fg.MapX - target.MapX);
+            var overlapTop = Math.Max(0, fg.MapY - target.MapY);
+            var overlapRight = Math.Min(w, fg.MapX + fg.Image.Width - target.MapX);
+            var overlapBottom = Math.Min(h, fg.MapY + fg.Image.Height - target.MapY);
+
+            if (overlapLeft >= overlapRight || overlapTop >= overlapBottom)
+                continue;
+
+            using var fgBitmap = SKBitmap.FromImage(fg.Image);
+
+            for (var py = overlapTop; py < overlapBottom; py++)
+                for (var px = overlapLeft; px < overlapRight; px++)
+                {
+                    if (!mask[py, px])
+                        continue;
+
+                    var fgLocalX = px + target.MapX - fg.MapX;
+                    var fgLocalY = py + target.MapY - fg.MapY;
+                    var color = fgBitmap.GetPixel(fgLocalX, fgLocalY);
+
+                    if (color.Alpha > 0)
+                        mask[py, px] = false;
+                }
+        }
+
+        return mask;
+    }
+
+    /// <summary>
+    ///     Erases light grid values under the visible portion of the foreground at the mouse position
+    /// </summary>
+    private void ApplyForegroundEraseAtMouse()
+    {
+        if (LightGrid is null || SkElement is null || ViewModel is null || LfgTileIds is null || RfgTileIds is null)
+            return;
+
+        var mousePoint = SkElement.GetMousePoint();
+
+        if (mousePoint is null)
+            return;
+
+        var pt = mousePoint.Value;
+        var mapX = (int)pt.X;
+        var mapY = (int)pt.Y;
+
+        var allFgs = CollectForegroundsAtPoint(mapX, mapY);
+
+        //front-to-back hit test
+        (ForegroundHit hit, int index)? result = null;
+
+        for (var i = allFgs.Count - 1; i >= 0; i--)
+        {
+            var fg = allFgs[i];
+            var localX = mapX - fg.MapX;
+            var localY = mapY - fg.MapY;
+
+            if (IsOpaquePixel(fg.Image, localX, localY))
+            {
+                result = (fg, i);
+
+                break;
+            }
+        }
+
+        if (result is null)
+            return;
+
+        var (target, targetIndex) = result.Value;
+        var mask = ComputeVisibleMask(target, targetIndex, allFgs);
+
+        var w = target.Image.Width;
+        var h = target.Image.Height;
+
+        //snapshot for undo
+        var gridLx = target.MapX - OVERLAY_OFFSET_X;
+        var gridTy = target.MapY - OVERLAY_OFFSET_Y;
+        var snapX = Math.Max(0, gridLx);
+        var snapY = Math.Max(0, gridTy);
+        var snapX2 = Math.Min(GridWidth - 1, gridLx + w - 1);
+        var snapY2 = Math.Min(GridHeight - 1, gridTy + h - 1);
+        var snapW = snapX2 - snapX + 1;
+        var snapH = snapY2 - snapY + 1;
+
+        if (snapW <= 0 || snapH <= 0)
+            return;
+
+        var before = HeaActionContext.CaptureRegion(LightGrid, snapX, snapY, snapW, snapH);
+
+        //erase light under visible foreground pixels
+        for (var py = 0; py < h; py++)
+            for (var px = 0; px < w; px++)
+            {
+                if (!mask[py, px])
+                    continue;
+
+                var gx = gridLx + px;
+                var gy = gridTy + py;
+
+                if (gx < 0 || gx >= GridWidth || gy < 0 || gy >= GridHeight)
+                    continue;
+
+                LightGrid[gy, gx] = 0;
+            }
+
+        var after = HeaActionContext.CaptureRegion(LightGrid, snapX, snapY, snapW, snapH);
+
+        if (!before.AsSpan().SequenceEqual(after))
+        {
+            UndoStack.AddNewest(
+                new HeaActionContext
+                {
+                    X = snapX,
+                    Y = snapY,
+                    Width = snapW,
+                    Height = snapH,
+                    Before = before,
+                    After = after
+                });
+
+            RedoStack.Clear();
+        }
+
+        RebuildDarknessOverlayRegion(snapX + snapW / 2, snapY + snapH / 2, Math.Max(snapW, snapH) / 2 + 1);
+        Redraw();
+    }
+
+    /// <summary>
+    ///     Recomputes the cached foreground erase mask when the mouse moves to a new pixel
+    /// </summary>
+    private void UpdateForegroundEraseCache(int mapX, int mapY)
+    {
+        var allFgs = CollectForegroundsAtPoint(mapX, mapY);
+
+        //front-to-back hit test
+        for (var i = allFgs.Count - 1; i >= 0; i--)
+        {
+            var fg = allFgs[i];
+            var localX = mapX - fg.MapX;
+            var localY = mapY - fg.MapY;
+
+            if (!IsOpaquePixel(fg.Image, localX, localY))
+                continue;
+
+            CachedFgEraseMask = ComputeVisibleMask(fg, i, allFgs);
+            CachedFgEraseMapX = fg.MapX;
+            CachedFgEraseMapY = fg.MapY;
+            CachedFgEraseMaskW = fg.Image.Width;
+            CachedFgEraseMaskH = fg.Image.Height;
+
+            return;
+        }
+
+        CachedFgEraseMask = null;
+    }
+
+    /// <summary>
+    ///     Previews the foreground erase by temporarily zeroing light under the
+    ///     visible portion of the hovered foreground and rebuilding darkness chunks
+    /// </summary>
+    private void DrawForegroundErasePreview(SKCanvas canvas)
+    {
+        if (SkElement is null || ViewModel is null || LightGrid is null || DarknessChunkManager is null)
+            return;
+
+        var mousePoint = SkElement.GetMousePoint();
+
+        if (mousePoint is null)
+            return;
+
+        var pt = mousePoint.Value;
+
+        //only recompute when mouse moves to a different pixel
+        if (CachedFgEraseMousePoint is null
+            || (int)CachedFgEraseMousePoint.Value.X != (int)pt.X
+            || (int)CachedFgEraseMousePoint.Value.Y != (int)pt.Y)
+        {
+            CachedFgEraseMousePoint = pt;
+            UpdateForegroundEraseCache((int)pt.X, (int)pt.Y);
+        }
+
+        if (CachedFgEraseMask is null)
+            return;
+
+        var mask = CachedFgEraseMask;
+        var w = CachedFgEraseMaskW;
+        var h = CachedFgEraseMaskH;
+
+        //compute light grid region
+        var gridLx = CachedFgEraseMapX - OVERLAY_OFFSET_X;
+        var gridTy = CachedFgEraseMapY - OVERLAY_OFFSET_Y;
+        var x0 = Math.Max(0, gridLx);
+        var y0 = Math.Max(0, gridTy);
+        var x1 = Math.Min(GridWidth - 1, gridLx + w - 1);
+        var y1 = Math.Min(GridHeight - 1, gridTy + h - 1);
+
+        if (x0 > x1 || y0 > y1)
+            return;
+
+        var regionW = x1 - x0 + 1;
+        var regionH = y1 - y0 + 1;
+
+        //snapshot for restore
+        if (BrushPreviewSnapshot is null || BrushPreviewSnapshot.GetLength(0) < regionH || BrushPreviewSnapshot.GetLength(1) < regionW)
+            BrushPreviewSnapshot = new byte[regionH, regionW];
+
+        for (var sy = 0; sy < regionH; sy++)
+            for (var sx = 0; sx < regionW; sx++)
+                BrushPreviewSnapshot[sy, sx] = LightGrid[y0 + sy, x0 + sx];
+
+        //temporarily erase
+        for (var py = 0; py < h; py++)
+            for (var px = 0; px < w; px++)
+            {
+                if (!mask[py, px])
+                    continue;
+
+                var gx = gridLx + px;
+                var gy = gridTy + py;
+
+                if (gx < 0 || gx >= GridWidth || gy < 0 || gy >= GridHeight)
+                    continue;
+
+                LightGrid[gy, gx] = 0;
+            }
+
+        //rebuild affected darkness chunks
+        var layer = CurrentDarknessLayer;
+        DarknessChunkManager.MarkRangeDirty(x0, y0, x1, y1);
+        DarknessChunkManager.RebuildDirtyChunks(LightGrid, layer.Alpha, layer.Color);
+
+        //restore
+        for (var sy = 0; sy < regionH; sy++)
+            for (var sx = 0; sx < regionW; sx++)
+                LightGrid[y0 + sy, x0 + sx] = BrushPreviewSnapshot[sy, sx];
+
+        DarknessChunkManager.MarkRangeDirty(x0, y0, x1, y1);
     }
 }

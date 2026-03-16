@@ -23,7 +23,7 @@ public class HeaEditorViewModel : NotifyPropertyChangedBase
     {
         get;
         set => SetField(ref field, value);
-    } = 255;
+    } = 127;
 
     public int BrushRadius
     {
