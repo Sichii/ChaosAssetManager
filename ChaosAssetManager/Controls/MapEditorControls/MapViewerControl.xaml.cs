@@ -36,18 +36,13 @@ public partial class MapViewerControl : IDisposable
     private readonly SynchronizedHashSet<MapChunk> PreviousHoverChunks = [];
     private readonly Lock RenderSync = new();
 
-    private Task? BackgroundRenderTask;
+    private readonly LayerRenderState BackgroundRenderState = new();
+    private readonly LayerRenderState ForegroundRenderState = new();
+    private readonly LayerRenderState TabMapRenderState = new();
     private ChunkManager? ChunkMgr;
-    private Task? ForegroundRenderTask;
-    private DateTime LastBackgroundRenderTime = DateTime.MinValue;
-    private DateTime LastForegroundRenderTime = DateTime.MinValue;
-    private DateTime LastRequestedBackgroundRenderTime = DateTime.MinValue;
-    private DateTime LastRequestedForegroundRenderTime = DateTime.MinValue;
-    private DateTime LastRequestedTabMapRenderTime = DateTime.MinValue;
-    private DateTime LastTabMapRenderTime = DateTime.MinValue;
     private bool LatestLeftButtonPressed;
     private SKPoint LatestMapPoint = new(-1, -1);
-    private Task? TabMapRenderTask;
+    private SKRect LatestViewRect;
 
     private TileGrabViewModel? HistoricalTileGrab { get; set; }
 
@@ -134,6 +129,36 @@ public partial class MapViewerControl : IDisposable
         ViewModel.ViewerTransform = SKMatrix.CreateTranslation(x, y);
 
         return true;
+    }
+
+    /// <summary>
+    ///     Marks the chunks under the current draw-tool hover as dirty so animated
+    ///     tile-grab tiles re-render even when the mouse is stationary
+    /// </summary>
+    public void InvalidateHoverChunks()
+    {
+        if (PreviousHoverChunks.Count == 0)
+            return;
+
+        var layers = MapEditorViewModel.EditingLayerFlags;
+
+        foreach (var chunk in PreviousHoverChunks)
+        {
+            if (layers.HasFlag(LayerFlags.Background))
+                chunk.BackgroundDirty = true;
+
+            if (layers.HasFlag(LayerFlags.LeftForeground) || layers.HasFlag(LayerFlags.RightForeground))
+            {
+                chunk.ForegroundDirty = true;
+                chunk.TabMapDirty = true;
+            }
+        }
+
+        if (layers.HasFlag(LayerFlags.Background))
+            ViewModel.BackgroundChangePending = true;
+
+        if (layers.HasFlag(LayerFlags.LeftForeground) || layers.HasFlag(LayerFlags.RightForeground))
+            ViewModel.ForegroundChangePending = true;
     }
 
     #region Utilities
@@ -535,14 +560,10 @@ public partial class MapViewerControl : IDisposable
     #region Rendering
     private SKRect GetCurrentViewRect()
     {
-        //if the element hasn't been laid out yet, return a rect covering the entire map
-        //so initial renders don't get skipped due to zero-size viewport
+        //if the element hasn't been laid out yet, return empty so we don't render all chunks;
+        //OnPaint will have a valid viewport once layout completes
         if ((Element.ActualWidth == 0) || (Element.ActualHeight == 0))
-            return SKRect.Create(
-                -100000,
-                -100000,
-                200000,
-                200000);
+            return SKRect.Empty;
 
         var inverted = Element.Matrix.Invert();
         var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
@@ -571,6 +592,39 @@ public partial class MapViewerControl : IDisposable
 
         var grContext = (GRContext)e.Surface.Context;
         var viewRect = GetCurrentViewRect();
+
+        //if viewport changed (pan/zoom/initial layout), check for dirty chunks
+        //that need rendering (e.g. initial load before layout, or panning to new area)
+        if (viewRect != LatestViewRect)
+        {
+            LatestViewRect = viewRect;
+
+            var hasDirtyBg = false;
+            var hasDirtyFg = false;
+            var hasDirtyTab = false;
+
+            foreach (var chunk in ChunkMgr.GetVisibleChunks(viewRect))
+            {
+                if (chunk.BackgroundDirty)
+                    hasDirtyBg = true;
+
+                if (chunk.ForegroundDirty)
+                    hasDirtyFg = true;
+
+                if (chunk.TabMapDirty)
+                    hasDirtyTab = true;
+            }
+
+            if (hasDirtyBg)
+                ViewModel.BackgroundChangePending = true;
+
+            if (hasDirtyFg)
+                ViewModel.ForegroundChangePending = true;
+
+            if (hasDirtyTab)
+                ViewModel.TabMapChangePending = true;
+        }
+
         var visibleChunks = ChunkMgr.GetVisibleChunks(viewRect);
 
         //promote raster-backed chunk images to gpu textures
@@ -599,6 +653,19 @@ public partial class MapViewerControl : IDisposable
                     chunk.ForegroundPixelBounds.Left,
                     chunk.ForegroundPixelBounds.Top,
                     paint);
+
+        //draw screen-blend foreground chunks (sotp transparent tiles)
+        using var screenBlendPaint = new SKPaint();
+        screenBlendPaint.BlendMode = SKBlendMode.Screen;
+        screenBlendPaint.IsAntialias = false;
+
+        foreach (var chunk in visibleChunks)
+            if (chunk.ScreenBlendForegroundImage is not null)
+                canvas.DrawImage(
+                    chunk.ScreenBlendForegroundImage,
+                    chunk.ForegroundPixelBounds.Left,
+                    chunk.ForegroundPixelBounds.Top,
+                    screenBlendPaint);
 
         if (MapEditorViewModel.ShowGrid)
         {
@@ -654,6 +721,12 @@ public partial class MapViewerControl : IDisposable
             rasterFg.Dispose();
         }
 
+        if (chunk.ScreenBlendForegroundImage is { IsTextureBacked: false } rasterScreenFg)
+        {
+            chunk.ScreenBlendForegroundImage = rasterScreenFg.ToTextureImage(grContext);
+            rasterScreenFg.Dispose();
+        }
+
         if (chunk.TabMapImage is { IsTextureBacked: false } rasterTab)
         {
             chunk.TabMapImage = rasterTab.ToTextureImage(grContext);
@@ -696,11 +769,13 @@ public partial class MapViewerControl : IDisposable
         var wallStartY = Math.Max(0, chunk.TileBounds.Top - 1);
         var wallEndX = Math.Min(bounds.Width - 1, chunk.TileBounds.Right + 1);
         var wallEndY = Math.Min(bounds.Height - 1, chunk.TileBounds.Bottom + 1);
+        var wallW = wallEndX - wallStartX + 1;
+        var wallH = wallEndY - wallStartY + 1;
         bool[,]? wallMap = null;
 
         if (MapEditorViewModel.ShowTabMap)
         {
-            wallMap = new bool[bounds.Width, bounds.Height];
+            wallMap = new bool[wallW, wallH];
 
             for (var y = wallStartY; y <= wallEndY; y++)
             {
@@ -712,24 +787,27 @@ public partial class MapViewerControl : IDisposable
                     SKPaint? unusedPaint = null;
 
                     if (isEditingLeftForeground)
-                        HandleLeftForegroundToolHover(
+                        HandleToolHover(
                             point,
                             mouseCoordinates,
                             tglfgTiles,
+                            static tg => tg.HasLeftForegroundTiles,
                             ref leftTile,
                             ref unusedPaint,
                             leftButtonPressed);
 
                     if (isEditingRightForeground)
-                        HandleRightForegroundToolHover(
+                        HandleToolHover(
                             point,
                             mouseCoordinates,
                             tgrfgTiles,
+                            static tg => tg.HasRightForegroundTiles,
                             ref rightTile,
                             ref unusedPaint,
                             leftButtonPressed);
 
-                    wallMap[x, y] = MapEditorRenderUtil.IsWall(leftTile.TileId) || MapEditorRenderUtil.IsWall(rightTile.TileId);
+                    wallMap[x - wallStartX, y - wallStartY] = MapEditorRenderUtil.IsWall(leftTile.TileId)
+                                                              || MapEditorRenderUtil.IsWall(rightTile.TileId);
                 }
             }
         }
@@ -745,36 +823,39 @@ public partial class MapViewerControl : IDisposable
                 SKPaint? rightForegroundPaint = null;
 
                 if (isEditingLeftForeground)
-                    HandleLeftForegroundToolHover(
+                    HandleToolHover(
                         point,
                         mouseCoordinates,
                         tglfgTiles,
+                        static tg => tg.HasLeftForegroundTiles,
                         ref leftTileViewModel,
                         ref leftForegroundPaint,
                         leftButtonPressed);
 
                 if (isEditingRightForeground)
-                    HandleRightForegroundToolHover(
+                    HandleToolHover(
                         point,
                         mouseCoordinates,
                         tgrfgTiles,
+                        static tg => tg.HasRightForegroundTiles,
                         ref rightTileViewModel,
                         ref rightForegroundPaint,
                         leftButtonPressed);
 
-                var isWall = wallMap is not null && wallMap[x, y];
+                var wx = x - wallStartX;
+                var wy = y - wallStartY;
+                var isWall = wallMap is not null && wallMap[wx, wy];
 
-                var fgDrawX = (bounds.Height - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-                var fgDrawY = FOREGROUND_PADDING + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                var (fgDrawX, fgDrawY) = MapEditorRenderUtil.GetTileDrawPosition(x, y, bounds.Height);
 
                 if (MapEditorViewModel.ShowTabMap && isWall)
                 {
                     canvas.DrawImage(MapEditorRenderUtil.RenderTabWall(), fgDrawX, fgDrawY);
 
-                    var drawTopRight = (y == 0) || !wallMap![x, y - 1];
-                    var drawBottomRight = (x == (bounds.Width - 1)) || !wallMap![x + 1, y];
-                    var drawBottomLeft = (y == (bounds.Height - 1)) || !wallMap![x, y + 1];
-                    var drawTopLeft = (x == 0) || !wallMap![x - 1, y];
+                    var drawTopRight = (y == 0) || !wallMap![wx, wy - 1];
+                    var drawBottomRight = (x == (bounds.Width - 1)) || !wallMap![wx + 1, wy];
+                    var drawBottomLeft = (y == (bounds.Height - 1)) || !wallMap![wx, wy + 1];
+                    var drawTopLeft = (x == 0) || !wallMap![wx - 1, wy];
 
                     if (drawTopRight || drawBottomRight || drawBottomLeft || drawTopLeft)
                         MapEditorRenderUtil.DrawTileOutlineEdges(
@@ -887,10 +968,11 @@ public partial class MapViewerControl : IDisposable
                     SKPaint? paint = null;
 
                     if (isEditingBackground)
-                        HandleBackgroundToolHover(
+                        HandleToolHover(
                             point,
                             mouseCoordinates,
                             tgbgTiles,
+                            static tg => tg.HasBackgroundTiles,
                             ref tileViewModel,
                             ref paint,
                             leftButtonPressed);
@@ -898,8 +980,7 @@ public partial class MapViewerControl : IDisposable
                     var currentFrame = tileViewModel.CurrentFrame;
 
                     //pixel position formula
-                    var drawX = (bounds.Height - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-                    var drawY = FOREGROUND_PADDING + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                    var (drawX, drawY) = MapEditorRenderUtil.GetTileDrawPosition(x, y, bounds.Height);
 
                     canvas.DrawImage(
                         currentFrame,
@@ -940,6 +1021,9 @@ public partial class MapViewerControl : IDisposable
         using var canvas = new SKCanvas(bitmap);
 
         //composite all chunks for export
+        using var exportScreenBlendPaint = new SKPaint();
+        exportScreenBlendPaint.BlendMode = SKBlendMode.Screen;
+
         foreach (var chunk in ChunkMgr.GetAllChunks())
         {
             if (chunk.BackgroundImage is not null)
@@ -947,6 +1031,13 @@ public partial class MapViewerControl : IDisposable
 
             if (chunk.ForegroundImage is not null)
                 canvas.DrawImage(chunk.ForegroundImage, chunk.ForegroundPixelBounds.Left, chunk.ForegroundPixelBounds.Top);
+
+            if (chunk.ScreenBlendForegroundImage is not null)
+                canvas.DrawImage(
+                    chunk.ScreenBlendForegroundImage,
+                    chunk.ForegroundPixelBounds.Left,
+                    chunk.ForegroundPixelBounds.Top,
+                    exportScreenBlendPaint);
 
             if (chunk.TabMapImage is not null)
                 canvas.DrawImage(chunk.TabMapImage, chunk.PixelBounds.Left, chunk.PixelBounds.Top);
@@ -957,10 +1048,11 @@ public partial class MapViewerControl : IDisposable
         return SKImage.FromBitmap(bitmap);
     }
 
-    private void HandleBackgroundToolHover(
+    private void HandleToolHover(
         Point currentPoint,
         SKPoint mouseCoordinates,
-        ListSegment2D<TileViewModel> backgroundTiles,
+        ListSegment2D<TileViewModel> grabTiles,
+        Func<TileGrabViewModel, bool> hasGrabTiles,
         ref TileViewModel tileViewModel,
         ref SKPaint? paint,
         bool leftButtonPressed)
@@ -988,16 +1080,16 @@ public partial class MapViewerControl : IDisposable
         {
             case ToolType.Draw:
             {
-                if (drawBounds.Contains(currentPoint) && tileGrab!.HasBackgroundTiles)
+                if (drawBounds.Contains(currentPoint) && hasGrabTiles(tileGrab!))
                 {
                     var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
                     var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
 
                     // if the tilegrab is empty, dont overwrite what's already there
-                    if (backgroundTiles[tileGrabX, tileGrabY].TileId == 0)
+                    if (grabTiles[tileGrabX, tileGrabY].TileId == 0)
                         return;
 
-                    tileViewModel = backgroundTiles[tileGrabX, tileGrabY];
+                    tileViewModel = grabTiles[tileGrabX, tileGrabY];
                 }
 
                 break;
@@ -1052,6 +1144,10 @@ public partial class MapViewerControl : IDisposable
         using var bitmap = new SKBitmap(new SKImageInfo(bitmapWidth, bitmapHeight));
         using var canvas = new SKCanvas(bitmap);
 
+        SKBitmap? screenBlendBitmap = null;
+        SKCanvas? screenBlendCanvas = null;
+        var hasScreenBlendTiles = false;
+
         var lfgTiles = ViewModel.LeftForegroundTilesView;
         var rfgTiles = ViewModel.RightForegroundTilesView;
         var bounds = ViewModel.Bounds;
@@ -1081,19 +1177,21 @@ public partial class MapViewerControl : IDisposable
                 SKPaint? rightForegroundPaint = null;
 
                 if (isEditingLeftForeground)
-                    HandleLeftForegroundToolHover(
+                    HandleToolHover(
                         point,
                         mouseCoordinates,
                         tglfgTiles,
+                        static tg => tg.HasLeftForegroundTiles,
                         ref leftTileViewModel,
                         ref leftForegroundPaint,
                         leftButtonPressed);
 
                 if (isEditingRightForeground)
-                    HandleRightForegroundToolHover(
+                    HandleToolHover(
                         point,
                         mouseCoordinates,
                         tgrfgTiles,
+                        static tg => tg.HasRightForegroundTiles,
                         ref rightTileViewModel,
                         ref rightForegroundPaint,
                         leftButtonPressed);
@@ -1102,205 +1200,70 @@ public partial class MapViewerControl : IDisposable
                 var rightCurrentFrame = rightTileViewModel.CurrentFrame;
 
                 //pixel position formula
-                var fgDrawX = (bounds.Height - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-                var fgDrawY = FOREGROUND_PADDING + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                var (fgDrawX, fgDrawY) = MapEditorRenderUtil.GetTileDrawPosition(x, y, bounds.Height);
 
                 if (MapEditorViewModel.ShowLeftForeground && leftCurrentFrame is not null && leftTileViewModel.TileId.IsRenderedTileIndex())
-                    canvas.DrawImage(
-                        leftCurrentFrame,
-                        fgDrawX,
-                        fgDrawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - leftCurrentFrame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT,
-                        leftForegroundPaint);
+                    GetTargetCanvas(leftTileViewModel.TileId)
+                        .DrawImage(
+                            leftCurrentFrame,
+                            fgDrawX,
+                            fgDrawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - leftCurrentFrame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT,
+                            leftForegroundPaint);
 
                 if (MapEditorViewModel.ShowRightForeground
                     && rightCurrentFrame is not null
                     && rightTileViewModel.TileId.IsRenderedTileIndex())
-                    canvas.DrawImage(
-                        rightCurrentFrame,
-                        fgDrawX + DALIB_CONSTANTS.HALF_TILE_WIDTH,
-                        fgDrawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - rightCurrentFrame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT,
-                        rightForegroundPaint);
+                    GetTargetCanvas(rightTileViewModel.TileId)
+                        .DrawImage(
+                            rightCurrentFrame,
+                            fgDrawX + DALIB_CONSTANTS.HALF_TILE_WIDTH,
+                            fgDrawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - rightCurrentFrame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT,
+                            rightForegroundPaint);
+
+                continue;
+
+                SKCanvas GetTargetCanvas(int tileId)
+                {
+                    if (!MapEditorRenderUtil.IsTransparent(tileId))
+                        return canvas;
+
+                    if (screenBlendBitmap is null)
+                    {
+                        screenBlendBitmap = new SKBitmap(new SKImageInfo(bitmapWidth, bitmapHeight));
+                        screenBlendCanvas = new SKCanvas(screenBlendBitmap);
+                        screenBlendCanvas.Translate(-fgBounds.Left, -fgBounds.Top);
+                    }
+
+                    hasScreenBlendTiles = true;
+
+                    return screenBlendCanvas!;
+                }
             }
         }
 
         SKImage? oldImage;
+        SKImage? oldScreenBlendImage;
         var image = SKImage.FromBitmap(bitmap);
+        var screenBlendImage = hasScreenBlendTiles ? SKImage.FromBitmap(screenBlendBitmap!) : null;
+
+        screenBlendCanvas?.Dispose();
+        screenBlendBitmap?.Dispose();
 
         using (RenderSync.EnterScope())
         {
             oldImage = chunk.ForegroundImage;
+            oldScreenBlendImage = chunk.ScreenBlendForegroundImage;
             chunk.ForegroundImage = image;
+            chunk.ScreenBlendForegroundImage = screenBlendImage;
         }
 
         if (oldImage is not null)
             PendingTextureDisposals.Enqueue(oldImage);
+
+        if (oldScreenBlendImage is not null)
+            PendingTextureDisposals.Enqueue(oldScreenBlendImage);
     }
 
-    private void HandleLeftForegroundToolHover(
-        Point currentPoint,
-        SKPoint mouseCoordinates,
-        ListSegment2D<TileViewModel> leftForegroundTiles,
-        ref TileViewModel currentFrame,
-        ref SKPaint? paint,
-        bool leftButtonPressed)
-    {
-        if (mouseCoordinates == new SKPoint(-1, -1))
-            return;
-
-        var tileGrab = TileGrab;
-
-        var selectionBounds = tileGrab?.SelectionStart is not null ? tileGrab.Bounds : null;
-
-        var drawBounds = tileGrab is not null
-            ? new ValueRectangle(
-                (int)mouseCoordinates.X,
-                (int)mouseCoordinates.Y,
-                tileGrab.Bounds.Width,
-                tileGrab.Bounds.Height)
-            : new ValueRectangle(
-                -1,
-                -1,
-                0,
-                0);
-
-        switch (MapEditorViewModel.SelectedTool)
-        {
-            case ToolType.Draw:
-            {
-                if (drawBounds.Contains(currentPoint) && tileGrab!.HasLeftForegroundTiles)
-                {
-                    var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
-                    var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
-
-                    // if the tilegrab is empty, dont overwrite what's already there
-                    if (leftForegroundTiles[tileGrabX, tileGrabY].TileId == 0)
-                        return;
-
-                    currentFrame = leftForegroundTiles[tileGrabX, tileGrabY];
-                }
-
-                break;
-            }
-            case ToolType.Select:
-            {
-                if (leftButtonPressed)
-                {
-                    //if lmb is pressed, highlight all tiles in the selection rectangle
-                    if (selectionBounds?.Contains(currentPoint) ?? false)
-                        paint = GetBrightenPaint();
-                }
-
-                //if lmb is not pressed, highlight only the tile under the mouse
-                else if (((int)mouseCoordinates.X == currentPoint.X) && ((int)mouseCoordinates.Y == currentPoint.Y))
-                    paint = GetBrightenPaint();
-
-                break;
-            }
-            case ToolType.Sample:
-                if (((int)mouseCoordinates.X == currentPoint.X) && ((int)mouseCoordinates.Y == currentPoint.Y))
-                    paint = GetBrightenPaint();
-
-                break;
-            case ToolType.Erase:
-                if (leftButtonPressed)
-                {
-                    //if lmb is pressed, highlight all tiles in the selection rectangle
-                    if (selectionBounds?.Contains(currentPoint) ?? false)
-                        paint = GetBrightenPaint();
-                }
-
-                //if lmb is not pressed, highlight only the tile under the mouse
-                else if (((int)mouseCoordinates.X == currentPoint.X) && ((int)mouseCoordinates.Y == currentPoint.Y))
-                    paint = GetBrightenPaint();
-
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    private void HandleRightForegroundToolHover(
-        Point currentPoint,
-        SKPoint mouseCoordinates,
-        ListSegment2D<TileViewModel> rightForegroundTiles,
-        ref TileViewModel currentFrame,
-        ref SKPaint? paint,
-        bool leftButtonPressed)
-    {
-        if (mouseCoordinates == new SKPoint(-1, -1))
-            return;
-
-        var tileGrab = TileGrab;
-
-        var selectionBounds = tileGrab?.SelectionStart is not null ? tileGrab.Bounds : null;
-
-        var drawBounds = tileGrab is not null
-            ? new ValueRectangle(
-                (int)mouseCoordinates.X,
-                (int)mouseCoordinates.Y,
-                tileGrab.Bounds.Width,
-                tileGrab.Bounds.Height)
-            : new ValueRectangle(
-                -1,
-                -1,
-                0,
-                0);
-
-        switch (MapEditorViewModel.SelectedTool)
-        {
-            case ToolType.Draw:
-            {
-                if (drawBounds.Contains(currentPoint) && tileGrab!.HasRightForegroundTiles)
-                {
-                    var tileGrabX = (int)(currentPoint.X - mouseCoordinates.X);
-                    var tileGrabY = (int)(currentPoint.Y - mouseCoordinates.Y);
-
-                    // if the tilegrab is empty, dont overwrite what's already there
-                    if (rightForegroundTiles[tileGrabX, tileGrabY].TileId == 0)
-                        return;
-
-                    currentFrame = rightForegroundTiles[tileGrabX, tileGrabY];
-                }
-
-                break;
-            }
-            case ToolType.Select:
-            {
-                if (leftButtonPressed)
-                {
-                    //if lmb is pressed, highlight all tiles in the selection rectangle
-                    if (selectionBounds?.Contains(currentPoint) ?? false)
-                        paint = GetBrightenPaint();
-                }
-
-                //if lmb is not pressed, highlight only the tile under the mouse
-                else if (((int)mouseCoordinates.X == currentPoint.X) && ((int)mouseCoordinates.Y == currentPoint.Y))
-                    paint = GetBrightenPaint();
-
-                break;
-            }
-            case ToolType.Sample:
-                if (((int)mouseCoordinates.X == currentPoint.X) && ((int)mouseCoordinates.Y == currentPoint.Y))
-                    paint = GetBrightenPaint();
-
-                break;
-            case ToolType.Erase:
-                if (leftButtonPressed)
-                {
-                    //if lmb is pressed, highlight all tiles in the selection rectangle
-                    if (selectionBounds?.Contains(currentPoint) ?? false)
-                        paint = GetBrightenPaint();
-                }
-
-                //if lmb is not pressed, highlight only the tile under the mouse
-                else if (((int)mouseCoordinates.X == currentPoint.X) && ((int)mouseCoordinates.Y == currentPoint.Y))
-                    paint = GetBrightenPaint();
-
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
     #endregion
 
     #region Property Changed
@@ -1345,6 +1308,14 @@ public partial class MapViewerControl : IDisposable
         if (string.IsNullOrEmpty(e.PropertyName))
             return;
 
+        //when the map dimensions change, recreate the chunk manager before any render
+        if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.Bounds)))
+        {
+            RecreateChunkManager();
+
+            return;
+        }
+
         // Calculate mouse state once for all renders
         var mousePoint = Element.GetMousePoint();
         var leftButtonPressed = Mouse.LeftButton == MouseButtonState.Pressed;
@@ -1353,140 +1324,94 @@ public partial class MapViewerControl : IDisposable
         //update shared state so background render loops always use the latest coordinates
         LatestMapPoint = mapPoint;
         LatestLeftButtonPressed = leftButtonPressed;
+        LatestViewRect = GetCurrentViewRect();
 
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.BackgroundChangePending)) && ViewModel.BackgroundChangePending)
-            QueueBackgroundRender();
+            QueueLayerRender(
+                BackgroundRenderState,
+                () => ViewModel.BackgroundChangePending = false,
+                viewRect => ChunkMgr!.GetDirtyVisibleBackgroundChunks(viewRect),
+                chunk => chunk.BackgroundDirty = false,
+                RenderBackgroundChunk);
 
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.ForegroundChangePending)) && ViewModel.ForegroundChangePending)
-            QueueForegroundRender();
+            QueueLayerRender(
+                ForegroundRenderState,
+                () => ViewModel.ForegroundChangePending = false,
+                viewRect => ChunkMgr!.GetDirtyVisibleForegroundChunks(viewRect),
+                chunk => chunk.ForegroundDirty = false,
+                RenderForegroundChunk);
 
         if (e.PropertyName.EqualsI(nameof(MapViewerViewModel.TabMapChangePending)) && ViewModel.TabMapChangePending)
-            QueueTabMapRender();
+            QueueLayerRender(
+                TabMapRenderState,
+                () => ViewModel.TabMapChangePending = false,
+                viewRect => ChunkMgr!.GetDirtyVisibleTabMapChunks(viewRect),
+                chunk => chunk.TabMapDirty = false,
+                RenderTabMapChunk);
     }
 
-    private void QueueBackgroundRender()
+    private void RecreateChunkManager()
     {
-        var now = DateTime.UtcNow;
+        ChunkMgr?.Dispose();
+        ChunkMgr = null;
+        ViewModel.ChunkMgr = null;
 
-        LastRequestedBackgroundRenderTime = now;
+        if ((ViewModel.Bounds.Width <= 0) || (ViewModel.Bounds.Height <= 0))
+            return;
+
+        ChunkMgr = new ChunkManager(ViewModel.Bounds.Width, ViewModel.Bounds.Height);
+        ViewModel.ChunkMgr = ChunkMgr;
+        ChunkMgr.MarkAllDirty(LayerFlags.All);
+
+        //unsubscribe during refresh to prevent premature render queueing
+        //(Refresh triggers ObservingCollection.CollectionChanged which sets pending flags)
+        ViewModel.PropertyChanged -= ViewModelOnPropertyChanged;
+
+        ViewModel.Refresh();
+
+        //clear pending flags that Refresh() set via ObservingCollection.CollectionChanged
+        //so that the explicit sets below actually fire PropertyChanged
         ViewModel.BackgroundChangePending = false;
-
-        if (BackgroundRenderTask is { IsCompleted: false })
-            return;
-
-        //capture view rect on UI thread
-        var viewRect = GetCurrentViewRect();
-
-        BackgroundRenderTask = Task.Run(() =>
-        {
-            if (ChunkMgr is null)
-                return;
-
-            while (LastRequestedBackgroundRenderTime > LastBackgroundRenderTime)
-            {
-                LastBackgroundRenderTime = DateTime.UtcNow;
-
-                //read latest mouse state so hover preview stays current
-                var mapPoint = LatestMapPoint;
-                var leftButtonPressed = LatestLeftButtonPressed;
-
-                var dirtyVisible = ChunkMgr.GetDirtyVisibleBackgroundChunks(viewRect);
-
-                //if nothing is dirty but a render was requested, re-render all visible chunks
-                //this handles external triggers (layer toggles, undo/redo) that don't mark chunks
-                if (dirtyVisible.Count == 0)
-                    dirtyVisible = ChunkMgr.GetVisibleChunks(viewRect);
-
-                //clear all dirty flags upfront so new flags set during rendering survive
-                foreach (var chunk in dirtyVisible)
-                    chunk.BackgroundDirty = false;
-
-                foreach (var chunk in dirtyVisible)
-                    RenderBackgroundChunk(chunk, mapPoint, leftButtonPressed);
-            }
-
-            Dispatcher.BeginInvoke(() =>
-            {
-                Element.Redraw();
-            });
-        });
-    }
-
-    private void QueueForegroundRender()
-    {
-        var now = DateTime.UtcNow;
-
-        LastRequestedForegroundRenderTime = now;
         ViewModel.ForegroundChangePending = false;
-
-        if (ForegroundRenderTask is { IsCompleted: false })
-            return;
-
-        //capture view rect on UI thread
-        var viewRect = GetCurrentViewRect();
-
-        ForegroundRenderTask = Task.Run(() =>
-        {
-            if (ChunkMgr is null)
-                return;
-
-            while (LastRequestedForegroundRenderTime > LastForegroundRenderTime)
-            {
-                LastForegroundRenderTime = DateTime.UtcNow;
-
-                //read latest mouse state so hover preview stays current
-                var mapPoint = LatestMapPoint;
-                var leftButtonPressed = LatestLeftButtonPressed;
-
-                var dirtyVisible = ChunkMgr.GetDirtyVisibleForegroundChunks(viewRect);
-
-                //if nothing is dirty but a render was requested, re-render all visible chunks
-                //this handles external triggers (layer toggles, undo/redo) that don't mark chunks
-                if (dirtyVisible.Count == 0)
-                    dirtyVisible = ChunkMgr.GetVisibleChunks(viewRect);
-
-                //clear all dirty flags upfront so new flags set during rendering survive
-                foreach (var chunk in dirtyVisible)
-                    chunk.ForegroundDirty = false;
-
-                foreach (var chunk in dirtyVisible)
-                    RenderForegroundChunk(chunk, mapPoint, leftButtonPressed);
-            }
-
-            Dispatcher.BeginInvoke(() =>
-            {
-                Element.Redraw();
-            });
-        });
-    }
-
-    private void QueueTabMapRender()
-    {
-        var now = DateTime.UtcNow;
-
-        LastRequestedTabMapRenderTime = now;
         ViewModel.TabMapChangePending = false;
 
-        if (TabMapRenderTask is { IsCompleted: false })
+        //re-subscribe, then trigger renders with all tiles fully initialized
+        ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
+
+        ViewModel.BackgroundChangePending = true;
+        ViewModel.ForegroundChangePending = true;
+        ViewModel.TabMapChangePending = true;
+    }
+
+    private void QueueLayerRender(
+        LayerRenderState state,
+        Action clearPending,
+        Func<SKRect, List<MapChunk>> getDirtyVisibleChunks,
+        Action<MapChunk> clearDirtyFlag,
+        Action<MapChunk, SKPoint, bool> renderChunk)
+    {
+        state.LastRequestedTime = DateTime.UtcNow;
+        clearPending();
+
+        if (state.RenderTask is { IsCompleted: false })
             return;
 
-        //capture view rect on UI thread
-        var viewRect = GetCurrentViewRect();
-
-        TabMapRenderTask = Task.Run(() =>
+        state.RenderTask = Task.Run(() =>
         {
             if (ChunkMgr is null)
                 return;
 
-            while (LastRequestedTabMapRenderTime > LastTabMapRenderTime)
+            while (state.LastRequestedTime > state.LastRenderTime)
             {
-                LastTabMapRenderTime = DateTime.UtcNow;
+                state.LastRenderTime = DateTime.UtcNow;
 
-                //read latest mouse state so hover preview stays current
+                //read latest state so renders target the current viewport and hover position
+                var viewRect = LatestViewRect;
                 var mapPoint = LatestMapPoint;
                 var leftButtonPressed = LatestLeftButtonPressed;
 
-                var dirtyVisible = ChunkMgr.GetDirtyVisibleTabMapChunks(viewRect);
+                var dirtyVisible = getDirtyVisibleChunks(viewRect);
 
                 //if nothing is dirty but a render was requested, re-render all visible chunks
                 //this handles external triggers (layer toggles, undo/redo) that don't mark chunks
@@ -1495,10 +1420,10 @@ public partial class MapViewerControl : IDisposable
 
                 //clear all dirty flags upfront so new flags set during rendering survive
                 foreach (var chunk in dirtyVisible)
-                    chunk.TabMapDirty = false;
+                    clearDirtyFlag(chunk);
 
                 foreach (var chunk in dirtyVisible)
-                    RenderTabMapChunk(chunk, mapPoint, leftButtonPressed);
+                    renderChunk(chunk, mapPoint, leftButtonPressed);
             }
 
             Dispatcher.BeginInvoke(() =>
@@ -1575,4 +1500,11 @@ public partial class MapViewerControl : IDisposable
         ViewModel.TabMapChangePending = true;
     }
     #endregion
+
+    private sealed class LayerRenderState
+    {
+        public DateTime LastRenderTime = DateTime.MinValue;
+        public DateTime LastRequestedTime = DateTime.MinValue;
+        public Task? RenderTask;
+    }
 }

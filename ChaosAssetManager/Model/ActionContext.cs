@@ -1,5 +1,4 @@
-﻿using ChaosAssetManager.Controls;
-using ChaosAssetManager.Definitions;
+﻿using ChaosAssetManager.Definitions;
 using ChaosAssetManager.ViewModel;
 using SkiaSharp;
 
@@ -13,20 +12,20 @@ public sealed class ActionContext
     public required LayerFlags LayerFlags { get; init; }
     public required SKPoint TileCoordinates { get; init; }
 
-    public void Redo(MapViewerViewModel viewModel)
+    public void Redo(MapViewerViewModel viewModel, MapEditorViewModel editorViewModel)
     {
         switch (ActionType)
         {
             case ActionType.Draw:
             {
-                MapEditorControl.Instance.ViewModel.TileGrab = After;
+                editorViewModel.TileGrab = After;
                 After.Apply(viewModel, LayerFlags, TileCoordinates);
 
                 break;
             }
             case ActionType.Erase:
             {
-                MapEditorControl.Instance.ViewModel.TileGrab = After;
+                editorViewModel.TileGrab = After;
                 After.Erase(viewModel, LayerFlags);
 
                 break;
@@ -36,10 +35,10 @@ public sealed class ActionContext
         }
     }
 
-    public void Undo(MapViewerViewModel viewModel)
+    public void Undo(MapViewerViewModel viewModel, MapEditorViewModel editorViewModel)
     {
-        MapEditorControl.Instance.ViewModel.TileGrab = Before;
+        editorViewModel.TileGrab = Before;
         Before.Apply(viewModel, LayerFlags, TileCoordinates, true);
-        MapEditorControl.Instance.ViewModel.TileGrab = After;
+        editorViewModel.TileGrab = After;
     }
 }

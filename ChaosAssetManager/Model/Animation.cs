@@ -18,7 +18,7 @@ public sealed class Animation : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        foreach (var frame in Frames.ToList())
+        foreach (var frame in Frames)
             frame.Dispose();
 
         Frames.Clear();

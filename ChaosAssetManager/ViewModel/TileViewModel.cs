@@ -1,8 +1,5 @@
-﻿using Chaos.Common.Utilities;
-using Chaos.Time;
 using Chaos.Time.Abstractions;
 using Chaos.Wpf.Abstractions;
-using ChaosAssetManager.Controls;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
@@ -12,8 +9,8 @@ namespace ChaosAssetManager.ViewModel;
 
 public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 {
-    private static readonly DateTime Origin = DateTime.FromOADate(50);
-    private readonly Lock Sync = new();
+    private static TimeSpan GlobalElapsed;
+    public static bool SnowTileset { get; set; }
     private int _currentFrameIndex;
 
     public Animation? Animation
@@ -32,7 +29,12 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
     //does not raise PropertyChanged to avoid triggering ObservingCollection.CollectionChanged
     public bool FrameChanged { get; set; }
 
-    public IIntervalTimer? FrameTimer { get; set; }
+    /// <summary>
+    ///     Optional callback invoked when the animation frame advances. Used by picker/preview controls
+    ///     that need to invalidate without going through PropertyChanged (which would trigger
+    ///     ObservingCollection.CollectionChanged on map tiles)
+    /// </summary>
+    public Action? OnFrameAdvanced { get; set; }
 
     public required LayerFlags LayerFlags
     {
@@ -96,54 +98,48 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
 
     public SKImage? CurrentFrame => Animation?.Frames[CurrentFrameIndex];
 
+    /// <summary>
+    ///     Advances the shared global animation clock. Call once per frame before updating tiles
+    /// </summary>
+    public static void AdvanceGlobalClock(TimeSpan delta) => GlobalElapsed += delta;
+
     public void Update(TimeSpan delta)
     {
-        using var @lock = Sync.EnterScope();
-
-        if (Animation is null || FrameTimer is null)
+        if (Animation is null || Animation.Frames.Count <= 1 || Animation.FrameIntervalMs <= 0)
             return;
 
-        FrameTimer.Update(delta);
+        var newIndex = (int)(GlobalElapsed.TotalMilliseconds / Animation.FrameIntervalMs) % Animation.Frames.Count;
 
-        if (FrameTimer.IntervalElapsed)
-        {
-            //directly set the backing field to avoid PropertyChanged / ObservingCollection churn
-            _currentFrameIndex = (_currentFrameIndex + 1) % Animation.Frames.Count;
-            FrameChanged = true;
-        }
+        if (newIndex == _currentFrameIndex)
+            return;
+
+        _currentFrameIndex = newIndex;
+        FrameChanged = true;
+        OnFrameAdvanced?.Invoke();
     }
 
     public TileViewModel Clone()
-    {
-        using var @lock = Sync.EnterScope();
-
-        var vm = new TileViewModel
+        => new()
         {
             LayerFlags = LayerFlags,
             TileId = TileId,
-            FrameTimer = FrameTimer is not null ? DeepClone.CreateRequired(FrameTimer) : null,
             CurrentFrameIndex = CurrentFrameIndex
         };
-
-        return vm;
-    }
 
     public void Initialize()
     {
         Animation = LayerFlags == LayerFlags.Background
-            ? MapEditorRenderUtil.RenderAnimatedBackground(TileId, MapEditorControl.Instance.ViewModel.SnowTileset)
-            : MapEditorRenderUtil.RenderAnimatedForeground(TileId, MapEditorControl.Instance.ViewModel.SnowTileset);
+            ? MapEditorRenderUtil.RenderAnimatedBackground(TileId, SnowTileset)
+            : MapEditorRenderUtil.RenderAnimatedForeground(TileId, SnowTileset);
 
         if (Animation is null)
             return;
 
-        //only create a timer for multi-frame animations
-        //single-frame tiles don't need to tick and would just waste CPU marking dirty
-        if (FrameTimer is null && Animation.Frames.Count > 1)
-        {
-            FrameTimer = new IntervalTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs), false);
-            FrameTimer.SetOrigin(Origin);
-        }
+        //derive initial frame index from global clock so new tiles are immediately in sync
+        if (Animation.Frames.Count > 1 && Animation.FrameIntervalMs > 0)
+            _currentFrameIndex = (int)(GlobalElapsed.TotalMilliseconds / Animation.FrameIntervalMs) % Animation.Frames.Count;
+        else
+            _currentFrameIndex = 0;
 
         OnPropertyChanged(nameof(CurrentFrameIndex));
     }

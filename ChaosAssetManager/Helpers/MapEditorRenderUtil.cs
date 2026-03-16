@@ -6,15 +6,41 @@ using DALib.Utility;
 using SkiaSharp;
 using Graphics = DALib.Drawing.Graphics;
 using Point = Chaos.Geometry.Point;
+using DALIB_CONSTANTS = DALib.Definitions.CONSTANTS;
 
 namespace ChaosAssetManager.Helpers;
 
 public static class MapEditorRenderUtil
 {
+    public const int FOREGROUND_PADDING = 512;
+
     private static readonly Lock Sync = new();
     private static readonly MapImageCache SnowMapImageCache = new();
     private static MapImageCache MapImageCache = new();
     private static SKImage? TabWallImage;
+
+    /// <summary>
+    ///     Calculates the isometric pixel position for a tile at the given coordinates
+    /// </summary>
+    public static (int drawX, int drawY) GetTileDrawPosition(int x, int y, int mapHeight)
+        => ((mapHeight - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH,
+            FOREGROUND_PADDING + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT);
+
+    /// <summary>
+    ///     Gets the current animation frame based on elapsed time
+    /// </summary>
+    public static SKImage? GetAnimationFrame(Animation? animation, TimeSpan elapsed)
+    {
+        if (animation is null)
+            return null;
+
+        if (animation.Frames.Count <= 1 || animation.FrameIntervalMs <= 0)
+            return animation.Frames[0];
+
+        var index = (int)(elapsed.TotalMilliseconds / animation.FrameIntervalMs) % animation.Frames.Count;
+
+        return animation.Frames[index];
+    }
 
     public static void Clear()
     {
@@ -190,9 +216,7 @@ public static class MapEditorRenderUtil
 
                                                  var palette = paletteLookup.GetPaletteForId(localIndex + 1);
 
-                                                 var transparent = IsTransparent(localIndex);
-
-                                                 return Graphics.RenderImage(hpfFile, palette, transparency: transparent);
+                                                 return Graphics.RenderImage(hpfFile, palette);
                                              }))
 
                                          // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract

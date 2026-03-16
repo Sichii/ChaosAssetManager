@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using Chaos.Wpf.Abstractions;
 using Chaos.Wpf.Collections.ObjectModel;
-using ChaosAssetManager.Controls;
 using ChaosAssetManager.Definitions;
 using ChaosAssetManager.Model;
 using SkiaSharp;
@@ -56,7 +55,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set
         {
             SetField(ref field, value);
-            MapEditorControl.Instance.ViewModel.CurrentMapViewer.BackgroundChangePending = true;
+            CurrentMapViewer.BackgroundChangePending = true;
         }
     } = true;
 
@@ -67,7 +66,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set
         {
             SetField(ref field, value);
-            MapEditorControl.Instance.ViewModel.CurrentMapViewer.TabMapChangePending = true;
+            CurrentMapViewer.TabMapChangePending = true;
         }
     } = false;
 
@@ -78,7 +77,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set
         {
             SetField(ref field, value);
-            MapEditorControl.Instance.ViewModel.CurrentMapViewer.TabMapChangePending = true;
+            CurrentMapViewer.TabMapChangePending = true;
         }
     } = false;
 
@@ -89,7 +88,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set
         {
             SetField(ref field, value);
-            MapEditorControl.Instance.ViewModel.CurrentMapViewer.ForegroundChangePending = true;
+            CurrentMapViewer.ForegroundChangePending = true;
         }
     } = true;
 
@@ -100,7 +99,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set
         {
             SetField(ref field, value);
-            MapEditorControl.Instance.ViewModel.CurrentMapViewer.ForegroundChangePending = true;
+            CurrentMapViewer.ForegroundChangePending = true;
         }
     } = true;
 
@@ -111,7 +110,7 @@ public class MapEditorViewModel : NotifyPropertyChangedBase
         set
         {
             SetField(ref field, value);
-            MapEditorControl.Instance.ViewModel.CurrentMapViewer.TabMapChangePending = true;
+            CurrentMapViewer.TabMapChangePending = true;
         }
     } = false;
 

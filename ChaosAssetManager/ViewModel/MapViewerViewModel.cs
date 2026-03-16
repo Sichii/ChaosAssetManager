@@ -105,6 +105,8 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
     public ObservingCollection<TileViewModel> RawBackgroundTiles { get; } = [];
     public ObservingCollection<TileViewModel> RawLeftForegroundTiles { get; } = [];
     public ObservableCollection<TileViewModel> RawRightForegroundTiles { get; } = [];
+    private List<(TileViewModel Tile, int Index, LayerFlags Layer)> AnimatedTiles { get; set; } = [];
+
     public FixedSizeDeque<ActionContext> RedoableActions { get; } = new(100);
 
     public FixedSizeDeque<ActionContext> UndoableActions { get; } = new(100);
@@ -142,64 +144,26 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         var bgDirtied = false;
         var fgDirtied = false;
 
-        for (var i = 0; i < RawBackgroundTiles.Count; i++)
+        foreach (var (tile, index, layer) in AnimatedTiles)
         {
-            var tile = RawBackgroundTiles[i];
             tile.Update(delta);
 
-            if (tile.FrameChanged)
+            if (!tile.FrameChanged)
+                continue;
+
+            tile.FrameChanged = false;
+
+            if (ChunkMgr is not null)
             {
-                tile.FrameChanged = false;
+                var x = index % Bounds.Width;
+                var y = index / Bounds.Width;
+                ChunkMgr.MarkDirty(x, y, layer);
+            }
 
-                if (ChunkMgr is not null)
-                {
-                    var x = i % Bounds.Width;
-                    var y = i / Bounds.Width;
-                    ChunkMgr.MarkDirty(x, y, LayerFlags.Background);
-                }
-
+            if (layer == LayerFlags.Background)
                 bgDirtied = true;
-            }
-        }
-
-        for (var i = 0; i < RawLeftForegroundTiles.Count; i++)
-        {
-            var tile = RawLeftForegroundTiles[i];
-            tile.Update(delta);
-
-            if (tile.FrameChanged)
-            {
-                tile.FrameChanged = false;
-
-                if (ChunkMgr is not null)
-                {
-                    var x = i % Bounds.Width;
-                    var y = i / Bounds.Width;
-                    ChunkMgr.MarkDirty(x, y, LayerFlags.LeftForeground);
-                }
-
+            else
                 fgDirtied = true;
-            }
-        }
-
-        for (var i = 0; i < RawRightForegroundTiles.Count; i++)
-        {
-            var tile = RawRightForegroundTiles[i];
-            tile.Update(delta);
-
-            if (tile.FrameChanged)
-            {
-                tile.FrameChanged = false;
-
-                if (ChunkMgr is not null)
-                {
-                    var x = i % Bounds.Width;
-                    var y = i / Bounds.Width;
-                    ChunkMgr.MarkDirty(x, y, LayerFlags.RightForeground);
-                }
-
-                fgDirtied = true;
-            }
         }
 
         if (bgDirtied)
@@ -207,6 +171,27 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
         if (fgDirtied)
             ForegroundChangePending = true;
+    }
+
+    public void RebuildAnimatedTileList()
+    {
+        var list = new List<(TileViewModel, int, LayerFlags)>();
+
+        CollectAnimatedTiles(list, RawBackgroundTiles, LayerFlags.Background);
+        CollectAnimatedTiles(list, RawLeftForegroundTiles, LayerFlags.LeftForeground);
+        CollectAnimatedTiles(list, RawRightForegroundTiles, LayerFlags.RightForeground);
+
+        AnimatedTiles = list;
+    }
+
+    private static void CollectAnimatedTiles(
+        List<(TileViewModel, int, LayerFlags)> list,
+        IReadOnlyList<TileViewModel> tiles,
+        LayerFlags layer)
+    {
+        for (var i = 0; i < tiles.Count; i++)
+            if (tiles[i].Animation is { Frames.Count: > 1 })
+                list.Add((tiles[i], i, layer));
     }
 
     public void AddAction(
@@ -240,17 +225,19 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
         foreach (var tile in RawRightForegroundTiles)
             tile.Initialize();
 
+        RebuildAnimatedTileList();
+
         BackgroundChangePending = false;
         ForegroundChangePending = false;
     }
 
-    public void RedoAction()
+    public void RedoAction(MapEditorViewModel editorViewModel)
     {
         if (RedoableActions.Count == 0)
             return;
 
         var action = RedoableActions.PopNewest();
-        action.Redo(this);
+        action.Redo(this, editorViewModel);
         UndoableActions.AddNewest(action);
     }
 
@@ -264,15 +251,17 @@ public sealed class MapViewerViewModel : NotifyPropertyChangedBase, IDeltaUpdata
 
         foreach (var tile in RawRightForegroundTiles)
             tile.Refresh();
+
+        RebuildAnimatedTileList();
     }
 
-    public void UndoAction()
+    public void UndoAction(MapEditorViewModel editorViewModel)
     {
         if (UndoableActions.Count == 0)
             return;
 
         var action = UndoableActions.PopNewest();
-        action.Undo(this);
+        action.Undo(this, editorViewModel);
         RedoableActions.AddNewest(action);
     }
 }

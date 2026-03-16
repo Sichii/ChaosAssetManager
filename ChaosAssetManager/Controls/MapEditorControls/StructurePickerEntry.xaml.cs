@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using ChaosAssetManager.Helpers;
@@ -149,6 +150,14 @@ public partial class StructurePickerEntry
 
     private void StructurePickerEntryControl_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        if (e.OldValue is StructureViewModel oldStructureVm)
+        {
+            oldStructureVm.PropertyChanged -= StructureViewModel_OnPropertyChanged;
+
+            foreach (var tile in oldStructureVm.RawBackgroundTiles.Concat(oldStructureVm.RawLeftForegroundTiles).Concat(oldStructureVm.RawRightForegroundTiles))
+                tile.OnFrameAdvanced = null;
+        }
+
         if (ViewModel is null)
         {
             Element.InvalidateVisual();
@@ -156,10 +165,11 @@ public partial class StructurePickerEntry
             return;
         }
 
-        if (e.OldValue is TileGrabViewModel oldTileViewModel)
-            oldTileViewModel.PropertyChanged -= StructureViewModel_OnPropertyChanged;
-
         ViewModel.PropertyChanged += StructureViewModel_OnPropertyChanged;
+
+        foreach (var tile in ViewModel.RawBackgroundTiles.Concat(ViewModel.RawLeftForegroundTiles).Concat(ViewModel.RawRightForegroundTiles))
+            tile.OnFrameAdvanced = () => Element.InvalidateVisual();
+
         ViewModel.Initialize();
 
         //calculate the size of the image

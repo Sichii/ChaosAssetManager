@@ -52,6 +52,11 @@ public partial class HeaViewerControl : IDisposable
 
     private bool IsDrawing;
     private int[,]? LfgTileIds;
+    private readonly System.Diagnostics.Stopwatch MapAnimationStopwatch = System.Diagnostics.Stopwatch.StartNew();
+    private readonly HashSet<(int cx, int cy)> AnimatedBgChunks = [];
+    private readonly HashSet<(int cx, int cy)> AnimatedFgChunks = [];
+    private System.Windows.Threading.DispatcherTimer? MapAnimationTimer;
+    private SKRect LatestMapViewRect;
     private Task? MapBackgroundRenderTask;
     private ChunkManager? MapChunkManager;
     private Task? MapForegroundRenderTask;
@@ -81,6 +86,9 @@ public partial class HeaViewerControl : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        MapAnimationTimer?.Stop();
+        MapAnimationTimer = null;
+
         DisposeSkElement();
 
         //drain pending gpu texture disposals
@@ -166,6 +174,7 @@ public partial class HeaViewerControl : IDisposable
                     var mapCenterY = (TileW + TileH) * DALIB_CONSTANTS.HALF_TILE_HEIGHT / 2f;
 
                     SkElement.Matrix = SKMatrix.CreateTranslation(viewW / 2f - mapCenterX, viewH / 2f - mapCenterY);
+                    Focus();
                     Redraw();
                 });
 
@@ -304,18 +313,10 @@ public partial class HeaViewerControl : IDisposable
     private SKRect GetCurrentViewRect()
     {
         if (SkElement is null || (SkElement.ActualWidth == 0) || (SkElement.ActualHeight == 0))
-            return SKRect.Create(
-                -100000,
-                -100000,
-                200000,
-                200000);
+            return SKRect.Empty;
 
         if (!SkElement.Matrix.TryInvert(out var inverted))
-            return SKRect.Create(
-                -100000,
-                -100000,
-                200000,
-                200000);
+            return SKRect.Empty;
 
         var dpiScale = (float)DpiHelper.GetDpiScaleFactor();
         var topLeft = inverted.MapPoint(new SKPoint(0, 0));
@@ -354,6 +355,8 @@ public partial class HeaViewerControl : IDisposable
         //dispose old map chunk manager
         MapChunkManager?.Dispose();
         MapChunkManager = null;
+        AnimatedBgChunks.Clear();
+        AnimatedFgChunks.Clear();
         BgTileIds = null;
         LfgTileIds = null;
         RfgTileIds = null;
@@ -376,7 +379,12 @@ public partial class HeaViewerControl : IDisposable
             for (var y = 0; y < height; y++)
                 for (var x = 0; x < width; x++)
                 {
-                    BgTileIds[x, y] = map.Tiles[x, y].Background;
+                    var bgId = map.Tiles[x, y].Background;
+
+                    if (bgId > 0)
+                        bgId--;
+
+                    BgTileIds[x, y] = bgId;
                     LfgTileIds[x, y] = map.Tiles[x, y].LeftForeground;
                     RfgTileIds[x, y] = map.Tiles[x, y].RightForeground;
                 }
@@ -385,8 +393,56 @@ public partial class HeaViewerControl : IDisposable
             MapChunkManager = new ChunkManager(width, height);
             MapChunkManager.MarkAllDirty(LayerFlags.All);
 
+            //initialize viewport rect; OnPaint will update it once layout is ready,
+            //but the first render needs a valid rect to determine visible chunks
+            var viewRect = GetCurrentViewRect();
+
+            LatestMapViewRect = new SKRect(
+                viewRect.Left,
+                viewRect.Top + MapViewerControl.FOREGROUND_PADDING,
+                viewRect.Right,
+                viewRect.Bottom + MapViewerControl.FOREGROUND_PADDING);
+
             QueueMapBackgroundRender();
             QueueMapForegroundRender();
+
+            //start animation timer for map tile animations
+            MapAnimationTimer?.Stop();
+
+            MapAnimationTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(200)
+            };
+
+            MapAnimationTimer.Tick += (_, _) =>
+            {
+                if (MapChunkManager is null)
+                    return;
+
+                //only re-render chunks that actually contain animated tiles
+                var hasBgWork = false;
+                var hasFgWork = false;
+
+                foreach (var (cx, cy) in AnimatedBgChunks)
+                {
+                    MapChunkManager.Chunks[cx, cy].BackgroundDirty = true;
+                    hasBgWork = true;
+                }
+
+                foreach (var (cx, cy) in AnimatedFgChunks)
+                {
+                    MapChunkManager.Chunks[cx, cy].ForegroundDirty = true;
+                    hasFgWork = true;
+                }
+
+                if (hasBgWork)
+                    QueueMapBackgroundRender();
+
+                if (hasFgWork)
+                    QueueMapForegroundRender();
+            };
+
+            MapAnimationTimer.Start();
         } catch
         {
             //ignored - map background is optional
@@ -517,7 +573,41 @@ public partial class HeaViewerControl : IDisposable
         if (MapChunkManager is not null)
         {
             var viewRect = GetCurrentViewRect();
-            var visibleMapChunks = MapChunkManager.GetVisibleChunks(viewRect);
+
+            //shift viewport into chunk coordinate space: chunks include FOREGROUND_PADDING
+            //in their pixel bounds, but the HeaEditor draws them offset by -FOREGROUND_PADDING
+            var chunkViewRect = new SKRect(
+                viewRect.Left,
+                viewRect.Top + MapViewerControl.FOREGROUND_PADDING,
+                viewRect.Right,
+                viewRect.Bottom + MapViewerControl.FOREGROUND_PADDING);
+
+            var visibleMapChunks = MapChunkManager.GetVisibleChunks(chunkViewRect);
+
+            //only check for dirty chunks when viewport has changed (pan/zoom/initial load)
+            //avoids re-triggering renders on every paint (render→redraw→paint cycle)
+            if (chunkViewRect != LatestMapViewRect)
+            {
+                LatestMapViewRect = chunkViewRect;
+
+                var needsBgRender = false;
+                var needsFgRender = false;
+
+                foreach (var chunk in visibleMapChunks)
+                {
+                    if (chunk.BackgroundDirty)
+                        needsBgRender = true;
+
+                    if (chunk.ForegroundDirty)
+                        needsFgRender = true;
+                }
+
+                if (needsBgRender)
+                    QueueMapBackgroundRender();
+
+                if (needsFgRender)
+                    QueueMapForegroundRender();
+            }
 
             //promote raster-backed map chunk images to gpu textures
             if (grContext is not null)
@@ -544,6 +634,18 @@ public partial class HeaViewerControl : IDisposable
                         chunk.ForegroundPixelBounds.Left,
                         chunk.ForegroundPixelBounds.Top - MapViewerControl.FOREGROUND_PADDING,
                         paint);
+
+            //screen-blend foreground (transparent tiles drawn with Screen blend mode)
+            using var screenBlendPaint = new SKPaint();
+            screenBlendPaint.BlendMode = SKBlendMode.Screen;
+
+            foreach (var chunk in visibleMapChunks)
+                if (chunk.ScreenBlendForegroundImage is not null)
+                    canvas.DrawImage(
+                        chunk.ScreenBlendForegroundImage,
+                        chunk.ForegroundPixelBounds.Left,
+                        chunk.ForegroundPixelBounds.Top - MapViewerControl.FOREGROUND_PADDING,
+                        screenBlendPaint);
         }
 
         //temporarily stamp the brush into the light grid and rebuild affected
@@ -630,6 +732,12 @@ public partial class HeaViewerControl : IDisposable
             chunk.ForegroundImage = rasterFg.ToTextureImage(grContext);
             rasterFg.Dispose();
         }
+
+        if (chunk.ScreenBlendForegroundImage is { IsTextureBacked: false } rasterScreenBlend)
+        {
+            chunk.ScreenBlendForegroundImage = rasterScreenBlend.ToTextureImage(grContext);
+            rasterScreenBlend.Dispose();
+        }
     }
 
     private void QueueMapBackgroundRender()
@@ -642,17 +750,13 @@ public partial class HeaViewerControl : IDisposable
             if (MapChunkManager is null || BgTileIds is null)
                 return;
 
-            for (var cy = 0; cy < MapChunkManager.ChunksHigh; cy++)
-                for (var cx = 0; cx < MapChunkManager.ChunksWide; cx++)
-                {
-                    var chunk = MapChunkManager.Chunks[cx, cy];
+            var dirtyVisible = MapChunkManager.GetDirtyVisibleBackgroundChunks(LatestMapViewRect);
 
-                    if (!chunk.BackgroundDirty)
-                        continue;
+            foreach (var chunk in dirtyVisible)
+                chunk.BackgroundDirty = false;
 
-                    chunk.BackgroundDirty = false;
-                    RenderMapBackgroundChunk(chunk);
-                }
+            foreach (var chunk in dirtyVisible)
+                RenderMapBackgroundChunk(chunk);
 
             Dispatcher.BeginInvoke(Redraw);
         });
@@ -668,17 +772,13 @@ public partial class HeaViewerControl : IDisposable
             if (MapChunkManager is null || LfgTileIds is null || RfgTileIds is null)
                 return;
 
-            for (var cy = 0; cy < MapChunkManager.ChunksHigh; cy++)
-                for (var cx = 0; cx < MapChunkManager.ChunksWide; cx++)
-                {
-                    var chunk = MapChunkManager.Chunks[cx, cy];
+            var dirtyVisible = MapChunkManager.GetDirtyVisibleForegroundChunks(LatestMapViewRect);
 
-                    if (!chunk.ForegroundDirty)
-                        continue;
+            foreach (var chunk in dirtyVisible)
+                chunk.ForegroundDirty = false;
 
-                    chunk.ForegroundDirty = false;
-                    RenderMapForegroundChunk(chunk);
-                }
+            foreach (var chunk in dirtyVisible)
+                RenderMapForegroundChunk(chunk);
 
             Dispatcher.BeginInvoke(Redraw);
         });
@@ -788,34 +888,35 @@ public partial class HeaViewerControl : IDisposable
         using var bitmap = new SKBitmap(new SKImageInfo(bitmapWidth, bitmapHeight));
         using var canvas = new SKCanvas(bitmap);
 
+        var elapsed = MapAnimationStopwatch.Elapsed;
+
         //offset so tiles draw at local chunk coords
         canvas.Translate(-chunkBounds.Left, -chunkBounds.Top);
+
+        var hasAnimatedTiles = false;
 
         for (var y = chunk.TileBounds.Top; y <= chunk.TileBounds.Bottom; y++)
         {
             for (var x = chunk.TileBounds.Left; x <= chunk.TileBounds.Right; x++)
             {
                 var tileId = BgTileIds![x, y];
-
-                if (tileId > 0)
-                    tileId--;
-
                 var animation = MapEditorRenderUtil.RenderAnimatedBackground(tileId);
+                var frame = MapEditorRenderUtil.GetAnimationFrame(animation, elapsed);
 
-                if (animation is null)
+                if (frame is null)
                     continue;
 
-                var frame = animation.Frames[0];
+                if (animation!.Frames.Count > 1)
+                    hasAnimatedTiles = true;
 
-                var drawX = (MapTileHeight - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-
-                var drawY = MapViewerControl.FOREGROUND_PADDING
-                            + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT
-                            + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                var (drawX, drawY) = MapEditorRenderUtil.GetTileDrawPosition(x, y, MapTileHeight);
 
                 canvas.DrawImage(frame, drawX, drawY);
             }
         }
+
+        if (hasAnimatedTiles)
+            AnimatedBgChunks.Add((chunk.ChunkX, chunk.ChunkY));
 
         SKImage? oldImage;
         var image = SKImage.FromBitmap(bitmap);
@@ -842,6 +943,13 @@ public partial class HeaViewerControl : IDisposable
         using var bitmap = new SKBitmap(new SKImageInfo(bitmapWidth, bitmapHeight));
         using var canvas = new SKCanvas(bitmap);
 
+        SKBitmap? screenBlendBitmap = null;
+        SKCanvas? screenBlendCanvas = null;
+        var hasScreenBlendTiles = false;
+        var hasAnimatedTiles = false;
+
+        var elapsed = MapAnimationStopwatch.Elapsed;
+
         canvas.Translate(-fgBounds.Left, -fgBounds.Top);
 
         for (var y = chunk.TileBounds.Top; y <= chunk.TileBounds.Bottom; y++)
@@ -851,55 +959,89 @@ public partial class HeaViewerControl : IDisposable
                 var lfgId = LfgTileIds![x, y];
                 var rfgId = RfgTileIds![x, y];
 
-                var drawX = (MapTileHeight - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-
-                var drawY = MapViewerControl.FOREGROUND_PADDING
-                            + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT
-                            + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                var (drawX, drawY) = MapEditorRenderUtil.GetTileDrawPosition(x, y, MapTileHeight);
 
                 if (lfgId.IsRenderedTileIndex())
                 {
                     var lfgAnim = MapEditorRenderUtil.RenderAnimatedForeground(lfgId);
+                    var frame = MapEditorRenderUtil.GetAnimationFrame(lfgAnim, elapsed);
 
-                    if (lfgAnim is not null)
+                    if (frame is not null)
                     {
-                        var frame = lfgAnim.Frames[0];
+                        if (lfgAnim!.Frames.Count > 1)
+                            hasAnimatedTiles = true;
 
-                        canvas.DrawImage(
-                            frame,
-                            drawX,
-                            drawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - frame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT);
+                        GetTargetCanvas(lfgId)
+                            .DrawImage(
+                                frame,
+                                drawX,
+                                drawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - frame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT);
                     }
                 }
 
                 if (rfgId.IsRenderedTileIndex())
                 {
                     var rfgAnim = MapEditorRenderUtil.RenderAnimatedForeground(rfgId);
+                    var frame = MapEditorRenderUtil.GetAnimationFrame(rfgAnim, elapsed);
 
-                    if (rfgAnim is not null)
+                    if (frame is not null)
                     {
-                        var frame = rfgAnim.Frames[0];
+                        if (rfgAnim!.Frames.Count > 1)
+                            hasAnimatedTiles = true;
 
-                        canvas.DrawImage(
-                            frame,
-                            drawX + DALIB_CONSTANTS.HALF_TILE_WIDTH,
-                            drawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - frame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT);
+                        GetTargetCanvas(rfgId)
+                            .DrawImage(
+                                frame,
+                                drawX + DALIB_CONSTANTS.HALF_TILE_WIDTH,
+                                drawY + DALIB_CONSTANTS.HALF_TILE_HEIGHT - frame.Height + DALIB_CONSTANTS.HALF_TILE_HEIGHT);
                     }
+                }
+
+                continue;
+
+                SKCanvas GetTargetCanvas(int tileId)
+                {
+                    if (!MapEditorRenderUtil.IsTransparent(tileId))
+                        return canvas;
+
+                    if (screenBlendBitmap is null)
+                    {
+                        screenBlendBitmap = new SKBitmap(new SKImageInfo(bitmapWidth, bitmapHeight));
+                        screenBlendCanvas = new SKCanvas(screenBlendBitmap);
+                        screenBlendCanvas.Translate(-fgBounds.Left, -fgBounds.Top);
+                    }
+
+                    hasScreenBlendTiles = true;
+
+                    return screenBlendCanvas!;
                 }
             }
         }
 
+        if (hasAnimatedTiles)
+            AnimatedFgChunks.Add((chunk.ChunkX, chunk.ChunkY));
+
         SKImage? oldImage;
+        SKImage? oldScreenBlendImage;
         var image = SKImage.FromBitmap(bitmap);
+        var screenBlendImage = hasScreenBlendTiles ? SKImage.FromBitmap(screenBlendBitmap!) : null;
+
+        screenBlendCanvas?.Dispose();
+        screenBlendBitmap?.Dispose();
 
         using (RenderSync.EnterScope())
         {
             oldImage = chunk.ForegroundImage;
+            oldScreenBlendImage = chunk.ScreenBlendForegroundImage;
             chunk.ForegroundImage = image;
+            chunk.ScreenBlendForegroundImage = screenBlendImage;
         }
 
         if (oldImage is not null)
             PendingTextureDisposals.Enqueue(oldImage);
+
+        if (oldScreenBlendImage is not null)
+            PendingTextureDisposals.Enqueue(oldScreenBlendImage);
     }
 
     public void Undo()

@@ -89,14 +89,14 @@ public partial class MapEditorControl
     {
         var selectedViewer = MapViewerTabControl.SelectedItem as MapViewerViewModel ?? MapViewerViewModel.Empty;
 
-        selectedViewer.RedoAction();
+        selectedViewer.RedoAction(ViewModel);
     }
 
     private void DoUndo()
     {
         var selectedViewer = MapViewerTabControl.SelectedItem as MapViewerViewModel ?? MapViewerViewModel.Empty;
 
-        selectedViewer.UndoAction();
+        selectedViewer.UndoAction(ViewModel);
     }
 
     private void EditingToolType_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -927,6 +927,7 @@ public partial class MapEditorControl
         var listBoxItem = (ListBoxItem)sender;
 
         ViewModel.SnowTileset = listBoxItem.IsSelected;
+        TileViewModel.SnowTileset = listBoxItem.IsSelected;
 
         if (TilesControl.IsVisible)
         {
@@ -1071,6 +1072,8 @@ public partial class MapEditorControl
 
                 var delta = deltaTime.GetDelta;
 
+                TileViewModel.AdvanceGlobalClock(delta);
+
                 foreach (var row in ViewModel.BackgroundTiles)
                     row.Update(delta);
 
@@ -1082,9 +1085,37 @@ public partial class MapEditorControl
 
                 ViewModel.CurrentMapViewer.Update(delta);
                 ViewModel.TileGrab?.Update(delta);
+
+                //if any tile-grab tile advanced a frame, re-render hover chunks
+                //so the draw tool preview animates even when the mouse is stationary
+                if (ViewModel.TileGrab is { } tileGrab)
+                {
+                    var tileGrabFrameChanged = ClearFrameChangedFlags(tileGrab.RawBackgroundTiles)
+                                               | ClearFrameChangedFlags(tileGrab.RawLeftForegroundTiles)
+                                               | ClearFrameChangedFlags(tileGrab.RawRightForegroundTiles);
+
+                    if (tileGrabFrameChanged)
+                        ViewModel.CurrentMapViewer.Control?.InvalidateHoverChunks();
+                }
             } catch
             {
                 //ignored
             }
+    }
+
+    private static bool ClearFrameChangedFlags(IEnumerable<TileViewModel> tiles)
+    {
+        var changed = false;
+
+        foreach (var tile in tiles)
+        {
+            if (!tile.FrameChanged)
+                continue;
+
+            tile.FrameChanged = false;
+            changed = true;
+        }
+
+        return changed;
     }
 }

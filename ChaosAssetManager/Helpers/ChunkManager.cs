@@ -1,4 +1,3 @@
-using ChaosAssetManager.Controls.MapEditorControls;
 using ChaosAssetManager.Definitions;
 using SkiaSharp;
 using DALIB_CONSTANTS = DALib.Definitions.CONSTANTS;
@@ -14,6 +13,7 @@ public sealed class MapChunk : IDisposable
     public SKImage? BackgroundImage { get; set; }
     public bool ForegroundDirty { get; set; } = true;
     public SKImage? ForegroundImage { get; set; }
+    public SKImage? ScreenBlendForegroundImage { get; set; }
 
     //pixel bounds extended upward for foreground sprites
     public SKRectI ForegroundPixelBounds { get; set; }
@@ -47,9 +47,11 @@ public sealed class MapChunk : IDisposable
     {
         BackgroundImage?.Dispose();
         ForegroundImage?.Dispose();
+        ScreenBlendForegroundImage?.Dispose();
         TabMapImage?.Dispose();
         BackgroundImage = null;
         ForegroundImage = null;
+        ScreenBlendForegroundImage = null;
         TabMapImage = null;
     }
 
@@ -59,7 +61,7 @@ public sealed class MapChunk : IDisposable
             //foreground sprites can be much taller than a tile, extend top upward
             new(
                 baseBounds.Left,
-                baseBounds.Top - MapViewerControl.FOREGROUND_PADDING,
+                baseBounds.Top - MapEditorRenderUtil.FOREGROUND_PADDING,
                 baseBounds.Right,
                 baseBounds.Bottom);
 
@@ -86,8 +88,7 @@ public sealed class MapChunk : IDisposable
         {
             foreach (var y in ys)
             {
-                var px = (mapHeight - 1 - y) * DALIB_CONSTANTS.HALF_TILE_WIDTH + x * DALIB_CONSTANTS.HALF_TILE_WIDTH;
-                var py = MapViewerControl.FOREGROUND_PADDING + y * DALIB_CONSTANTS.HALF_TILE_HEIGHT + x * DALIB_CONSTANTS.HALF_TILE_HEIGHT;
+                var (px, py) = MapEditorRenderUtil.GetTileDrawPosition(x, y, mapHeight);
 
                 minPixelX = Math.Min(minPixelX, px);
                 minPixelY = Math.Min(minPixelY, py);

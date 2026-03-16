@@ -71,6 +71,12 @@ public partial class TilePickerEntryControl
     {
         using var @lock = Sync.EnterScope();
 
+        if (e.OldValue is TileViewModel oldTileViewModel)
+        {
+            oldTileViewModel.PropertyChanged -= TileViewModel_OnPropertyChanged;
+            oldTileViewModel.OnFrameAdvanced = null;
+        }
+
         if (TileViewModel is null)
         {
             Element.InvalidateVisual();
@@ -78,10 +84,8 @@ public partial class TilePickerEntryControl
             return;
         }
 
-        if (e.OldValue is TileViewModel oldTileViewModel)
-            oldTileViewModel.PropertyChanged -= TileViewModel_OnPropertyChanged;
-
         TileViewModel.PropertyChanged += TileViewModel_OnPropertyChanged;
+        TileViewModel.OnFrameAdvanced = () => Element.InvalidateVisual();
         TileViewModel.Initialize();
         Element.InvalidateVisual();
     }
