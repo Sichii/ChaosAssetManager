@@ -60,30 +60,41 @@ public partial class MainWindow : Window
 
         //if we're given a single arg and it's a dat file
         //open it up in the archive viewer
-        if (args.Length == 1)
+        try
         {
-            var extension = Path.GetExtension(args[0]);
+            if (args.Length == 1)
+            {
+                var extension = Path.GetExtension(args[0]);
 
-            if (extension.EqualsI(".dat"))
-            {
-                NavigateTo(ArchivesNav);
-                ArchivesView.LoadArchive(args[0]);
-            } else if (extension.EqualsI(".map"))
-            {
-                NavigateTo(MapEditorNav);
-                MapEditorView.LoadMap(args[0]);
-            } else if (string.IsNullOrEmpty(extension))
-            {
-                NavigateTo(MetaFileEditorNav);
-                MetaFileEditorView.LoadMetaData(args[0]);
-            }
-        } else if (args.All(arg => Path.GetExtension(arg)
-                                       .EqualsI(".map")))
-            foreach (var arg in args)
-            {
-                NavigateTo(MapEditorNav);
-                MapEditorView.LoadMap(arg);
-            }
+                if (extension.EqualsI(".dat"))
+                {
+                    NavigateTo(ArchivesNav);
+                    ArchivesView.LoadArchive(args[0]);
+                } else if (extension.EqualsI(".map"))
+                {
+                    NavigateTo(MapEditorNav);
+                    MapEditorView.LoadMap(args[0]);
+                } else if (string.IsNullOrEmpty(extension))
+                {
+                    NavigateTo(MetaFileEditorNav);
+                    MetaFileEditorView.LoadMetaData(args[0]);
+                }
+            } else if (args.All(arg => Path.GetExtension(arg)
+                                           .EqualsI(".map")))
+                foreach (var arg in args)
+                {
+                    NavigateTo(MapEditorNav);
+                    MapEditorView.LoadMap(arg);
+                }
+        } catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                this,
+                $"Failed to open file:\n{ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
 
         UpdateArchivePathLabel();
     }
