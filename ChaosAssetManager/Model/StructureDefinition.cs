@@ -10,9 +10,9 @@ public sealed class StructureDefinition
     public required string Id { get; set; }
     public required int Width { get; set; }
     public required int Height { get; set; }
-    public int[]? BackgroundTiles { get; set; }
-    public int[]? LeftForegroundTiles { get; set; }
-    public int[]? RightForegroundTiles { get; set; }
+    public short[]? BackgroundTiles { get; set; }
+    public short[]? LeftForegroundTiles { get; set; }
+    public short[]? RightForegroundTiles { get; set; }
 
     /// <summary>
     /// Determines if this is a foreground structure based on tile content

@@ -42,7 +42,7 @@ public sealed class TileViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
         set => SetField(ref field, value);
     }
 
-    public required int TileId
+    public required short TileId
     {
         get;
         set => SetField(ref field, value);

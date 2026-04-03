@@ -2287,9 +2287,9 @@ public static class CONSTANTS
 
             foreach (var chunk in indexChunks)
             {
-                var bgData = new int[width, height];
-                var lfgData = new int[width, height];
-                var rfgData = new int[width, height];
+                var bgData = new short[width, height];
+                var lfgData = new short[width, height];
+                var rfgData = new short[width, height];
 
                 for (var y = 0; y < height; y++)
                 {
@@ -2302,7 +2302,7 @@ public static class CONSTANTS
                             if (num != 0)
 
                                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                                bgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                                bgData[x, y] = (short)(num == 0 ? 0 : chunk[num - 1]);
                         }
 
                         if (lfgPattern is not null)
@@ -2312,7 +2312,7 @@ public static class CONSTANTS
                             if (num != 0)
 
                                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                                lfgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                                lfgData[x, y] = (short)(num == 0 ? 0 : chunk[num - 1]);
                         }
 
                         if (rfgPattern is not null)
@@ -2322,7 +2322,7 @@ public static class CONSTANTS
                             if (num != 0)
 
                                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                                rfgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                                rfgData[x, y] = (short)(num == 0 ? 0 : chunk[num - 1]);
                         }
                     }
                 }
@@ -2382,9 +2382,9 @@ public static class CONSTANTS
         var width = Math.Max(bgPattern?.GetLength(1) ?? 0, Math.Max(lfgPattern?.GetLength(1) ?? 0, rfgPattern?.GetLength(1) ?? 0));
         var height = Math.Max(bgPattern?.GetLength(0) ?? 0, Math.Max(lfgPattern?.GetLength(0) ?? 0, rfgPattern?.GetLength(0) ?? 0));
 
-        var bgData = new int[width, height];
-        var lfgData = new int[width, height];
-        var rfgData = new int[width, height];
+        var bgData = new short[width, height];
+        var lfgData = new short[width, height];
+        var rfgData = new short[width, height];
         var chunk = indexes.ToList();
 
         for (var y = 0; y < height; y++)
@@ -2398,7 +2398,7 @@ public static class CONSTANTS
                     if (num != 0)
 
                         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                        bgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                        bgData[x, y] = (short)(num == 0 ? 0 : chunk[num - 1]);
                 }
 
                 if (lfgPattern is not null)
@@ -2408,7 +2408,7 @@ public static class CONSTANTS
                     if (num != 0)
 
                         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                        lfgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                        lfgData[x, y] = (short)(num == 0 ? 0 : chunk[num - 1]);
                 }
 
                 if (rfgPattern is not null)
@@ -2418,7 +2418,7 @@ public static class CONSTANTS
                     if (num != 0)
 
                         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                        rfgData[x, y] = num == 0 ? 0 : chunk[num - 1];
+                        rfgData[x, y] = (short)(num == 0 ? 0 : chunk[num - 1]);
                 }
             }
         }

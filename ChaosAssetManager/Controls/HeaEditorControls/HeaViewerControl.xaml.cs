@@ -39,7 +39,7 @@ public partial class HeaViewerControl : IDisposable
     private readonly FixedSizeDeque<HeaActionContext> UndoStack = new(100);
 
     //tile IDs read from the .map file, indexed [x, y]
-    private int[,]? BgTileIds;
+    private short[,]? BgTileIds;
     private LightBrush? CachedBrush;
     private string? CachedBrushKey;
 
@@ -59,7 +59,7 @@ public partial class HeaViewerControl : IDisposable
     private int CachedFgEraseMaskH;
 
     private bool IsDrawing;
-    private int[,]? LfgTileIds;
+    private short[,]? LfgTileIds;
     private readonly System.Diagnostics.Stopwatch MapAnimationStopwatch = System.Diagnostics.Stopwatch.StartNew();
     private readonly HashSet<(int cx, int cy)> AnimatedBgChunks = [];
     private readonly HashSet<(int cx, int cy)> AnimatedFgChunks = [];
@@ -69,7 +69,7 @@ public partial class HeaViewerControl : IDisposable
     private ChunkManager? MapChunkManager;
     private Task? MapForegroundRenderTask;
     private int MapTileHeight;
-    private int[,]? RfgTileIds;
+    private short[,]? RfgTileIds;
     private SKGLElementPlus? SkElement;
     private byte[,]? StrokeBeforeSnapshot;
 
@@ -391,9 +391,9 @@ public partial class HeaViewerControl : IDisposable
 
             //extract all tile IDs into flat 2d arrays
             MapTileHeight = height;
-            BgTileIds = new int[width, height];
-            LfgTileIds = new int[width, height];
-            RfgTileIds = new int[width, height];
+            BgTileIds = new short[width, height];
+            LfgTileIds = new short[width, height];
+            RfgTileIds = new short[width, height];
 
             for (var y = 0; y < height; y++)
                 for (var x = 0; x < width; x++)

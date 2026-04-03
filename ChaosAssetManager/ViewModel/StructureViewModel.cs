@@ -56,7 +56,7 @@ public class StructureViewModel : NotifyPropertyChangedBase, IDeltaUpdatable
             tile.Update(delta);
     }
 
-    public static StructureViewModel Create(int[,]? bgData = null, int[,]? lfgData = null, int[,]? rfgData = null)
+    public static StructureViewModel Create(short[,]? bgData = null, short[,]? lfgData = null, short[,]? rfgData = null)
     {
         var width = bgData?.GetLength(0) ?? lfgData?.GetLength(0) ?? rfgData?.GetLength(0) ?? 0;
         var height = bgData?.GetLength(1) ?? lfgData?.GetLength(1) ?? rfgData?.GetLength(1) ?? 0;

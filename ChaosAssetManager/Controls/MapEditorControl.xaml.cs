@@ -611,7 +611,7 @@ public partial class MapEditorControl
                                    })
                                    .Select(i => new TileViewModel
                                    {
-                                       TileId = i,
+                                       TileId = (short)i,
                                        LayerFlags = LayerFlags.Foreground
                                    })
                                    .Chunk(4)
@@ -626,7 +626,7 @@ public partial class MapEditorControl
         var backgroundtiles = Enumerable.Range(0, backgroundCount)
                                         .Select(i => new TileViewModel
                                         {
-                                            TileId = i,
+                                            TileId = (short)i,
                                             LayerFlags = LayerFlags.Background
                                         })
                                         .Chunk(4)
