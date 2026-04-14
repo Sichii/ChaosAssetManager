@@ -107,6 +107,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -172,12 +173,18 @@
                         <!-- Stop Motion (Optional Animation) -->
                         <TextBlock Grid.Row="5" Grid.Column="0" Text="Stop Motion:" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" ToolTip="Optional standing frames that occasionally play instead of normal standing animation" />
                         <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="Ratio:" VerticalAlignment="Center" Margin="0,0,5,0" />
-                            <TextBox x:Name="StopMotionRatioTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" ToolTip="Percentage chance to play optional frames (e.g. 30 = 30% of the time)" />
+                            <TextBlock Text="Probability:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                            <TextBox x:Name="StopMotionProbabilityTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" ToolTip="Percentage chance (0-100) to play the optional frames when both a standing loop and an extended loop exist. Only used when both counts are non-zero and different." />
                         </StackPanel>
                         <StackPanel Grid.Row="5" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="Count:" VerticalAlignment="Center" Margin="0,0,5,0" />
                             <TextBox x:Name="StopMotionCountTxt" Text="0" Width="50" Style="{StaticResource MaterialDesignTextBox}" ToolTip="Total standing frames including optional. E.g. 4 normal + 2 optional = 6. Set to 0 if no optional animation." />
+                        </StackPanel>
+
+                        <!-- Animation Interval -->
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Interval (ms):" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,8" ToolTip="Per-frame display interval for the idle animation" />
+                        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBox x:Name="AnimationIntervalMsTxt" Text="300" Width="50" Style="{StaticResource MaterialDesignTextBox}" ToolTip="Per-frame display interval in milliseconds. Only saved for sprites with no separate standing loop (Standing Count = 0 or Standing Count = Stop Motion Count); floored to the nearest 100 ms on save." />
                         </StackPanel>
                     </Grid>
                 </GroupBox>

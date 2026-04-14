@@ -205,7 +205,10 @@ public partial class EquipmentEditorControl
         ContentPanel.Content = null;
         EquipmentPalette = null;
 
-        var male = MaleRadio.IsChecked == true;
+        // Shields are always loaded from khanmns.dat regardless of character gender; vanilla
+        // Darkages.exe hardcodes the shield-slot filename prefix to 'm'. Editor mirrors that so
+        // it operates on the files the game actually reads.
+        var male = (typeLetter == 's') || (MaleRadio.IsChecked == true);
 
         EquipmentFiles = equipmentFiles;
 
@@ -232,7 +235,8 @@ public partial class EquipmentEditorControl
     {
         EntryListView.Items.Clear();
 
-        var male = MaleRadio.IsChecked == true;
+        // Shields hardcode to khanmns.dat regardless of gender radio (see LoadEquipmentEntry).
+        var male = (typeLetter == 's') || (MaleRadio.IsChecked == true);
         var archive = GetArchiveForType(typeLetter, male);
 
         if (archive is null)
@@ -288,7 +292,8 @@ public partial class EquipmentEditorControl
             return;
         }
 
-        var male = MaleRadio.IsChecked == true;
+        // Shields always persist to khanmns.dat regardless of gender radio (see LoadEquipmentEntry).
+        var male = (CurrentTypeLetter == 's') || (MaleRadio.IsChecked == true);
         var archive = GetArchiveForType(CurrentTypeLetter, male);
 
         if (archive is null)

@@ -39,16 +39,30 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
         }
     }
 
-    public byte StopMotionRatio
+    public byte OptionalAnimationProbability
     {
-        get => MpfFile.OptionalAnimationRatio;
+        get => MpfFile.OptionalAnimationProbability;
 
         set
         {
-            if (MpfFile.OptionalAnimationRatio == value)
+            if (MpfFile.OptionalAnimationProbability == value)
                 return;
 
-            MpfFile.OptionalAnimationRatio = value;
+            MpfFile.OptionalAnimationProbability = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public int AnimationIntervalMs
+    {
+        get => MpfFile.AnimationIntervalMs;
+
+        set
+        {
+            if (MpfFile.AnimationIntervalMs == value)
+                return;
+
+            MpfFile.AnimationIntervalMs = value;
             OnPropertyChanged();
         }
     }

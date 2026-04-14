@@ -105,7 +105,8 @@ public sealed partial class NPCImportControl
             !int.TryParse(StandingCountTxt.Text, out var standingFrameCount) ||
             !int.TryParse(StandingIndexTxt.Text, out var standingFrameIndex) ||
             !int.TryParse(StopMotionCountTxt.Text, out var stopMotionFrameCount) ||
-            !int.TryParse(StopMotionRatioTxt.Text, out var stopMotionRatio))
+            !int.TryParse(StopMotionProbabilityTxt.Text, out var stopMotionProbability) ||
+            !int.TryParse(AnimationIntervalMsTxt.Text, out var animationIntervalMs))
         {
             Snackbar.MessageQueue!.Enqueue("Please enter valid numbers for animation settings");
 
@@ -190,7 +191,8 @@ public sealed partial class NPCImportControl
                     newMpf.Entity.HeaderType = MpfHeaderType.None;
                     newMpf.Entity.UnknownHeaderBytes = [];
                     newMpf.Entity.OptionalAnimationFrameCount = (byte)stopMotionFrameCount;
-                    newMpf.Entity.OptionalAnimationRatio = (byte)stopMotionRatio;
+                    newMpf.Entity.OptionalAnimationProbability = (byte)stopMotionProbability;
+                    newMpf.Entity.AnimationIntervalMs = animationIntervalMs;
                     newMpf.Entity.PixelWidth = 0;
                     newMpf.Entity.PixelHeight = 0;
 

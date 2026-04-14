@@ -189,6 +189,16 @@ public sealed partial class EquipmentImportControl
         var isUnisex = UnisexRadio.IsChecked == true;
         var hasDyeablePalette = DyeableToggle.IsChecked == true;
 
+        // Shields are always loaded from khanmns.dat regardless of character gender; vanilla
+        // Darkages.exe hardcodes the shield-slot filename prefix to 'm'. Force male-only import
+        // so patched files land where the game actually reads them.
+        if (equipmentLetter.Equals("s", StringComparison.OrdinalIgnoreCase) && (!isMale || isUnisex))
+        {
+            isMale = true;
+            isUnisex = false;
+            Snackbar.MessageQueue!.Enqueue("Shields are only read from khanmns.dat — importing as male.");
+        }
+
         ImportBtn.IsEnabled = false;
 
         try

@@ -231,6 +231,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Walk -->
@@ -364,32 +365,29 @@
                          Margin="0,0,10,3" />
                 <TextBlock Grid.Row="5"
                            Grid.Column="2"
-                           Text="Ratio:"
+                           Text="Probability:"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Right"
                            Margin="0,0,5,3" />
                 <TextBox Grid.Row="5"
                          Grid.Column="3"
-                         Text="{Binding StopMotionRatio, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding OptionalAnimationProbability, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,3"
-                         ToolTip="Percentage chance to play stop-motion frames" />
-            </Grid>
+                         ToolTip="Percentage chance (0-100) to play the optional frames when both a standing loop and an extended loop exist." />
 
-            <!-- Stop Motion Ratio (conditional) - now hidden since it's in File Properties -->
-            <StackPanel x:Name="StopMotionPanel"
-                        Grid.Row="3"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,10"
-                        Visibility="Collapsed">
-                <TextBlock Text="Stop Motion Ratio:"
+                <!-- Animation Interval -->
+                <TextBlock Grid.Row="6"
+                           Grid.Column="0"
+                           Text="Interval (ms):"
                            VerticalAlignment="Center"
-                           Margin="0,0,10,0" />
-                <TextBox x:Name="StopMotionRatioTxt"
-                         Text="{Binding StopMotionRatio, UpdateSourceTrigger=PropertyChanged}"
-                         Width="60"
-                         Style="{StaticResource MaterialDesignTextBox}"
-                         ToolTip="Percentage chance to play optional frames (e.g. 30 = 30% of the time)" />
-            </StackPanel>
+                           HorizontalAlignment="Right"
+                           Margin="0,0,5,3" />
+                <TextBox Grid.Row="6"
+                         Grid.Column="1"
+                         Text="{Binding AnimationIntervalMs, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,10,3"
+                         ToolTip="Per-frame display interval in milliseconds. Only saved for sprites with no separate standing loop; floored to the nearest 100 ms on save." />
+            </Grid>
 
             <!-- Frame Selector with Animation and Play/Pause -->
             <StackPanel Grid.Row="4">

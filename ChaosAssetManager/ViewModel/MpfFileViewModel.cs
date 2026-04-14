@@ -175,21 +175,35 @@ public class MpfFileViewModel : INotifyPropertyChanged
         }
     }
 
-    public byte StopMotionFailureRatio
+    public byte OptionalAnimationProbability
     {
-        get => MpfFile.OptionalAnimationRatio;
+        get => MpfFile.OptionalAnimationProbability;
 
         set
         {
-            if (MpfFile.OptionalAnimationRatio == value)
+            if (MpfFile.OptionalAnimationProbability == value)
                 return;
 
-            MpfFile.OptionalAnimationRatio = value;
+            MpfFile.OptionalAnimationProbability = value;
             OnPropertyChanged();
         }
     }
 
-    public byte StopMotionFrameCount
+    public int AnimationIntervalMs
+    {
+        get => MpfFile.AnimationIntervalMs;
+
+        set
+        {
+            if (MpfFile.AnimationIntervalMs == value)
+                return;
+
+            MpfFile.AnimationIntervalMs = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public byte OptionalAnimationFrameCount
     {
         get => MpfFile.OptionalAnimationFrameCount;
 
