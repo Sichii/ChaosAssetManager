@@ -58,20 +58,22 @@ public sealed partial class EquipmentImportControl
         }
     }
 
-    private static IEnumerable<DataArchiveEntry> GetAllAssociatedEntries(DataArchive archive, string equipmentLetter, string genderLetter)
-        => equipmentLetter.ToLower() switch
+    //associated letters may live in different archives (e.g. p=khanNs, w=khanTz),
+    //so we resolve the archive per letter rather than accepting a single archive.
+    private static IEnumerable<DataArchiveEntry> GetAllAssociatedEntries(string equipmentLetter, string genderLetter, bool isMale)
+    {
+        var letters = equipmentLetter.ToLower() switch
         {
-            "c" or "g" => archive.GetEntries($"{genderLetter}c", ".epf")
-                                 .Concat(archive.GetEntries($"{genderLetter}g", ".epf")),
-            "e" or "f" or "h" => archive.GetEntries($"{genderLetter}e", ".epf")
-                                        .Concat(archive.GetEntries($"{genderLetter}f", ".epf"))
-                                        .Concat(archive.GetEntries($"{genderLetter}h", ".epf")),
-            "i" or "u" => archive.GetEntries($"{genderLetter}i", ".epf")
-                                 .Concat(archive.GetEntries($"{genderLetter}u", ".epf")),
-            "p" or "w" => archive.GetEntries($"{genderLetter}p", ".epf")
-                                 .Concat(archive.GetEntries($"{genderLetter}w", ".epf")),
-            _ => archive.GetEntries($"{genderLetter}{equipmentLetter.ToLower()}", ".epf")
+            "c" or "g"        => new[] { "c", "g" },
+            "e" or "f" or "h" => new[] { "e", "f", "h" },
+            "i" or "u"        => new[] { "i", "u" },
+            "p" or "w"        => new[] { "p", "w" },
+            _                 => new[] { equipmentLetter.ToLower() }
         };
+
+        return letters.SelectMany(letter => GetArchiveForLetter(letter, isMale)
+                                     .GetEntries($"{genderLetter}{letter}", ".epf"));
+    }
 
     private static DataArchive GetArchiveForLetter(string letter, bool isMale)
         => letter.ToLower() switch
@@ -101,9 +103,9 @@ public sealed partial class EquipmentImportControl
         return $"khan{genderLetter}{suffix}.dat";
     }
 
-    private static int GetNextEntryId(DataArchive archive, string equipmentLetter, string genderLetter)
+    private static int GetNextEntryId(string equipmentLetter, string genderLetter, bool isMale)
     {
-        var entries = GetAllAssociatedEntries(archive, equipmentLetter, genderLetter)
+        var entries = GetAllAssociatedEntries(equipmentLetter, genderLetter, isMale)
                       .Select(entry => entry.TryGetNumericIdentifier(out var id, 3) ? id : -1)
                       .ToHashSet();
 
@@ -114,13 +116,13 @@ public sealed partial class EquipmentImportControl
         return -1;
     }
 
-    private static int GetNextUnisexEntryId(DataArchive maleArchive, DataArchive femaleArchive, string equipmentLetter)
+    private static int GetNextUnisexEntryId(string equipmentLetter)
     {
-        var maleEntries = GetAllAssociatedEntries(maleArchive, equipmentLetter, "m")
+        var maleEntries = GetAllAssociatedEntries(equipmentLetter, "m", true)
                           .Select(entry => entry.TryGetNumericIdentifier(out var id, 3) ? id : -1)
                           .ToHashSet();
 
-        var femaleEntries = GetAllAssociatedEntries(femaleArchive, equipmentLetter, "w")
+        var femaleEntries = GetAllAssociatedEntries(equipmentLetter, "w", false)
                             .Select(entry => entry.TryGetNumericIdentifier(out var id, 3) ? id : -1)
                             .ToHashSet();
 
@@ -277,7 +279,7 @@ public sealed partial class EquipmentImportControl
                     var maleArchive = GetArchiveForLetter(equipmentLetter, true);
                     var femaleArchive = GetArchiveForLetter(equipmentLetter, false);
 
-                    nextEntryId = GetNextUnisexEntryId(maleArchive, femaleArchive, equipmentLetter);
+                    nextEntryId = GetNextUnisexEntryId(equipmentLetter);
 
                     if (nextEntryId == -1)
                         return (Success: false, Message: "No free equipment slots found in both archives", EntryId: -1, PaletteId: -1);
@@ -306,7 +308,7 @@ public sealed partial class EquipmentImportControl
                     var genderLetter = isMale ? "m" : "w";
                     var archive = GetArchiveForLetter(equipmentLetter, isMale);
 
-                    nextEntryId = GetNextEntryId(archive, equipmentLetter, genderLetter);
+                    nextEntryId = GetNextEntryId(equipmentLetter, genderLetter, isMale);
 
                     if (nextEntryId == -1)
                         return (Success: false, Message: "No free equipment slots found", EntryId: -1, PaletteId: -1);
