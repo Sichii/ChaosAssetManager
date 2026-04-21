@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/build/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="../dalib/DALib/DALib.csproj" />
+  <Project Path="ChaosAssetManager/ChaosAssetManager.csproj" />
+</Solution>

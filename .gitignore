@@ -409,3 +409,6 @@ FodyWeavers.xsd
 
 # Crash dumps
 *.stackdump
+
+# Local, untracked Claude instructions
+CLAUDE.local.md
