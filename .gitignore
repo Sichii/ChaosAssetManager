@@ -396,3 +396,16 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+.idea/
+
+# Claude Code state
+.claude/
+
+# Serena MCP server state
+.serena/
+
+# Superpowers brainstorming artifacts
+.superpowers/
+
+# Crash dumps
+*.stackdump
