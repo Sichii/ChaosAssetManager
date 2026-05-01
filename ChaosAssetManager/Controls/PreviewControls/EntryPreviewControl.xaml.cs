@@ -302,7 +302,18 @@ public sealed partial class EntryPreviewControl : IDisposable
             var targetX = 0;
             var targetY = 0;
 
-            canvas.DrawImage(frame, targetX, targetY);
+            if (Animation.BlendMode is { } blendMode)
+            {
+                using var paint = new SKPaint();
+                paint.BlendMode = blendMode;
+
+                canvas.DrawImage(
+                    frame,
+                    targetX,
+                    targetY,
+                    paint);
+            } else
+                canvas.DrawImage(frame, targetX, targetY);
 
             canvas.Restore();
         } catch

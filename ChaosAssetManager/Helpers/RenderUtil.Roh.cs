@@ -30,7 +30,7 @@ public static partial class RenderUtil
             if (!effectTable.TryGetEntry(identifier, out var effectEntry))
                 return null;
 
-            var palette = paletteLookup.GetPaletteForId(identifier);
+            var (palette, alphaType) = paletteLookup.GetPaletteAndAlphaType(identifier);
 
             // select frames as they are specified in the effect table
             var transformer = effectEntry.Select(
@@ -39,7 +39,7 @@ public static partial class RenderUtil
                                                  if (frameIndex >= epfFile.Count)
                                                      return null;
 
-                                                 return Graphics.RenderImage(epfFile[frameIndex], palette);
+                                                 return Graphics.RenderImage(epfFile[frameIndex], palette, alphaType);
                                              })
                                          .Where(frame => frame is not null);
 
@@ -64,8 +64,8 @@ public static partial class RenderUtil
             var paletteLookup = RohMefcPaletteLookup ??= PaletteLookup.FromArchive("mefcpal", "mefc", archive)
                                                                       .Freeze();
 
-            var palette = paletteLookup.GetPaletteForId(identifier);
-            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+            var (palette, alphaType) = paletteLookup.GetPaletteAndAlphaType(identifier);
+            var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette, alphaType));
             var frames = new SKImageCollection(transformer);
 
             return new Animation(frames);

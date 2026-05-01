@@ -126,9 +126,9 @@ public static partial class RenderUtil
             var transformer = epfFile.Select((frame, index) =>
             {
                 var itemId = (identifier - 1) * 266 + index + 1;
-                var palette = paletteLookup.GetPaletteForId(itemId);
+                var (palette, alphaType) = paletteLookup.GetPaletteAndAlphaType(itemId);
 
-                return Graphics.RenderImage(frame, palette);
+                return Graphics.RenderImage(frame, palette, alphaType);
             });
             using var images = new SKImageCollection(transformer);
             var grid = CreateGrid(images);

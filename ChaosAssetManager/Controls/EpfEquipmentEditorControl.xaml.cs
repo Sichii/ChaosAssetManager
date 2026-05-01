@@ -76,6 +76,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
 
     private readonly Dictionary<string, EpfFile> EquipmentFiles;
     private readonly Palette EquipmentPalette;
+    private readonly SKAlphaType EquipmentAlphaType;
     private readonly char EquipmentTypeLetter;
     private readonly Lock Sync = new();
     private CancellationTokenSource? AnimationCts;
@@ -83,6 +84,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
 
     private Dictionary<string, Animation>? BodyAnimations;
     private Palette? BodyPalette;
+    private SKAlphaType BodyAlphaType;
     private (string Name, string Suffix, int UpStart, int UpEnd, int RightStart, int RightEnd)? CurrentAnimationDef;
     private int CurrentAnimationEndFrame;
     private int CurrentAnimationStartFrame;
@@ -107,11 +109,13 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
     public EpfEquipmentEditorControl(
         Dictionary<string, EpfFile> equipmentFiles,
         Palette equipmentPalette,
+        SKAlphaType equipmentAlphaType,
         char equipmentTypeLetter,
         bool isMale)
     {
         EquipmentFiles = equipmentFiles;
         EquipmentPalette = equipmentPalette;
+        EquipmentAlphaType = equipmentAlphaType;
         EquipmentTypeLetter = char.ToLower(equipmentTypeLetter);
         IsMale = isMale;
 
@@ -157,7 +161,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
             var archive = IsMale ? ArchiveCache.KhanMad : ArchiveCache.KhanWad;
             var palArchive = ArchiveCache.KhanPal;
             var palLookup = PaletteLookup.FromArchive("palb", palArchive);
-            BodyPalette = palLookup.GetPaletteForId(1, IsMale ? KhanPalOverrideType.Male : KhanPalOverrideType.Female);
+            (BodyPalette, BodyAlphaType) = palLookup.GetPaletteAndAlphaType(1, IsMale ? KhanPalOverrideType.Male : KhanPalOverrideType.Female);
 
             //dispose old animations
             if (BodyAnimations is not null)
@@ -177,7 +181,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
                     continue;
 
                 var bodyEpf = EpfFile.FromEntry(archive[bodyFileName]);
-                var frames = bodyEpf.Select(frame => Graphics.RenderImage(frame, BodyPalette));
+                var frames = bodyEpf.Select(frame => Graphics.RenderImage(frame, BodyPalette, BodyAlphaType));
                 BodyAnimations[suffix] = new Animation(new SKImageCollection(frames), 250);
             }
         } catch (Exception ex)
@@ -256,7 +260,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
 
         foreach ((var suffix, var epfFile) in EquipmentFiles)
         {
-            var frames = epfFile.Select(frame => Graphics.RenderImage(frame, EquipmentPalette));
+            var frames = epfFile.Select(frame => Graphics.RenderImage(frame, EquipmentPalette, EquipmentAlphaType));
             EquipmentAnimations[suffix] = new Animation(new SKImageCollection(frames), 250);
         }
     }
@@ -408,7 +412,7 @@ public sealed partial class EpfEquipmentEditorControl : IDisposable, INotifyProp
             {
                 anim.Frames[i]
                     .Dispose();
-                anim.Frames[i] = Graphics.RenderImage(frame, EquipmentPalette);
+                anim.Frames[i] = Graphics.RenderImage(frame, EquipmentPalette, EquipmentAlphaType);
             }
         }
 

@@ -308,8 +308,8 @@ public sealed partial class PanelSpriteEditorControl
                 if (!isEmpty)
                     try
                     {
-                        var palette = paletteLookup.GetPaletteForId(globalId);
-                        image = Graphics.RenderImage(frame!, palette);
+                        var (palette, alphaType) = paletteLookup.GetPaletteAndAlphaType(globalId);
+                        image = Graphics.RenderImage(frame!, palette, alphaType);
                     } catch
                     {
                         isEmpty = true;

@@ -1,4 +1,5 @@
 using System.IO;
+using SkiaSharp;
 using System.Windows;
 using System.Windows.Controls;
 using ChaosAssetManager.Helpers;
@@ -160,7 +161,7 @@ public partial class EquipmentEditorControl
         return archiveName is null ? null : Path.Combine(root, archiveName);
     }
 
-    private static Palette? GetPaletteForType(char typeLetter, int entryId, bool male)
+    private static (Palette? Palette, SKAlphaType AlphaType) GetPaletteForType(char typeLetter, int entryId, bool male)
     {
         typeLetter = char.ToLower(typeLetter);
 
@@ -180,8 +181,9 @@ public partial class EquipmentEditorControl
         {
             // Body palettes and pants don't use PaletteLookup the same way
             var palettes = Palette.FromArchive($"pal{paletteLetter}", ArchiveCache.KhanPal);
+            var pal = palettes.TryGetValue(entryId, out var found) ? found : palettes.Values.FirstOrDefault();
 
-            return palettes.TryGetValue(entryId, out var pal) ? pal : palettes.Values.FirstOrDefault();
+            return (pal, SKAlphaType.Premul);
         }
 
         var lookupPrefix = $"pal{paletteLetter}";
@@ -190,11 +192,12 @@ public partial class EquipmentEditorControl
         {
             var lookup = PaletteLookup.FromArchive(lookupPrefix, ArchiveCache.KhanPal);
             var overrideType = male ? KhanPalOverrideType.Male : KhanPalOverrideType.Female;
+            var (palette, alphaType) = lookup.GetPaletteAndAlphaType(entryId, overrideType);
 
-            return lookup.GetPaletteForId(entryId, overrideType);
+            return (palette, alphaType);
         } catch
         {
-            return null;
+            return (null, SKAlphaType.Premul);
         }
     }
 
@@ -206,14 +209,15 @@ public partial class EquipmentEditorControl
         EquipmentPalette = null;
 
         // Shields are always loaded from khanmns.dat regardless of character gender; vanilla
-        // Darkages.exe hardcodes the shield-slot filename prefix to 'm'. Editor mirrors that so
+        // hardcodes the shield-slot filename prefix to 'm'. Editor mirrors that so
         // it operates on the files the game actually reads.
         var male = (typeLetter == 's') || (MaleRadio.IsChecked == true);
 
         EquipmentFiles = equipmentFiles;
 
         //load palette
-        EquipmentPalette = GetPaletteForType(typeLetter, entryId, male);
+        var (palette, alphaType) = GetPaletteForType(typeLetter, entryId, male);
+        EquipmentPalette = palette;
 
         if (EquipmentPalette is null)
         {
@@ -227,6 +231,7 @@ public partial class EquipmentEditorControl
         ContentPanel.Content = new EpfEquipmentEditorControl(
             EquipmentFiles,
             EquipmentPalette,
+            alphaType,
             typeLetter,
             male);
     }

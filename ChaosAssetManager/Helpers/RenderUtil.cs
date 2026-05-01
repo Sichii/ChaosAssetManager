@@ -348,7 +348,10 @@ public static partial class RenderUtil
             var transformer = efaFile.Select(frame => Graphics.RenderImage(frame, efaFile.BlendingType));
             var frames = new SKImageCollection(transformer);
 
-            return new Animation(frames, efaFile.FrameIntervalMs);
+            return new Animation(frames, efaFile.FrameIntervalMs)
+            {
+                BlendMode = efaFile.BlendingType.ToSKBlendMode()
+            };
         } catch
         {
             return null;

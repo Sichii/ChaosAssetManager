@@ -40,9 +40,9 @@ public sealed partial class EffectEditorControl
             } else if (entry.EntryName.EndsWithI(".epf"))
             {
                 var epfFile = EpfFile.FromEntry(entry);
-                var palette = GetPaletteForEffect(entry, archive);
+                var paletteInfo = GetPaletteForEffect(entry, archive);
 
-                if (palette is null)
+                if (paletteInfo is null)
                 {
                     Snackbar.MessageQueue!.Enqueue($"Could not find palette for {entry.EntryName}");
 
@@ -50,14 +50,14 @@ public sealed partial class EffectEditorControl
                 }
 
                 var centerPoints = LoadCenterPoints(entry.EntryName, archive, epfFile.Count);
-                listViewItem.Tag = (epfFile, palette, centerPoints);
+                listViewItem.Tag = (epfFile, paletteInfo.Value.Palette, paletteInfo.Value.AlphaType, centerPoints);
             }
         }
 
         if (listViewItem is { Tag: EfaFile efa, Content: string efaEntryName })
             LoadEffect(efaEntryName, efa);
-        else if (listViewItem is { Tag: (EpfFile epf, Palette pal, List<SKPoint> centerPoints), Content: string epfEntryName })
-            LoadEffect(epfEntryName, epf, pal, centerPoints);
+        else if (listViewItem is { Tag: (EpfFile epf, Palette pal, SKAlphaType alphaType, List<SKPoint> centerPoints), Content: string epfEntryName })
+            LoadEffect(epfEntryName, epf, pal, alphaType, centerPoints);
     }
 
     private void EffectEditorControl_OnLoaded(object sender, RoutedEventArgs e)
@@ -82,7 +82,7 @@ public sealed partial class EffectEditorControl
             PopulateEffectList();
     }
 
-    private static Palette? GetPaletteForEffect(DataArchiveEntry entry, DataArchive archive)
+    private static (Palette Palette, SKAlphaType AlphaType)? GetPaletteForEffect(DataArchiveEntry entry, DataArchive archive)
     {
         if (!entry.TryGetNumericIdentifier(out var id))
             return null;
@@ -92,7 +92,7 @@ public sealed partial class EffectEditorControl
             EfctPaletteLookup ??= PaletteLookup.FromArchive("effpal", "eff", archive)
                                                .Freeze();
 
-            return EfctPaletteLookup.GetPaletteForId(id);
+            return EfctPaletteLookup.GetPaletteAndAlphaType(id);
         }
 
         if (entry.EntryName.StartsWithI("mefc"))
@@ -100,18 +100,21 @@ public sealed partial class EffectEditorControl
             MefcPaletteLookup ??= PaletteLookup.FromArchive("mefcpal", "mefc", archive)
                                                .Freeze();
 
-            return MefcPaletteLookup.GetPaletteForId(id);
+            return MefcPaletteLookup.GetPaletteAndAlphaType(id);
         }
 
         // Fallback for other EPF files - try efct palette
         EfctPaletteLookup ??= PaletteLookup.FromArchive("effpal", "eff", archive)
                                            .Freeze();
 
-        return EfctPaletteLookup.GetPaletteForId(0);
+        return EfctPaletteLookup.GetPaletteAndAlphaType(0);
     }
 
     private static List<SKPoint> LoadCenterPoints(string entryName, DataArchive archive, int frameCount)
     {
+        //fallback used when the tbl is missing or has no entry for a given frame
+        var defaultCenter = new SKPoint(28, 70);
+
         var tblName = Path.ChangeExtension(entryName, ".tbl");
 
         if (archive.TryGetValue(tblName, out var tblEntry))
@@ -128,15 +131,15 @@ public sealed partial class EffectEditorControl
                 points.Add(new SKPoint(x, y));
             }
 
-            // Ensure we have enough points for all frames
+            //pad missing frames with the default centerpoint
             while (points.Count < frameCount)
-                points.Add(points.Count > 0 ? points[^1] : new SKPoint(0, 0));
+                points.Add(defaultCenter);
 
             return points;
         }
 
-        // No TBL file - create default center points
-        return Enumerable.Repeat(new SKPoint(0, 0), frameCount)
+        //no tbl file - all frames use the default centerpoint
+        return Enumerable.Repeat(defaultCenter, frameCount)
                          .ToList();
     }
 
@@ -151,14 +154,14 @@ public sealed partial class EffectEditorControl
     }
 
 
-    private void LoadEffect(string entryName, EpfFile epfFile, Palette palette, List<SKPoint> centerPoints)
+    private void LoadEffect(string entryName, EpfFile epfFile, Palette palette, SKAlphaType alphaType, List<SKPoint> centerPoints)
     {
         //dispose previous content
         (ContentPanel.Content as IDisposable)?.Dispose();
         ContentPanel.Content = null;
         CurrentEntryName = entryName;
 
-        ContentPanel.Content = new EffectContentEditorControl(epfFile, palette, centerPoints);
+        ContentPanel.Content = new EffectContentEditorControl(epfFile, palette, alphaType, centerPoints);
     }
 
     private void PopulateEffectList()

@@ -72,6 +72,10 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
     public bool IsEfa { get; }
     public Palette? Palette { get; }
 
+    // For EPF effects: the alpha type to use when rendering frames. Unpremul indicates a luminance-blended
+    // palette (>= 1000) that must skip Skia's premultiplication so per-color alpha is applied at draw time
+    public SKAlphaType AlphaType { get; }
+
     public Visibility EfaSettingsVisibility => IsEfa ? Visibility.Visible : Visibility.Collapsed;
 
     // Constructor for EFA effects
@@ -95,11 +99,12 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
     }
 
     // Constructor for EPF effects
-    public EffectContentEditorControl(EpfFile epfFile, Palette palette, List<SKPoint> centerPoints)
+    public EffectContentEditorControl(EpfFile epfFile, Palette palette, SKAlphaType alphaType, List<SKPoint> centerPoints)
     {
         IsEfa = false;
         EpfFile = epfFile;
         Palette = palette;
+        AlphaType = alphaType;
         CenterPoints = centerPoints;
 
         InitializeComponent();
@@ -135,7 +140,7 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
             var archive = ArchiveCache.KhanMad;
             var palArchive = ArchiveCache.KhanPal;
             var palLookup = PaletteLookup.FromArchive("palb", palArchive);
-            var bodyPalette = palLookup.GetPaletteForId(1, KhanPalOverrideType.Male);
+            var (bodyPalette, bodyAlphaType) = palLookup.GetPaletteAndAlphaType(1, KhanPalOverrideType.Male);
 
             const string BODY_FILE_NAME = "mb00101.epf";
 
@@ -143,7 +148,7 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
                 return;
 
             var bodyEpf = EpfFile.FromEntry(archive[BODY_FILE_NAME]);
-            var frames = bodyEpf.Select(frame => Graphics.RenderImage(frame, bodyPalette));
+            var frames = bodyEpf.Select(frame => Graphics.RenderImage(frame, bodyPalette, bodyAlphaType));
             BodyAnimation = new Animation(new SKImageCollection(frames), 250);
         } catch
         {
@@ -160,10 +165,13 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         if (IsEfa)
         {
             var frames = EfaFile!.Select(frame => Graphics.RenderImage(frame, EfaFile!.BlendingType));
-            Animation = new Animation(new SKImageCollection(frames), EfaFile!.FrameIntervalMs);
+            Animation = new Animation(new SKImageCollection(frames), EfaFile!.FrameIntervalMs)
+            {
+                BlendMode = EfaFile!.BlendingType.ToSKBlendMode()
+            };
         } else
         {
-            var frames = EpfFile!.Select(frame => Graphics.RenderImage(frame, Palette!));
+            var frames = EpfFile!.Select(frame => Graphics.RenderImage(frame, Palette!, AlphaType));
             Animation = new Animation(new SKImageCollection(frames), 250);
         }
 
@@ -184,7 +192,7 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         if (IsEfa)
             Animation.Frames[SelectedFrameIndex] = Graphics.RenderImage(EfaFile![SelectedFrameIndex], EfaFile.BlendingType);
         else
-            Animation.Frames[SelectedFrameIndex] = Graphics.RenderImage(EpfFile![SelectedFrameIndex], Palette!);
+            Animation.Frames[SelectedFrameIndex] = Graphics.RenderImage(EpfFile![SelectedFrameIndex], Palette!, AlphaType);
 
         PreviewElement?.Redraw();
     }
@@ -204,7 +212,7 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
             if (IsEfa)
                 Animation.Frames[i] = Graphics.RenderImage(EfaFile![i], EfaFile.BlendingType);
             else
-                Animation.Frames[i] = Graphics.RenderImage(EpfFile![i], Palette!);
+                Animation.Frames[i] = Graphics.RenderImage(EpfFile![i], Palette!, AlphaType);
         }
 
         PreviewElement?.Redraw();
@@ -550,9 +558,11 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         var left = -frameCenterX + Math.Min(0, frameLeft);
         var top = -frameCenterY + Math.Min(0, frameTop);
 
-        // Draw effect frame
+        // Draw effect frame. EFA additive/self-alpha frames carry full alpha and need SKBlendMode.Plus so dark
+        // pixels add nothing to the destination. EPF frames (and EFA per-pixel-alpha frames) use standard
+        // SrcOver so luminance alpha on palette>=1000 sprites composes naturally
         using var paint = new SKPaint();
-        paint.BlendMode = SKBlendMode.SrcATop;
+        paint.BlendMode = Animation!.BlendMode ?? SKBlendMode.SrcOver;
 
         canvas.DrawImage(
             frame,

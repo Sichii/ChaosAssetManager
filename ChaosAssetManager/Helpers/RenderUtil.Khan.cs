@@ -57,9 +57,9 @@ public static partial class RenderUtil
             return null;
 
         var overrideType = male ? KhanPalOverrideType.Male : KhanPalOverrideType.Female;
-        var palette = lookup.GetPaletteForId(identifier, overrideType);
+        var (palette, alphaType) = lookup.GetPaletteAndAlphaType(identifier, overrideType);
         var epfFile = EpfFile.FromEntry(entry);
-        var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette));
+        var transformer = epfFile.Select(frame => Graphics.RenderImage(frame, palette, alphaType));
         var images = new SKImageCollection(transformer);
 
         return new Animation(images, 200);
