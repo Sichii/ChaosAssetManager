@@ -79,93 +79,7 @@ public sealed partial class EntryPreviewControl : IDisposable
             {
                 Content = RenderUtil.RenderText(Entry);
 
-                break;
-            }
-            case ".pal":
-            {
-                var animation = RenderUtil.RenderPalette(Entry);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
-            }
-            case ".efa":
-            {
-                var animation = RenderUtil.RenderEfa(Entry);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
-            }
-
-            case ".spf":
-            {
-                var animation = RenderUtil.RenderSpf(Entry);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
-            }
-            case ".bmp":
-            {
-                if (ArchiveName == "seo.dat")
-                    return;
-
-                var animation = RenderUtil.RenderBmp(Entry);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
-            }
-            case ".mpf":
-            {
-                var animation = RenderUtil.RenderMpf(Archive, Entry);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
-            }
-            case ".epf":
-            {
-                var animation = RenderUtil.RenderEpf(
-                    Archive,
-                    Entry,
-                    ArchiveName,
-                    ArchiveRoot);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
-            }
-
-            case ".hpf":
-            {
-                var animation = RenderUtil.RenderHpf(Archive, Entry);
-
-                if (animation is null)
-                    break;
-
-                Animation = animation;
-
-                break;
+                return;
             }
             case ".mp3":
             {
@@ -174,9 +88,15 @@ public sealed partial class EntryPreviewControl : IDisposable
 
                 Content = player;
 
-                break;
+                return;
             }
         }
+
+        Animation = RenderUtil.TryRenderAnimation(
+            Archive,
+            Entry,
+            ArchiveName,
+            ArchiveRoot);
 
         if (Animation is not null)
             GenerateElement();

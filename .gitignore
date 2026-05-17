@@ -407,6 +407,9 @@ FodyWeavers.xsd
 # Superpowers brainstorming artifacts
 .superpowers/
 
+# Local design specs and implementation plans (AI workflow output)
+docs/
+
 # Crash dumps
 *.stackdump
 

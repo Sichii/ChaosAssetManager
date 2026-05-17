@@ -50,6 +50,11 @@
                       IsEnabled="false"
                       Padding="10 0 10 0"
                       Click="ExtractSelectionBtn_OnClick" />
+            <MenuItem x:Name="SaveRenderBtn"
+                      Header="SaveRender"
+                      IsEnabled="false"
+                      Padding="10 0 10 0"
+                      Click="SaveRenderBtn_OnClick" />
             <MenuItem x:Name="CompileBtn"
                       Header="Compile"
                       Padding="10 0 10 0"

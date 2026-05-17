@@ -98,5 +98,7 @@ public sealed class PathHelper
     public string? PaletteRemapperImageToPath { get; set; }
     public string? PaletteRemapperPalToPath { get; set; }
     public string? ArchiveExtractSelectionToPath { get; set; }
+    public string? SaveRenderToPath { get; set; }
+    public string? SaveRenderToFilePath { get; set; }
     #endregion
 }

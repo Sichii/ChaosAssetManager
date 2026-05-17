@@ -1,11 +1,8 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Data;
-using Chaos.Extensions.Common;
-using ChaosAssetManager.Model;
+using ChaosAssetManager.Helpers;
 using DALib.Data;
 using DALib.Drawing;
-using DALib.Utility;
-using Graphics = DALib.Drawing.Graphics;
 
 namespace ChaosAssetManager.Controls.PreviewControls;
 
@@ -13,8 +10,6 @@ public sealed partial class TileViewerControl : IDisposable
 {
     private readonly DataArchive Archive;
     private readonly DataArchiveEntry Entry;
-    private readonly PaletteLookup PaletteLookup;
-    private readonly TileAnimationTable TileAnimationTable;
     private readonly Tileset Tileset;
 
     public TileViewerControl(DataArchive archive, DataArchiveEntry entry)
@@ -24,11 +19,7 @@ public sealed partial class TileViewerControl : IDisposable
 
         InitializeComponent();
 
-        var palettePrefix = Entry.EntryName.EqualsI("tilea.bmp") ? "mpt" : "mps";
-
         Tileset = Tileset.FromArchive(Entry.EntryName, Archive);
-        PaletteLookup = PaletteLookup.FromArchive(palettePrefix, Archive);
-        TileAnimationTable = TileAnimationTable.FromArchive("gndani", Archive);
 
         var collectionView = new CollectionView(Enumerable.Range(0, Tileset.Count));
         TileListView.ItemsSource = collectionView;
@@ -36,6 +27,8 @@ public sealed partial class TileViewerControl : IDisposable
 
     /// <inheritdoc />
     public void Dispose() => (TilePreview?.Content as IDisposable)?.Dispose();
+
+    public int? SelectedTileIndex => TileListView.SelectedIndex >= 0 ? TileListView.SelectedIndex : null;
 
     private void TileListView_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -45,31 +38,11 @@ public sealed partial class TileViewerControl : IDisposable
         if (TileListView.SelectedItem is null)
             return;
 
-        var tileIndex = TileListView.SelectedIndex;
-        List<int> tileIndexes = [tileIndex];
+        var animation = RenderUtil.TryRenderTile(Archive, Entry, TileListView.SelectedIndex);
 
-        if (TileAnimationTable.TryGetEntry(tileIndex, out var animationEntry))
-            tileIndexes = animationEntry.TileSequence
-                                        .Select(i => (int)i)
-                                        .ToList();
-
-        var transformer = tileIndexes.Select(index =>
-        {
-            var tile = Tileset[index];
-            var palette = PaletteLookup.GetPaletteForId(index + 1);
-            var image = Graphics.RenderTile(tile, palette);
-
-            return image;
-        });
-
-        var frames = new SKImageCollection(transformer);
-
-        if (frames.IsNullOrEmpty())
+        if (animation is null)
             return;
 
-        var animation = new Animation(frames, animationEntry?.AnimationIntervalMs);
-        var content = new EntryPreviewControl(animation);
-
-        TilePreview.Content = content;
+        TilePreview.Content = new EntryPreviewControl(animation);
     }
 }

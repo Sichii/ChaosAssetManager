@@ -8,6 +8,7 @@ using ChaosAssetManager.Helpers;
 using ChaosAssetManager.Model;
 using DALib.Data;
 using MaterialDesignThemes.Wpf;
+using SkiaSharp;
 using Application = System.Windows.Application;
 using Button = System.Windows.Controls.Button;
 using DataFormats = System.Windows.DataFormats;
@@ -179,6 +180,7 @@ public sealed partial class ArchivesControl : IDisposable
         var numSelectedItems = ArchivesView.SelectedItems.Count;
 
         ExtractSelectionBtn.IsEnabled = numSelectedItems != 0;
+        SaveRenderBtn.IsEnabled = numSelectedItems != 0;
 
         if (numSelectedItems == 1)
         {
@@ -293,6 +295,217 @@ public sealed partial class ArchivesControl : IDisposable
             }
     }
 
+    private async void SaveRenderBtn_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (Archive is null)
+            return;
+
+        //tile viewer hijacks the single-entry case
+        if (Preview.Content is TileViewerControl tileViewer)
+        {
+            await SaveRenderForTile(tileViewer);
+
+            return;
+        }
+
+        var selectedItems = ArchivesView.SelectedItems
+                                        .OfType<DataArchiveEntry>()
+                                        .ToList();
+
+        if (selectedItems.Count == 0)
+            return;
+
+        if (selectedItems.Count == 1)
+            await SaveRenderForSingleEntry(selectedItems[0]);
+        else
+            SaveRenderForBatch(selectedItems);
+    }
+
+    private async Task SaveRenderForTile(TileViewerControl tileViewer)
+    {
+        var tileIndex = tileViewer.SelectedTileIndex;
+
+        if (tileIndex is null)
+        {
+            ShowMessage("Select a tile first.");
+
+            return;
+        }
+
+        if (ArchivesView.SelectedItem is not DataArchiveEntry atlasEntry)
+            return;
+
+        using var animation = RenderUtil.TryRenderTile(Archive!, atlasEntry, tileIndex.Value);
+
+        if (animation is null || animation.Frames.Count == 0)
+        {
+            ShowMessage("Failed to render tile.");
+
+            return;
+        }
+
+        var nameHint = $"{Path.GetFileNameWithoutExtension(atlasEntry.EntryName)}_tile{tileIndex.Value:D3}";
+
+        if (animation.Frames.Count == 1)
+            SaveSingleFrameViaDialog(animation.Frames[0], nameHint);
+        else
+            await SaveMultiFrameViaSelector(animation, nameHint);
+    }
+
+    private async Task SaveRenderForSingleEntry(DataArchiveEntry entry)
+    {
+        using var animation = RenderUtil.TryRenderAnimation(
+            Archive!,
+            entry,
+            ArchiveName,
+            ArchiveRoot);
+
+        if (animation is null || animation.Frames.Count == 0)
+        {
+            ShowMessage("Selected entry has no renderable preview.");
+
+            return;
+        }
+
+        var nameHint = Path.GetFileNameWithoutExtension(entry.EntryName);
+
+        if (animation.Frames.Count == 1)
+            SaveSingleFrameViaDialog(animation.Frames[0], nameHint);
+        else
+            await SaveMultiFrameViaSelector(animation, nameHint);
+    }
+
+    private void SaveSingleFrameViaDialog(SKImage frame, string nameHint)
+    {
+        var saveFileDialog = new SaveFileDialog
+        {
+            Filter = "PNG Image (*.png)|*.png",
+            FileName = $"{nameHint}.png",
+            InitialDirectory = PathHelper.Instance.SaveRenderToFilePath
+        };
+
+        if (saveFileDialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            WriteFrameToPng(frame, saveFileDialog.FileName);
+        } catch (Exception ex)
+        {
+            ShowMessage($"Failed to save {Path.GetFileName(saveFileDialog.FileName)} — {ex.Message}.", TimeSpan.FromSeconds(3));
+
+            return;
+        }
+
+        PathHelper.Instance.SaveRenderToFilePath = Path.GetDirectoryName(saveFileDialog.FileName);
+        PathHelper.Instance.Save();
+
+        ShowMessage("Saved 1 frame.");
+    }
+
+    private async Task SaveMultiFrameViaSelector(Animation animation, string nameHint)
+    {
+        var selector = new SaveRenderFrameSelectorControl(animation, nameHint);
+        var picked = await selector.ShowAsync();
+
+        if (picked is null || picked.Count == 0)
+            return;
+
+        using var folderBrowserDialog = new FolderBrowserDialog();
+        folderBrowserDialog.InitialDirectory = PathHelper.Instance.SaveRenderToPath!;
+
+        if (folderBrowserDialog.ShowDialog() != DialogResult.OK)
+            return;
+
+        foreach (var frameIndex in picked)
+        {
+            var fileName = $"{nameHint}_{frameIndex:D3}.png";
+            var outPath = Path.Combine(folderBrowserDialog.SelectedPath, fileName);
+
+            try
+            {
+                WriteFrameToPng(animation.Frames[frameIndex], outPath);
+            } catch (Exception ex)
+            {
+                ShowMessage($"Failed to save {fileName} — {ex.Message}.", TimeSpan.FromSeconds(3));
+
+                return;
+            }
+        }
+
+        PathHelper.Instance.SaveRenderToPath = folderBrowserDialog.SelectedPath;
+        PathHelper.Instance.Save();
+
+        ShowMessage($"Saved {picked.Count} frames.");
+    }
+
+    private void SaveRenderForBatch(List<DataArchiveEntry> entries)
+    {
+        using var folderBrowserDialog = new FolderBrowserDialog();
+        folderBrowserDialog.InitialDirectory = PathHelper.Instance.SaveRenderToPath!;
+
+        if (folderBrowserDialog.ShowDialog() != DialogResult.OK)
+            return;
+
+        var totalFrames = 0;
+        var savedEntries = 0;
+        var skippedEntries = 0;
+
+        foreach (var entry in entries)
+        {
+            using var animation = RenderUtil.TryRenderAnimation(
+                Archive!,
+                entry,
+                ArchiveName,
+                ArchiveRoot);
+
+            if (animation is null || animation.Frames.Count == 0)
+            {
+                skippedEntries++;
+
+                continue;
+            }
+
+            var nameHint = Path.GetFileNameWithoutExtension(entry.EntryName);
+
+            for (var i = 0; i < animation.Frames.Count; i++)
+            {
+                var fileName = $"{nameHint}_{i:D3}.png";
+                var outPath = Path.Combine(folderBrowserDialog.SelectedPath, fileName);
+
+                try
+                {
+                    WriteFrameToPng(animation.Frames[i], outPath);
+                } catch (Exception ex)
+                {
+                    ShowMessage($"Failed to save {fileName} — {ex.Message}.", TimeSpan.FromSeconds(3));
+
+                    return;
+                }
+
+                totalFrames++;
+            }
+
+            savedEntries++;
+        }
+
+        PathHelper.Instance.SaveRenderToPath = folderBrowserDialog.SelectedPath;
+        PathHelper.Instance.Save();
+
+        var msg = skippedEntries == 0
+            ? $"Saved {totalFrames} frames from {savedEntries} entries."
+            : $"Saved {totalFrames} frames from {savedEntries} entries. ({skippedEntries} skipped.)";
+
+        ShowMessage(msg);
+    }
+
+    private static void WriteFrameToPng(SKImage frame, string outPath)
+    {
+        using var data = frame.Encode(SKEncodedImageFormat.Png, 100);
+        using var outStream = File.Create(outPath);
+        data.SaveTo(outStream);
+    }
+
     private void ExtractToBtn_OnClick(object sender, RoutedEventArgs e)
     {
         using var folderBrowserDialog = new FolderBrowserDialog();
@@ -395,6 +608,7 @@ public sealed partial class ArchivesControl : IDisposable
         ExtractToBtn.IsEnabled = true;
         PatchBtn.IsEnabled = true;
         ExtractSelectionBtn.IsEnabled = false;
+        SaveRenderBtn.IsEnabled = false;
     }
 
     private void PatchArchive(string path)
