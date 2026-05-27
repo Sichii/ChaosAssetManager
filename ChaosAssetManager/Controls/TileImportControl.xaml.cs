@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using Chaos.Extensions.Common;
 using ChaosAssetManager.Helpers;
+using ChaosAssetManager.Model;
 using ChaosAssetManager.ViewModel;
 using DALib.Abstractions;
 using DALib.Data;
@@ -20,6 +21,9 @@ public sealed partial class TileImportControl
     public ObservableCollection<TileImportViewModel> TileViewModels { get; } = [];
     private bool IsForeground => ForegroundRadio.IsChecked == true;
     private bool IsSnow => SnowRadio.IsChecked == true;
+
+    private SplicedTileLayout? SplicedLayout;
+    private string? SplicedSourcePath;
 
     public TileImportControl()
     {
@@ -45,6 +49,10 @@ public sealed partial class TileImportControl
             vm.Dispose();
 
         TileViewModels.Clear();
+
+        //manually browsed tiles are not a spliced set - no layout map
+        SplicedLayout = null;
+        SplicedSourcePath = null;
 
         var validCount = 0;
         var isForeground = IsForeground;
@@ -98,61 +106,12 @@ public sealed partial class TileImportControl
         UpdateStatus(validCount);
     }
 
-    private static HashSet<SKColor> GetUniqueColors(SKImage image)
-    {
-        using var bitmap = SKBitmap.FromImage(image);
-        var colors = new HashSet<SKColor>();
-
-        for (var y = 0; y < bitmap.Height; y++)
-        {
-            for (var x = 0; x < bitmap.Width; x++)
-            {
-                var pixel = bitmap.GetPixel(x, y);
-
-                if (pixel.Alpha > 0)
-                    colors.Add(pixel.WithAlpha(255));
-            }
-        }
-
-        return colors;
-    }
-
-    private static List<List<SKImage>> GroupImagesByColorCount(List<SKImage> images)
-    {
-        var groups = new List<List<SKImage>>();
-        var currentGroup = new List<SKImage>();
-        var currentColors = new HashSet<SKColor>();
-
-        foreach (var image in images)
-        {
-            var imageColors = GetUniqueColors(image);
-
-            var combinedColors = new HashSet<SKColor>(currentColors);
-
-            foreach (var color in imageColors)
-                combinedColors.Add(color);
-
-            if ((combinedColors.Count > CONSTANTS.COLORS_PER_PALETTE) && (currentGroup.Count > 0))
-            {
-                groups.Add(currentGroup);
-                currentGroup = [];
-                currentColors.Clear();
-
-                foreach (var color in imageColors)
-                    currentColors.Add(color);
-            } else
-                currentColors = combinedColors;
-
-            currentGroup.Add(image);
-        }
-
-        if (currentGroup.Count > 0)
-            groups.Add(currentGroup);
-
-        return groups;
-    }
-
-    private static string ImportBackgroundTiles(string archivePath, bool isSnow, List<TileImportData> tileData)
+    private static string ImportBackgroundTiles(
+        string archivePath,
+        bool isSnow,
+        List<TileImportData> tileData,
+        SplicedTileLayout? layout,
+        string? sourcePath)
     {
         var seo = ArchiveCache.Seo;
         var tilesetName = isSnow ? "tileas" : "tilea";
@@ -164,41 +123,30 @@ public sealed partial class TileImportControl
         //load existing palette lookup
         var paletteLookup = PaletteLookup.FromArchive("mpt", seo);
 
-        //group images by color count to respect palette limits
+        //quantize the entire imported set into a single shared palette
         var images = tileData.Select(td => td.Image)
                              .ToList();
-        var imageGroups = GroupImagesByColorCount(images);
 
+        using var palettized = Tileset.FromImages(images);
+        (var newTileset, var newPalette) = palettized;
+
+        //add tiles to existing tileset
+        foreach (var tile in newTileset)
+            existingTileset.Add(tile);
+
+        //all imported tiles reference the one newly created palette
+        var paletteId = paletteLookup.GetNextPaletteId();
         var tileIndex = startingIndex;
-        var palettesCreated = 0;
 
-        foreach (var group in imageGroups)
+        for (var i = 0; i < newTileset.Count; i++)
         {
-            //create palettized tileset from this group
-            using var palettized = Tileset.FromImages(group);
-            (var newTileset, var newPalette) = palettized;
-
-            //add tiles to existing tileset
-            foreach (var tile in newTileset)
-                existingTileset.Add(tile);
-
-            //get next palette ID and add entries
-            var paletteId = paletteLookup.GetNextPaletteId();
-
-            for (var i = 0; i < newTileset.Count; i++)
-            {
-                //palette table uses +2 offset for tile IDs (based on MapEditorRenderUtil)
-                paletteLookup.Table.Add(tileIndex + 2, paletteId);
-                tileIndex++;
-            }
-
-            //add palette to lookup
-            paletteLookup.Palettes[paletteId] = newPalette;
-
-            //patch new palette
-            seo.Patch($"mpt{paletteId:D4}.pal", newPalette);
-            palettesCreated++;
+            //palette table uses +2 offset for tile IDs (based on MapEditorRenderUtil)
+            paletteLookup.Table.Add(tileIndex + 2, paletteId);
+            tileIndex++;
         }
+
+        paletteLookup.Palettes[paletteId] = newPalette;
+        seo.Patch($"mpt{paletteId:D4}.pal", newPalette);
 
         //patch updated tileset
         seo.Patch($"{tilesetName}.bmp", existingTileset);
@@ -209,8 +157,63 @@ public sealed partial class TileImportControl
         //save SEO archive
         seo.Save(Path.Combine(archivePath, "seo.dat"));
 
-        return
-            $"Imported {tileData.Count} background tiles to {tilesetName} (starting at index {startingIndex}, {palettesCreated} palettes)";
+        var resultMessage =
+            $"Imported {tileData.Count} background tiles to {tilesetName} (starting at index {startingIndex}, 1 shared palette)";
+
+        //if these tiles came from the splicer, also write a .map reconstructing the scene
+        if (layout is not null)
+            resultMessage += WriteLayoutMapFile(layout, sourcePath, startingIndex);
+
+        return resultMessage;
+    }
+
+    private static string WriteLayoutMapFile(SplicedTileLayout layout, string? sourcePath, int startingIndex)
+    {
+        (var map, var size) = TileLayoutMapFileExporter.Build(layout, startingIndex);
+
+        var fileName = string.IsNullOrEmpty(sourcePath)
+            ? "tile_layout.map"
+            : $"{Path.GetFileNameWithoutExtension(sourcePath)}.map";
+
+        var sourceDir = string.IsNullOrEmpty(sourcePath) ? null : Path.GetDirectoryName(sourcePath);
+
+        //prefer writing next to the source image; fall back to temp if that isn't writable
+        string? finalPath = null;
+
+        if (!string.IsNullOrEmpty(sourceDir))
+        {
+            var candidate = Path.Combine(sourceDir, fileName);
+
+            if (TryWriteMap(map, candidate))
+                finalPath = candidate;
+        }
+
+        if (finalPath == null)
+        {
+            var tempCandidate = Path.Combine(Path.GetTempPath(), fileName);
+
+            if (TryWriteMap(map, tempCandidate))
+                finalPath = tempCandidate;
+        }
+
+        if (finalPath == null)
+            return " (layout map write failed)";
+
+        return $" Layout map: {finalPath} ({size}x{size}).";
+    }
+
+    private static bool TryWriteMap(MapFile map, string path)
+    {
+        try
+        {
+            map.Save(path);
+
+            return true;
+        } catch
+        {
+            //unwritable location (permissions, path too long) - caller falls back to temp
+            return false;
+        }
     }
 
     private async void ImportBtn_OnClick(object sender, RoutedEventArgs e)
@@ -234,6 +237,10 @@ public sealed partial class TileImportControl
         var isForeground = IsForeground;
         var isSnow = IsSnow;
 
+        //capture the spliced layout (if any) for .map emission on the background path
+        var layout = SplicedLayout;
+        var sourcePath = SplicedSourcePath;
+
         ImportBtn.IsEnabled = false;
         BrowseBtn.IsEnabled = false;
 
@@ -248,7 +255,7 @@ public sealed partial class TileImportControl
             if (isForeground)
                 resultMessage = await Task.Run(() => ImportForegroundTiles(archivePath, isSnow, tileData));
             else
-                resultMessage = await Task.Run(() => ImportBackgroundTiles(archivePath, isSnow, tileData));
+                resultMessage = await Task.Run(() => ImportBackgroundTiles(archivePath, isSnow, tileData, layout, sourcePath));
 
             //clear the view models after successful import
             foreach (var vm in TileViewModels)
@@ -256,6 +263,10 @@ public sealed partial class TileImportControl
 
             TileViewModels.Clear();
             UpdateStatus(0);
+
+            //the spliced set has been consumed
+            SplicedLayout = null;
+            SplicedSourcePath = null;
 
             //clear render caches so new tiles are visible
             MapEditorRenderUtil.Clear();
@@ -290,58 +301,51 @@ public sealed partial class TileImportControl
         while (existingIndices.Contains(startingIndex))
             startingIndex++;
 
-        //group images by color count
+        //quantize the entire imported set into a single shared palette
         var images = tileData.Select(td => td.Image)
                              .ToList();
 
         var flags = tileData.Select(td => td.Flags)
                             .ToList();
-        var imageGroups = GroupImagesByColorCount(images);
 
+        //preserve non-transparent blacks in place before quantizing (mutates the list entries)
+        ImageProcessor.PreserveNonTransparentBlacks(images);
+
+        using var quantized = ImageProcessor.QuantizeMultiple(QuantizerOptions.Default, images.ToArray());
+        (var quantizedImages, var palette) = quantized;
+
+        //all imported tiles reference the one newly created palette
+        var paletteId = paletteLookup.GetNextPaletteId();
         var tileIndex = startingIndex;
-        var palettesCreated = 0;
         var createdTileIds = new List<int>();
 
-        foreach (var group in imageGroups)
+        //create an HPF file for each quantized image (order matches the input/flags order)
+        for (var i = 0; i < quantizedImages.Count; i++)
         {
-            //quantize all images in group together for shared palette
-            ImageProcessor.PreserveNonTransparentBlacks(group.ToArray());
+            var quantizedImage = quantizedImages[i];
 
-            using var quantized = ImageProcessor.QuantizeMultiple(QuantizerOptions.Default, group.ToArray());
-            (var quantizedImages, var palette) = quantized;
-
-            //get next palette ID
-            var paletteId = paletteLookup.GetNextPaletteId();
-
-            //create HPF files for each image in group
-            for (var i = 0; i < quantizedImages.Count; i++)
-            {
-                var quantizedImage = quantizedImages[i];
-
-                //find next available index
-                while (existingIndices.Contains(tileIndex))
-                    tileIndex++;
-
-                //create HPF with palettized data
-                var hpfData = quantizedImage.GetPalettizedPixelData(palette);
-                var hpf = new HpfFile(new byte[8], hpfData);
-
-                //patch HPF file
-                ia.Patch($"{prefix}{tileIndex:D5}.hpf", hpf);
-
-                //add palette table entry (+1 offset based on MapEditorRenderUtil)
-                paletteLookup.Table.Add(tileIndex + 1, paletteId);
-
-                createdTileIds.Add(tileIndex);
-                existingIndices.Add(tileIndex);
+            //find next available index
+            while (existingIndices.Contains(tileIndex))
                 tileIndex++;
-            }
 
-            //add palette to lookup and patch
-            paletteLookup.Palettes[paletteId] = palette;
-            ia.Patch($"{prefix}{paletteId:D4}.pal", palette);
-            palettesCreated++;
+            //create HPF with palettized data
+            var hpfData = quantizedImage.GetPalettizedPixelData(palette);
+            var hpf = new HpfFile(new byte[8], hpfData);
+
+            //patch HPF file
+            ia.Patch($"{prefix}{tileIndex:D5}.hpf", hpf);
+
+            //add palette table entry (+1 offset based on MapEditorRenderUtil)
+            paletteLookup.Table.Add(tileIndex + 1, paletteId);
+
+            createdTileIds.Add(tileIndex);
+            existingIndices.Add(tileIndex);
+            tileIndex++;
         }
+
+        //add the shared palette to lookup and patch
+        paletteLookup.Palettes[paletteId] = palette;
+        ia.Patch($"{prefix}{paletteId:D4}.pal", palette);
 
         //patch updated palette table
         ia.Patch($"{prefix}pal.tbl", paletteLookup.Table);
@@ -352,13 +356,13 @@ public sealed partial class TileImportControl
         //save IA archive
         ia.Save(Path.Combine(archivePath, "ia.dat"));
 
-        return $"Imported {tileData.Count} foreground tiles as {prefix} (IDs: {startingIndex}-{tileIndex - 1}, {palettesCreated} palettes)";
+        return $"Imported {tileData.Count} foreground tiles as {prefix} (IDs: {startingIndex}-{tileIndex - 1}, 1 shared palette)";
     }
 
     /// <summary>
     ///     Loads spliced tiles from the Tile Splicer tool
     /// </summary>
-    public void LoadSplicedTiles(IEnumerable<SKImage> tiles)
+    public void LoadSplicedTiles(SplicedTileLayout layout, string? sourcePath)
     {
         //clear previous tiles
         foreach (var vm in TileViewModels)
@@ -366,12 +370,16 @@ public sealed partial class TileImportControl
 
         TileViewModels.Clear();
 
+        //remember the spliced layout + source path so Import can also emit a .map next to the source
+        SplicedLayout = layout;
+        SplicedSourcePath = sourcePath;
+
         //ensure we're in background mode (spliced tiles are always 56x27 background tiles)
         BackgroundRadio.IsChecked = true;
 
         var index = 0;
 
-        foreach (var tile in tiles)
+        foreach (var tile in layout.OrderedImages)
         {
             TileViewModels.Add(
                 new TileImportViewModel

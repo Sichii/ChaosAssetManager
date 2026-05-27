@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using ChaosAssetManager.Helpers;
+using ChaosAssetManager.Model;
 using DALib.Definitions;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
@@ -17,7 +19,7 @@ public sealed partial class BgTileSplicerControl : IDisposable
     private bool IsDraggingGrid;
     private SKPoint LastGridDragPoint;
     private SKImage? SourceImage;
-    private List<SKImage>? SplicedTiles;
+    private string? SourceImagePath;
 
     public BgTileSplicerControl() => InitializeComponent();
 
@@ -25,8 +27,6 @@ public sealed partial class BgTileSplicerControl : IDisposable
     {
         SourceImage?.Dispose();
         SourceImage = null;
-
-        DisposeSplicedTiles();
 
         Preview.Dispose();
     }
@@ -59,7 +59,6 @@ public sealed partial class BgTileSplicerControl : IDisposable
 
         //dispose previous image
         SourceImage?.Dispose();
-        DisposeSplicedTiles();
 
         //load new image
         SourceImage = SKImage.FromEncodedData(dialog.FileName);
@@ -71,6 +70,9 @@ public sealed partial class BgTileSplicerControl : IDisposable
             return;
         }
 
+        //remember the full source path so the layout map can be written next to it
+        SourceImagePath = dialog.FileName;
+
         //reset grid offset
         GridOffset = SKPoint.Empty;
         GridOffsetAccumulator = SKPoint.Empty;
@@ -81,17 +83,6 @@ public sealed partial class BgTileSplicerControl : IDisposable
         SendToImportBtn.IsEnabled = true;
 
         Preview.Redraw();
-    }
-
-    private void DisposeSplicedTiles()
-    {
-        if (SplicedTiles != null)
-        {
-            foreach (var tile in SplicedTiles)
-                tile.Dispose();
-
-            SplicedTiles = null;
-        }
     }
 
     private void DrawIsometricGridOverlay(SKCanvas canvas, float canvasWidth, float canvasHeight)
@@ -163,13 +154,14 @@ public sealed partial class BgTileSplicerControl : IDisposable
             blendPaint);
     }
 
-    private List<SKImage> ExtractTiles()
+    private SplicedTileLayout ExtractTiles()
     {
         if (SourceImage == null)
-            return [];
+            return new SplicedTileLayout([]);
 
-        //collect tiles with their pixel positions for sorting
-        var tilesWithPos = new List<(int tileLeft, int tileTop, SKImage Image)>();
+        //collect kept tiles with positions + lattice coords, and empty-cell positions, separately
+        var keptTiles = new List<(int tileLeft, int tileTop, int row, int col, SKImage image)>();
+        var emptyCells = new List<(int tileLeft, int tileTop, int row, int col)>();
 
         const int TILE_WIDTH = CONSTANTS.TILE_WIDTH;
         const int TILE_HEIGHT = CONSTANTS.TILE_HEIGHT;
@@ -240,23 +232,36 @@ public sealed partial class BgTileSplicerControl : IDisposable
                     }
                 }
 
-                //check if tile is completely transparent - skip if so
-                if (IsTileTransparent(tileBitmap))
-                    continue;
+                //record empty cells (transparent or black) so the map can show them as gaps
+                if (IsTileEmpty(tileBitmap))
+                {
+                    emptyCells.Add((tileLeft, tileTop, row, col));
 
-                tilesWithPos.Add((tileLeft, tileTop, SKImage.FromBitmap(tileBitmap)));
+                    continue;
+                }
+
+                keptTiles.Add((tileLeft, tileTop, row, col, SKImage.FromBitmap(tileBitmap)));
             }
         }
 
-        //sort like "left to right, top to bottom" rotated 45 degrees counterclockwise
-        //use actual pixel positions for accurate sorting
-        //diagonal index = (x - y) since diagonals go from top-right to bottom-left
-        var sortedTiles = tilesWithPos.OrderBy(t => t.tileLeft / 2 + t.tileTop)
-                                      .ThenBy(t => t.tileLeft)
-                                      .Select(t => t.Image)
-                                      .ToList();
+        //assign placement order via the existing diagonal sort
+        //"left to right, top to bottom" rotated 45 degrees: diagonal index = tileLeft / 2 + tileTop
+        var orderedKept = keptTiles.OrderBy(tile => tile.tileLeft / 2 + tile.tileTop)
+                                   .ThenBy(tile => tile.tileLeft)
+                                   .ToList();
 
-        return sortedTiles;
+        var placedTiles = new List<PlacedTile>(orderedKept.Count + emptyCells.Count);
+
+        for (var order = 0; order < orderedKept.Count; order++)
+        {
+            (var tileLeft, var tileTop, var row, var col, var image) = orderedKept[order];
+            placedTiles.Add(new PlacedTile(tileLeft, tileTop, row, col, false, image, order));
+        }
+
+        foreach ((var tileLeft, var tileTop, var row, var col) in emptyCells)
+            placedTiles.Add(new PlacedTile(tileLeft, tileTop, row, col, true, null, -1));
+
+        return new SplicedTileLayout(placedTiles);
     }
 
     private void FitImageToPreview()
@@ -290,15 +295,18 @@ public sealed partial class BgTileSplicerControl : IDisposable
             translateY);
     }
 
-    private static bool IsTileTransparent(SKBitmap bitmap)
+    private static bool IsTileEmpty(SKBitmap bitmap)
     {
         for (var y = 0; y < bitmap.Height; y++)
         {
             for (var x = 0; x < bitmap.Width; x++)
-                if (bitmap.GetPixel(x, y)
-                          .Alpha
-                    > 0)
+            {
+                var pixel = bitmap.GetPixel(x, y);
+
+                //a pixel counts as content unless it is fully transparent or exact black
+                if ((pixel.Alpha > 0) && ((pixel.Red != 0) || (pixel.Green != 0) || (pixel.Blue != 0)))
                     return false;
+            }
         }
 
         return true;
@@ -349,11 +357,11 @@ public sealed partial class BgTileSplicerControl : IDisposable
             return;
         }
 
-        //extract tiles
-        DisposeSplicedTiles();
-        SplicedTiles = ExtractTiles();
+        //extract tiles into a spatial layout
+        var layout = ExtractTiles();
+        var orderedImages = layout.OrderedImages;
 
-        if (SplicedTiles.Count == 0)
+        if (orderedImages.Count == 0)
         {
             Snackbar.MessageQueue!.Enqueue("No tiles could be extracted from the image");
 
@@ -370,17 +378,84 @@ public sealed partial class BgTileSplicerControl : IDisposable
             return;
         }
 
-        //get TileImportControl
+        //render the layout map before handing the tile images to the importer
+        //(the renderer reads the images but does not take ownership of them)
+        using var mapImage = TileLayoutMapRenderer.Render(layout);
+
+        //load the spliced tiles (TileImportControl now owns the ordered images)
         var tileImport = mainWindow.TileImportView;
-
-        //load the spliced tiles
-        tileImport.LoadSplicedTiles(SplicedTiles);
-
-        //clear our reference (TileImportControl now owns the images)
-        SplicedTiles = null;
+        tileImport.LoadSplicedTiles(layout, SourceImagePath);
 
         //navigate to TileImport
         mainWindow.NavigateToTileImport();
+
+        //write the layout map next to the source image and open it
+        SaveAndOpenLayoutMap(mapImage);
+    }
+
+    private void SaveAndOpenLayoutMap(SKImage mapImage)
+    {
+        var fileName = string.IsNullOrEmpty(SourceImagePath)
+            ? "tile_layout.png"
+            : $"{Path.GetFileNameWithoutExtension(SourceImagePath)}_layout.png";
+
+        var sourceDir = string.IsNullOrEmpty(SourceImagePath) ? null : Path.GetDirectoryName(SourceImagePath);
+
+        //prefer writing next to the source image; fall back to temp if that isn't writable
+        string? finalPath = null;
+
+        if (!string.IsNullOrEmpty(sourceDir))
+        {
+            var candidate = Path.Combine(sourceDir, fileName);
+
+            if (TryWritePng(mapImage, candidate))
+                finalPath = candidate;
+        }
+
+        if (finalPath == null)
+        {
+            var tempCandidate = Path.Combine(Path.GetTempPath(), fileName);
+
+            if (TryWritePng(mapImage, tempCandidate))
+                finalPath = tempCandidate;
+        }
+
+        if (finalPath == null)
+        {
+            Snackbar.MessageQueue!.Enqueue("Failed to write the layout map");
+
+            return;
+        }
+
+        //open in the system default image viewer
+        try
+        {
+            Process.Start(
+                new ProcessStartInfo(finalPath)
+                {
+                    UseShellExecute = true
+                });
+        } catch
+        {
+            //no viewer association - the file is still on disk
+            Snackbar.MessageQueue!.Enqueue($"Layout map saved to {finalPath}");
+        }
+    }
+
+    private static bool TryWritePng(SKImage image, string path)
+    {
+        try
+        {
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            using var stream = File.Create(path);
+            data.SaveTo(stream);
+
+            return true;
+        } catch
+        {
+            //unwritable location (permissions, path too long) - caller falls back to temp
+            return false;
+        }
     }
 
     #region Grid Dragging
