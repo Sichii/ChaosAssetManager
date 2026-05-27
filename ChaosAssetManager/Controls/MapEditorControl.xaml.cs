@@ -46,6 +46,9 @@ public partial class MapEditorControl
         if (PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
             PopulateTileViewModels();
 
+        //rebuild the preloaded tile pickers after an import refreshes the caches
+        CacheManager.Refreshed += OnCachesRefreshed;
+
         _ = UpdateLoop();
     }
 
@@ -643,6 +646,28 @@ public partial class MapEditorControl
 
         //load structures from repository
         LoadStructuresFromRepository();
+    }
+
+    private void OnCachesRefreshed()
+    {
+        //refresh fires on the import's UI continuation, but marshal defensively
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(OnCachesRefreshed);
+
+            return;
+        }
+
+        //the pickers read the archives directly; skip when no valid path is configured
+        if (!PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath))
+            return;
+
+        //rebuild the one-shot tile pickers from the fresh caches (thumbnails are cache-owned, so no disposal here;
+        //structures aren't duplicated because LoadStructuresFromRepository clears them first)
+        ViewModel.ForegroundTiles.Clear();
+        ViewModel.BackgroundTiles.Clear();
+        Interlocked.Exchange(ref IsPopulated, false);
+        PopulateTileViewModels();
     }
 
     private void RedoBtn_OnClick(object sender, RoutedEventArgs e) => DoRedo();

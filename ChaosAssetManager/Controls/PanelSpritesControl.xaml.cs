@@ -285,6 +285,9 @@ public sealed partial class PanelSpritesControl
                 return count;
             });
 
+            //refresh all in-memory archives and render caches so the new panel sprites are visible without a restart
+            CacheManager.RefreshAfterImport();
+
             Snackbar.MessageQueue!.Enqueue($"Successfully imported {importedCount} panel sprites");
         } catch (Exception ex)
         {

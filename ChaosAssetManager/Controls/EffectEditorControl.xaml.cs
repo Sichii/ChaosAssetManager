@@ -21,6 +21,24 @@ public sealed partial class EffectEditorControl
         InitializeComponent();
 
         PathHelper.ArchivesPathChanged += () => EffectEditorControl_OnLoaded(this, new RoutedEventArgs());
+
+        //drop the cached roh palette lookups when an import refreshes the caches
+        CacheManager.Refreshed += OnCachesRefreshed;
+    }
+
+    private void OnCachesRefreshed()
+    {
+        //the event is raised on the import's UI continuation; marshal defensively to keep the writes UI-thread-only
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(OnCachesRefreshed);
+
+            return;
+        }
+
+        //null the static palette lookups so they re-load from the refreshed roh.dat on next use
+        EfctPaletteLookup = null;
+        MefcPaletteLookup = null;
     }
 
     private void Effect_OnSelectionChanged(object sender, SelectionChangedEventArgs e)

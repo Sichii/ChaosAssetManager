@@ -219,7 +219,12 @@ public sealed partial class NPCImportControl
                 });
 
             if (result.Success)
+            {
+                //refresh all in-memory archives and render caches so the new NPC is visible without a restart
+                CacheManager.RefreshAfterImport();
+
                 Snackbar.MessageQueue!.Enqueue($"{result.Message} (ID: {result.MonsterId}, Palette: {result.PaletteId})");
+            }
             else
                 Snackbar.MessageQueue!.Enqueue(result.Message);
         }

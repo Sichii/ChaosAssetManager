@@ -268,8 +268,8 @@ public sealed partial class TileImportControl
             SplicedLayout = null;
             SplicedSourcePath = null;
 
-            //clear render caches so new tiles are visible
-            MapEditorRenderUtil.Clear();
+            //refresh all in-memory archives and render caches so imported tiles are visible without a restart
+            CacheManager.RefreshAfterImport();
 
             Snackbar.MessageQueue!.Enqueue(resultMessage);
         } catch (Exception ex)

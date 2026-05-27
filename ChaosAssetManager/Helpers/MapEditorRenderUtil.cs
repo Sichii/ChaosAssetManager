@@ -59,8 +59,6 @@ public static class MapEditorRenderUtil
         StcPaletteLookup = null;
         StsPaletteLookup = null;
         Sotp = null;
-
-        ArchiveCache.Clear();
     }
 
     public static bool IsTransparent(int tileIndex)

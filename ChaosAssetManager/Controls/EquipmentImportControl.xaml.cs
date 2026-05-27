@@ -349,8 +349,12 @@ public sealed partial class EquipmentImportControl
             });
 
             if (result.Success)
+            {
+                //refresh all in-memory archives and render caches so the new equipment is visible without a restart
+                CacheManager.RefreshAfterImport();
+
                 Snackbar.MessageQueue!.Enqueue($"{result.Message} (ID: {result.EntryId}, Palette: {result.PaletteId})");
-            else
+            } else
                 Snackbar.MessageQueue!.Enqueue(result.Message);
         } catch (Exception ex)
         {
