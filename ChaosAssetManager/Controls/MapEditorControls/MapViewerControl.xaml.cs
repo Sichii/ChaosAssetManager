@@ -446,7 +446,12 @@ public partial class MapViewerControl : IDisposable
             ViewModel.ForegroundChangePending = true;
     }
 
-    private void MarkHoverChunksDirty(SKPoint tileCoordinates, LayerFlags layers)
+    private void MarkHoverChunksDirty(
+        int originX,
+        int originY,
+        int width,
+        int height,
+        LayerFlags layers)
     {
         if (ChunkMgr is null)
             return;
@@ -466,25 +471,19 @@ public partial class MapViewerControl : IDisposable
 
         PreviousHoverChunks.Clear();
 
-        //mark current hover chunks dirty
-        var tileGrab = TileGrab;
-        var startX = (int)tileCoordinates.X;
-        var startY = (int)tileCoordinates.Y;
-        var grabWidth = tileGrab?.Bounds.Width ?? 1;
-        var grabHeight = tileGrab?.Bounds.Height ?? 1;
-
+        //mark every chunk the hover region covers dirty
         ChunkMgr.MarkRangeDirty(
-            startX,
-            startY,
-            grabWidth,
-            grabHeight,
+            originX,
+            originY,
+            width,
+            height,
             layers);
 
-        //track which chunks are now hovered
-        var startCx = Math.Max(0, startX / ChunkManager.CHUNK_SIZE);
-        var startCy = Math.Max(0, startY / ChunkManager.CHUNK_SIZE);
-        var endCx = Math.Min(ChunkMgr.ChunksWide - 1, (startX + grabWidth - 1) / ChunkManager.CHUNK_SIZE);
-        var endCy = Math.Min(ChunkMgr.ChunksHigh - 1, (startY + grabHeight - 1) / ChunkManager.CHUNK_SIZE);
+        //track which chunks are now hovered so the next move can clear them
+        var startCx = Math.Max(0, originX / ChunkManager.CHUNK_SIZE);
+        var startCy = Math.Max(0, originY / ChunkManager.CHUNK_SIZE);
+        var endCx = Math.Min(ChunkMgr.ChunksWide - 1, (originX + width - 1) / ChunkManager.CHUNK_SIZE);
+        var endCy = Math.Min(ChunkMgr.ChunksHigh - 1, (originY + height - 1) / ChunkManager.CHUNK_SIZE);
 
         for (var cy = startCy; cy <= endCy; cy++)
             for (var cx = startCx; cx <= endCx; cx++)
@@ -525,7 +524,13 @@ public partial class MapViewerControl : IDisposable
                     if (TileGrab.HasForegroundTiles)
                         hoverLayers |= LayerFlags.Foreground;
 
-                    MarkHoverChunksDirty(tileCoordinates, hoverLayers);
+                    //draw stamp is positioned at the cursor
+                    MarkHoverChunksDirty(
+                        (int)tileCoordinates.X,
+                        (int)tileCoordinates.Y,
+                        TileGrab.Bounds.Width,
+                        TileGrab.Bounds.Height,
+                        hoverLayers);
 
                     if (TileGrab.HasBackgroundTiles)
                         ViewModel.BackgroundChangePending = true;
@@ -536,22 +541,47 @@ public partial class MapViewerControl : IDisposable
             } else
             {
                 var editLayers = MapEditorViewModel.EditingLayerFlags;
-                MarkHoverChunksDirty(tileCoordinates, editLayers);
+                var leftButtonPressed = e.LeftButton == MouseButtonState.Pressed;
+
+                //update the selection before marking dirty so the dirty region matches the new bounds
+                if (leftButtonPressed)
+                {
+                    if (MapEditorViewModel.SelectedTool == ToolType.Select)
+                        HandleSelectToolDrag(tileCoordinates);
+
+                    if (MapEditorViewModel.SelectedTool == ToolType.Erase)
+                        HandleEraseToolDrag(tileCoordinates);
+                }
+
+                //while dragging a selection the highlight covers the whole selection rectangle, so
+                //every chunk it spans must re-render; marking only the chunk under the cursor leaves
+                //the off-diagonal chunks un-highlighted and the selection looks non-rectangular
+                var draggingSelection = leftButtonPressed
+                                        && (MapEditorViewModel.SelectedTool is ToolType.Select or ToolType.Erase)
+                                        && (TileGrab is not null);
+
+                if (draggingSelection)
+                    MarkHoverChunksDirty(
+                        TileGrab!.Bounds.Left,
+                        TileGrab.Bounds.Top,
+                        TileGrab.Bounds.Width,
+                        TileGrab.Bounds.Height,
+                        editLayers);
+                else
+
+                    //plain hover/sample highlights only the single tile under the cursor
+                    MarkHoverChunksDirty(
+                        (int)tileCoordinates.X,
+                        (int)tileCoordinates.Y,
+                        1,
+                        1,
+                        editLayers);
 
                 if (editLayers.HasFlag(LayerFlags.Background))
                     ViewModel.BackgroundChangePending = true;
 
                 if (editLayers.HasFlag(LayerFlags.LeftForeground) || editLayers.HasFlag(LayerFlags.RightForeground))
                     ViewModel.ForegroundChangePending = true;
-            }
-
-            if (e.LeftButton == MouseButtonState.Pressed)
-            {
-                if (MapEditorViewModel.SelectedTool == ToolType.Select)
-                    HandleSelectToolDrag(tileCoordinates);
-
-                if (MapEditorViewModel.SelectedTool == ToolType.Erase)
-                    HandleEraseToolDrag(tileCoordinates);
             }
         }
     }
@@ -1301,6 +1331,18 @@ public partial class MapViewerControl : IDisposable
 
             if (HistoricalTileGrab is not null)
                 HistoricalTileGrab.PropertyChanged += TileGrabOnPropertyChanged;
+        }
+
+        //swapping the active tool or editing layer leaves the previous hover/selection glow baked
+        //into the chunk images; re-render every visible chunk so the glow is recomputed for the new
+        //tool/layer (it is only painted onto layers that are currently being edited). all layers are
+        //dirtied because the stale glow may live on a layer we are switching away from
+        if (e.PropertyName.EqualsI(nameof(MapEditorViewModel.SelectedTool))
+            || e.PropertyName.EqualsI(nameof(MapEditorViewModel.EditingLayerFlags)))
+        {
+            ChunkMgr?.MarkAllDirty(LayerFlags.All);
+            ViewModel.BackgroundChangePending = true;
+            ViewModel.ForegroundChangePending = true;
         }
     }
 
