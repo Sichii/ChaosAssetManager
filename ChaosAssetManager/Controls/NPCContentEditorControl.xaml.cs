@@ -99,40 +99,50 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
 
     private (int StartIndex, int Count) GetAnimationFrameRange()
     {
-        //check if we need to fall back to idle frame (first walk frame per direction)
-        var useIdleFallback = ((CurrentAnimationType == AnimationType.Standing) && (MpfFile.StandingFrameCount == 0))
-                              || ((CurrentAnimationType == AnimationType.Optional) && (MpfFile.OptionalAnimationFrameCount == 0));
+        //StaticNoIdle (OptionalAnimationFrameCount == 0): the idle resolves to a single static walk frame,
+        //which retail draws even when StandingFrameCount > 0. only the idle-related types fall back.
+        var isIdleType = CurrentAnimationType is AnimationType.Standing or AnimationType.Optional;
 
-        if (useIdleFallback)
+        if (isIdleType && (MpfFile.OptionalAnimationFrameCount == 0))
         {
-            //idle frame: frame 0 for UP/LEFT, frame WalkFrameCount for RIGHT/DOWN
-            var idleFrameIndex = CurrentViewDirection is ViewDirection.Up or ViewDirection.Left
-                ? MpfFile.WalkFrameIndex
-                : MpfFile.WalkFrameCount;
+            var staticBase = (int)MpfFile.WalkFrameIndex;
+            var staticStride = (int)MpfFile.WalkFrameCount;
+
+            //single-direction sprite: no second block exists, so reuse the first for every facing
+            if ((staticBase + staticStride) >= MpfFile.Count)
+                staticStride = 0;
+
+            var idleFrameIndex = CurrentViewDirection is ViewDirection.Up or ViewDirection.Left ? staticBase : staticBase + staticStride;
 
             return (idleFrameIndex, 1);
         }
 
-        //get base range for animation type (count is per-direction, for UP only)
+        //base range per animation type. count is per-direction (the UP block). for an animated idle the
+        //standing loop length is StandingFrameCount, or OptionalAnimationFrameCount when there is no
+        //separate standing block (StandingFrameCount == 0, which retail still animates as a normal idle)
         (var baseIndex, var count) = CurrentAnimationType switch
         {
-            AnimationType.Walk     => (MpfFile.WalkFrameIndex, MpfFile.WalkFrameCount),
-            AnimationType.Attack   => (MpfFile.AttackFrameIndex, MpfFile.AttackFrameCount),
-            AnimationType.Attack2  => (MpfFile.Attack2StartIndex, MpfFile.Attack2FrameCount),
-            AnimationType.Attack3  => (MpfFile.Attack3StartIndex, MpfFile.Attack3FrameCount),
-            AnimationType.Standing => (MpfFile.StandingFrameIndex, MpfFile.StandingFrameCount),
-            AnimationType.Optional => (MpfFile.StandingFrameIndex, MpfFile.OptionalAnimationFrameCount),
+            AnimationType.Walk     => (MpfFile.WalkFrameIndex, (int)MpfFile.WalkFrameCount),
+            AnimationType.Attack   => (MpfFile.AttackFrameIndex, (int)MpfFile.AttackFrameCount),
+            AnimationType.Attack2  => (MpfFile.Attack2StartIndex, (int)MpfFile.Attack2FrameCount),
+            AnimationType.Attack3  => (MpfFile.Attack3StartIndex, (int)MpfFile.Attack3FrameCount),
+            AnimationType.Standing => (MpfFile.StandingFrameIndex, MpfFile.StandingFrameCount > 0 ? MpfFile.StandingFrameCount : MpfFile.OptionalAnimationFrameCount),
+            AnimationType.Optional => (MpfFile.StandingFrameIndex, (int)MpfFile.OptionalAnimationFrameCount),
             _                      => (0, 0)
         };
 
-        //frames are organized: UP frames first, then RIGHT frames (same count each)
-        //down/left are horizontal flips of right/up respectively
-        //up/left use UP frames, right/down use RIGHT frames (offset by count)
-        //for standing: if optional frames exist, the direction offset is OptionalAnimationFrameCount
-        var dirOffsetAmount = (CurrentAnimationType == AnimationType.Standing) && (MpfFile.OptionalAnimationFrameCount > 0)
+        //frames are stored UP block first, then RIGHT block. up/left use the UP block (offset 0); right/down
+        //use the RIGHT block. for an animated idle the stride between blocks is OptionalAnimationFrameCount,
+        //otherwise it is the per-direction count
+        var dirStride = isIdleType && (MpfFile.OptionalAnimationFrameCount > 0)
             ? MpfFile.OptionalAnimationFrameCount
             : count;
-        var dirOffset = CurrentViewDirection is ViewDirection.Up or ViewDirection.Left ? 0 : dirOffsetAmount;
+
+        //single-direction sprite: the RIGHT block doesn't exist, so reuse the UP block for every facing
+        if ((baseIndex + dirStride) >= MpfFile.Count)
+            dirStride = 0;
+
+        var dirOffset = CurrentViewDirection is ViewDirection.Up or ViewDirection.Left ? 0 : dirStride;
 
         return (baseIndex + dirOffset, count);
     }
@@ -426,6 +436,12 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
 
             MpfFile.StandingFrameCount = value;
             OnPropertyChanged();
+
+            //raise the optional standing-frame count to match so the standing frames play as an animated
+            //idle instead of freezing as StaticNoIdle; never lower a higher optional count the user set
+            if (MpfFile.OptionalAnimationFrameCount < value)
+                OptionalAnimationFrameCount = value;
+
             RefreshFrameList();
         }
     }
