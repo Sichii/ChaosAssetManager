@@ -64,6 +64,10 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
 
             MpfFile.AnimationIntervalMs = value;
             OnPropertyChanged();
+
+            //restart the running timer so the new interval takes effect live
+            if (IsPlaying)
+                StartAnimation();
         }
     }
 
@@ -232,7 +236,7 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
         Animation?.Dispose();
 
         var frames = MpfFile.Select(frame => Graphics.RenderImage(frame, Palette));
-        Animation = new Animation(new SKImageCollection(frames), 250);
+        Animation = new Animation(new SKImageCollection(frames), MpfFile.AnimationIntervalMs);
 
         AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation.FrameIntervalMs));
         CurrentFrameIndex = 0;
@@ -585,7 +589,7 @@ public sealed partial class NPCContentEditorControl : IDisposable, INotifyProper
     {
         AnimationCts?.Cancel();
         AnimationCts = new CancellationTokenSource();
-        AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(Animation?.FrameIntervalMs ?? 250));
+        AnimationTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(MpfFile.AnimationIntervalMs));
         _ = AnimateAsync(AnimationCts.Token);
     }
 
