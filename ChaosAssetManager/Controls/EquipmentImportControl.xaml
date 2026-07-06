@@ -87,17 +87,20 @@
                              Content="Male"
                              GroupName="Gender"
                              Style="{StaticResource MaterialDesignTabRadioButtonLeft}"
-                             Margin="0,0,10,0" />
+                             Margin="0,0,10,0"
+                             Checked="EquipmentTarget_OnChanged" />
                 <RadioButton x:Name="FemaleRadio"
                              Content="Female"
                              GroupName="Gender"
                              Style="{StaticResource MaterialDesignTabRadioButtonLeft}"
-                             Margin="0,0,10,0" />
+                             Margin="0,0,10,0"
+                             Checked="EquipmentTarget_OnChanged" />
                 <RadioButton x:Name="UnisexRadio"
                              Content="Unisex"
                              GroupName="Gender"
                              IsChecked="True"
-                             Style="{StaticResource MaterialDesignTabRadioButtonLeft}" />
+                             Style="{StaticResource MaterialDesignTabRadioButtonLeft}"
+                             Checked="EquipmentTarget_OnChanged" />
             </StackPanel>
 
             <!-- Equipment Type -->
@@ -112,7 +115,8 @@
                       Grid.ColumnSpan="2"
                       Margin="0,0,0,10"
                       Style="{StaticResource MaterialDesignComboBox}"
-                      SelectedIndex="0">
+                      SelectedIndex="0"
+                      SelectionChanged="EquipmentTarget_OnChanged">
                 <ComboBoxItem Content="a - Arms 1" Tag="a" />
                 <ComboBoxItem Content="b - Body 1" Tag="b" />
                 <ComboBoxItem Content="c - Accessories 1" Tag="c" />
