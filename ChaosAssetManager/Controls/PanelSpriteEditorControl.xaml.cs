@@ -15,10 +15,17 @@ using Orientation = System.Windows.Controls.Orientation;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class PanelSpriteEditorControl
+public sealed partial class PanelSpriteEditorControl : IActiveFileProvider
 {
     private const int ITEMS_PER_PAGE = 266;
     public ObservableCollection<PanelSpriteViewModel> SpriteViewModels { get; } = [];
+
+    /// <inheritdoc />
+    public string? ActiveFileName => PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath) ? "legend.dat" : null;
+
+    /// <inheritdoc />
+    //fixed archive, never changes for the lifetime of the control
+    public event Action? ActiveFileChanged { add { } remove { } }
 
     public PanelSpriteEditorControl()
     {

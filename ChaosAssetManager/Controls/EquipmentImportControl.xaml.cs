@@ -12,13 +12,39 @@ using SkiaSharp;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EquipmentImportControl
+public sealed partial class EquipmentImportControl : IActiveFileProvider
 {
+    /// <inheritdoc />
+    public string? ActiveFileName
+    {
+        get
+        {
+            if (EquipmentTypeCbx.SelectedItem is not ComboBoxItem { Tag: string letter })
+                return null;
+
+            if (UnisexRadio.IsChecked == true)
+                return $"{GetArchiveNameForLetter(letter, true)} + {GetArchiveNameForLetter(letter, false)}";
+
+            return GetArchiveNameForLetter(letter, MaleRadio.IsChecked == true);
+        }
+    }
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
+
     public EquipmentImportControl()
     {
         InitializeComponent();
 
         PathHelper.ArchivesPathChanged += () => EquipmentImportControl_OnLoaded(this, new RoutedEventArgs());
+    }
+
+    private void EquipmentTarget_OnChanged(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded)
+            return;
+
+        ActiveFileChanged?.Invoke();
     }
 
     private void BrowseInputBtn_OnClick(object sender, RoutedEventArgs e)

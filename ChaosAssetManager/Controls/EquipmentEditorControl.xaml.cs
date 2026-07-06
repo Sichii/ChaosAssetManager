@@ -10,7 +10,7 @@ using ListViewItem = System.Windows.Controls.ListViewItem;
 
 namespace ChaosAssetManager.Controls;
 
-public partial class EquipmentEditorControl
+public partial class EquipmentEditorControl : IActiveFileProvider
 {
     // Equipment type letters mapped to their descriptions
     public static readonly Dictionary<char, string> EquipmentTypes = new()
@@ -54,6 +54,24 @@ public partial class EquipmentEditorControl
 
     private Dictionary<string, EpfFile>? EquipmentFiles;
     private Palette? EquipmentPalette;
+
+    /// <inheritdoc />
+    public string? ActiveFileName
+    {
+        get
+        {
+            if (CurrentTypeLetter == default)
+                return null;
+
+            var male = (CurrentTypeLetter == 's') || (MaleRadio.IsChecked == true);
+            var path = GetArchivePathForType(CurrentTypeLetter, male);
+
+            return path is null ? null : Path.GetFileName(path);
+        }
+    }
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
 
     public EquipmentEditorControl()
     {
@@ -112,6 +130,7 @@ public partial class EquipmentEditorControl
 
         CurrentTypeLetter = typeLetter;
         PopulateEntryList(typeLetter);
+        ActiveFileChanged?.Invoke();
     }
 
     private void Gender_OnChecked(object sender, RoutedEventArgs e)
@@ -122,6 +141,8 @@ public partial class EquipmentEditorControl
         // Refresh entry list when gender changes
         if (EquipmentTypeCmb.SelectedItem is ComboBoxItem { Tag: char typeLetter })
             PopulateEntryList(typeLetter);
+
+        ActiveFileChanged?.Invoke();
     }
 
     private static DataArchive? GetArchiveForType(char typeLetter, bool male)

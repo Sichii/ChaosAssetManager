@@ -10,11 +10,18 @@ using ListViewItem = System.Windows.Controls.ListViewItem;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class EffectEditorControl
+public sealed partial class EffectEditorControl : IActiveFileProvider
 {
     private static PaletteLookup? EfctPaletteLookup;
     private static PaletteLookup? MefcPaletteLookup;
     private string? CurrentEntryName;
+
+    /// <inheritdoc />
+    public string? ActiveFileName => PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath) ? "roh.dat" : null;
+
+    /// <inheritdoc />
+    //fixed archive, never changes for the lifetime of the control
+    public event Action? ActiveFileChanged { add { } remove { } }
 
     public EffectEditorControl()
     {

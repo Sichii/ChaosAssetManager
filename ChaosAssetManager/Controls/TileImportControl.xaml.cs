@@ -16,7 +16,7 @@ using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class TileImportControl
+public sealed partial class TileImportControl : IActiveFileProvider
 {
     public ObservableCollection<TileImportViewModel> TileViewModels { get; } = [];
     private bool IsForeground => ForegroundRadio.IsChecked == true;
@@ -24,6 +24,12 @@ public sealed partial class TileImportControl
 
     private SplicedTileLayout? SplicedLayout;
     private string? SplicedSourcePath;
+
+    /// <inheritdoc />
+    public string? ActiveFileName => PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath) ? (IsForeground ? "ia.dat" : "seo.dat") : null;
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
 
     public TileImportControl()
     {
@@ -425,6 +431,7 @@ public sealed partial class TileImportControl
         TileViewModels.Clear();
         UpdateStatus(0);
         UpdateInfoMessages();
+        ActiveFileChanged?.Invoke();
     }
 
     private void UpdateInfoMessages()

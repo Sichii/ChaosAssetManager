@@ -21,11 +21,17 @@ using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class ArchivesControl : IDisposable
+public sealed partial class ArchivesControl : IDisposable, IActiveFileProvider
 {
     private string ArchiveName = string.Empty;
     private string ArchiveRoot = string.Empty;
     public DataArchive? Archive { get; set; }
+
+    /// <inheritdoc />
+    public string? ActiveFileName => string.IsNullOrEmpty(ArchiveName) ? null : ArchiveName;
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
 
     public ArchivesControl() => InitializeComponent();
 
@@ -601,6 +607,7 @@ public sealed partial class ArchivesControl : IDisposable
 
         ArchiveName = Path.GetFileName(path);
         ArchiveRoot = Path.GetDirectoryName(path) ?? string.Empty;
+        ActiveFileChanged?.Invoke();
 
         SetViewSource();
 

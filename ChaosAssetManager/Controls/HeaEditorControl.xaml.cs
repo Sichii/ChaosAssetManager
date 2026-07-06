@@ -17,11 +17,18 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 namespace ChaosAssetManager.Controls;
 
-public partial class HeaEditorControl
+public partial class HeaEditorControl : IActiveFileProvider
 {
     public static HeaEditorControl? Instance { get; private set; }
 
     public HeaEditorViewModel ViewModel { get; set; } = new();
+
+    /// <inheritdoc />
+    public string? ActiveFileName => PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath) ? "seo.dat" : null;
+
+    /// <inheritdoc />
+    //fixed archive, never changes for the lifetime of the control
+    public event Action? ActiveFileChanged { add { } remove { } }
 
     public HeaEditorControl()
     {
