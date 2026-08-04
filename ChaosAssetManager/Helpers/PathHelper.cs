@@ -85,6 +85,7 @@ public sealed class PathHelper
     public string? EquipmentImportFromPath { get; set; }
     public string? NPCImportFromPath { get; set; }
     public string? BgTileSplicerFromPath { get; set; }
+    public string? IconImportFromPath { get; set; }
     #endregion
 
     #region To

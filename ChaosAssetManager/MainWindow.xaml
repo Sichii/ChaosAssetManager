@@ -199,6 +199,12 @@
                                          GroupName="Navigation"
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
+
+                            <RadioButton x:Name="IconImportNav"
+                                         Content="Icons"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
                         </StackPanel>
                     </Expander>
 
@@ -245,6 +251,12 @@
                                          Style="{StaticResource SubNavButtonStyle}"
                                          Checked="NavItem_Checked" />
 
+                            <RadioButton x:Name="IconEditorNav"
+                                         Content="Icon Editor"
+                                         GroupName="Navigation"
+                                         Style="{StaticResource SubNavButtonStyle}"
+                                         Checked="NavItem_Checked" />
+
                             <RadioButton x:Name="HeaEditorNav"
                                          Content="Light Editor"
                                          GroupName="Navigation"
@@ -270,6 +282,8 @@
                                            Visibility="Collapsed" />
                 <controls:TileImportControl x:Name="TileImportView"
                                             Visibility="Collapsed" />
+                <controls:IconImportControl x:Name="IconImportView"
+                                            Visibility="Collapsed" />
                 <controls:EffectEditorControl x:Name="EffectEditorView"
                                               Visibility="Collapsed" />
                 <controls:EquipmentEditorControl x:Name="EquipmentEditorView"
@@ -286,6 +300,8 @@
                                                Visibility="Collapsed" />
                 <controls:PanelSpriteEditorControl x:Name="PanelSpriteEditorView"
                                                     Visibility="Collapsed" />
+                <controls:IconEditorControl x:Name="IconEditorView"
+                                            Visibility="Collapsed" />
                 <controls:HeaEditorControl x:Name="HeaEditorView"
                                            Visibility="Collapsed" />
             </Grid>

@@ -9,12 +9,14 @@ public sealed class PanelSpriteViewModel : INotifyPropertyChanged, IDisposable
     private bool _isSelected;
 
     /// <summary>
-    ///     1-based global sprite id
+    ///     The sprite's identifying id. Exact semantics (0-based vs 1-based, global vs per-page) are defined by
+    ///     the owning editor; for the panel-sprite editor this is the 1-based global sprite id.
     /// </summary>
     public required int GlobalId { get; init; }
 
     /// <summary>
-    ///     0-based slot index within the page
+    ///     The sprite's slot index. Exact semantics are defined by the owning editor; for the panel-sprite
+    ///     editor this is the 0-based slot index within the page.
     /// </summary>
     public required int SlotIndex { get; init; }
 

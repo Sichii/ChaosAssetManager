@@ -32,6 +32,7 @@ public partial class MainWindow : Window
         _navContentMap["EquipmentImportNav"] = EquipmentImportView;
         _navContentMap["NPCImportNav"] = NPCImportView;
         _navContentMap["TileImportNav"] = TileImportView;
+        _navContentMap["IconImportNav"] = IconImportView;
         _navContentMap["EffectEditorNav"] = EffectEditorView;
         _navContentMap["EquipmentEditorNav"] = EquipmentEditorView;
         _navContentMap["NPCEditorNav"] = NPCEditorView;
@@ -40,6 +41,7 @@ public partial class MainWindow : Window
         _navContentMap["MapEditorNav"] = MapEditorView;
         _navContentMap["BgTileSplicerNav"] = BgTileSplicerView;
         _navContentMap["PanelSpriteEditorNav"] = PanelSpriteEditorView;
+        _navContentMap["IconEditorNav"] = IconEditorView;
         _navContentMap["HeaEditorNav"] = HeaEditorView;
 
         PathHelper.ArchivesPathChanged += UpdateArchivePathLabel;
@@ -181,6 +183,7 @@ public partial class MainWindow : Window
             || (navButton == MetaFileEditorNav)
             || (navButton == MapEditorNav)
             || (navButton == PanelSpriteEditorNav)
+            || (navButton == IconEditorNav)
             || (navButton == HeaEditorNav))
             EditorsExpander.IsExpanded = true;
     }
