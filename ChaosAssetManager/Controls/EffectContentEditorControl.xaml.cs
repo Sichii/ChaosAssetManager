@@ -87,7 +87,9 @@ public sealed partial class EffectContentEditorControl : IDisposable, INotifyPro
         InitializeComponent();
 
         // Setup blending type dropdown
-        BlendingTypeCmb.ItemsSource = new CollectionView(Enum.GetNames<EfaBlendingType>());
+        //plain array: a CollectionView ItemsSource auto-selects its first item, which fires
+        //SelectionChanged and overwrites the parsed BlendingType with Additive
+        BlendingTypeCmb.ItemsSource = Enum.GetNames<EfaBlendingType>();
         BlendingTypeCmb.SelectedItem = efaFile.BlendingType.ToString();
 
         // Setup frame list
