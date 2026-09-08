@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>14</LangVersion>
+        <RootNamespace>ChaosAssetManager.Cli</RootNamespace>
+        <AssemblyName>chaos-cli</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.CommandLine" Version="3.0.0-preview.5.26302.115" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\dalib\DALib\DALib.csproj" />
+    </ItemGroup>
+
+</Project>

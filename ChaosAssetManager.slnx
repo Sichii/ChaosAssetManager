@@ -5,4 +5,5 @@
   </Folder>
   <Project Path="../dalib/DALib/DALib.csproj" />
   <Project Path="ChaosAssetManager/ChaosAssetManager.csproj" />
+  <Project Path="ChaosAssetManager.Cli/ChaosAssetManager.Cli.csproj" />
 </Solution>
