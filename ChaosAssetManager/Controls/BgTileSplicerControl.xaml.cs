@@ -12,7 +12,7 @@ using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class BgTileSplicerControl : IDisposable
+public sealed partial class BgTileSplicerControl : IDisposable, IActiveFileProvider
 {
     private SKPoint GridOffset;
     private SKPoint GridOffsetAccumulator; //accumulates subpixel movement
@@ -20,6 +20,12 @@ public sealed partial class BgTileSplicerControl : IDisposable
     private SKPoint LastGridDragPoint;
     private SKImage? SourceImage;
     private string? SourceImagePath;
+
+    /// <inheritdoc />
+    public string? ActiveFileName => string.IsNullOrEmpty(SourceImagePath) ? null : Path.GetFileName(SourceImagePath);
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
 
     public BgTileSplicerControl() => InitializeComponent();
 
@@ -72,6 +78,7 @@ public sealed partial class BgTileSplicerControl : IDisposable
 
         //remember the full source path so the layout map can be written next to it
         SourceImagePath = dialog.FileName;
+        ActiveFileChanged?.Invoke();
 
         //reset grid offset
         GridOffset = SKPoint.Empty;

@@ -28,7 +28,7 @@ using TextBox = System.Windows.Controls.TextBox;
 
 namespace ChaosAssetManager.Controls;
 
-public partial class MapEditorControl
+public partial class MapEditorControl : IActiveFileProvider
 {
     private bool IsPopulated;
     public static MapEditorControl Instance { get; private set; } = null!;
@@ -36,6 +36,20 @@ public partial class MapEditorControl
     public MapEditorViewModel ViewModel { get; set; } = new();
 
     public MapViewerViewModel? CurrentMapViewer => MapViewerTabControl.SelectedItem as MapViewerViewModel;
+
+    /// <inheritdoc />
+    public string? ActiveFileName
+    {
+        get
+        {
+            var path = CurrentMapViewer?.FromPath;
+
+            return string.IsNullOrEmpty(path) ? null : Path.GetFileName(path);
+        }
+    }
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
 
     public MapEditorControl()
     {
@@ -394,6 +408,7 @@ public partial class MapEditorControl
 
         ViewModel.PossibleBounds = new ObservableCollection<MapBounds>(selectedTab.PossibleBounds);
         ViewModel.CurrentMapViewer = selectedTab;
+        ActiveFileChanged?.Invoke();
     }
 
     private void NewMapCreateBtn_OnClick(object sender, RoutedEventArgs e)
@@ -696,6 +711,7 @@ public partial class MapEditorControl
             }
 
             viewer.FromPath = saveFileDialog.FileName.WithExtension(".map");
+            ActiveFileChanged?.Invoke();
 
             SaveBtn_OnClick(sender, e);
         }

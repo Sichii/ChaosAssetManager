@@ -11,10 +11,17 @@ using SkiaSharp;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class PanelSpritesControl
+public sealed partial class PanelSpritesControl : IActiveFileProvider
 {
     private const int ITEMS_PER_PAGE = 266;
     private const int TARGET_SIZE = 32;
+
+    /// <inheritdoc />
+    public string? ActiveFileName => PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath) ? "legend.dat" : null;
+
+    /// <inheritdoc />
+    //fixed archive, never changes for the lifetime of the control
+    public event Action? ActiveFileChanged { add { } remove { } }
 
     public PanelSpritesControl()
     {

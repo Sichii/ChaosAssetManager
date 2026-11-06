@@ -44,12 +44,18 @@ public partial class MainWindow : Window
         _navContentMap["IconEditorNav"] = IconEditorView;
         _navContentMap["HeaEditorNav"] = HeaEditorView;
 
-        PathHelper.ArchivesPathChanged += UpdateArchivePathLabel;
+        PathHelper.ArchivesPathChanged += UpdateTitleLabel;
+
+        // Refresh the title label whenever a screen's active file changes, regardless of
+        // whether it's currently visible (UpdateTitleLabel only shows the currently-visible one)
+        foreach (var content in _navContentMap.Values)
+            if (content is IActiveFileProvider provider)
+                provider.ActiveFileChanged += UpdateTitleLabel;
     }
 
     private void CloseBtn_OnClick(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
 
-    private void MainWindow_OnActivated(object? sender, EventArgs e) => UpdateArchivePathLabel();
+    private void MainWindow_OnActivated(object? sender, EventArgs e) => UpdateTitleLabel();
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -98,7 +104,7 @@ public partial class MainWindow : Window
                 MessageBoxImage.Error);
         }
 
-        UpdateArchivePathLabel();
+        UpdateTitleLabel();
     }
 
     private void MainWindow_OnStateChanged(object? sender, EventArgs e)
@@ -209,6 +215,8 @@ public partial class MainWindow : Window
         // Show selected content
         if (_navContentMap.TryGetValue(radioButton.Name, out var selectedContent))
             selectedContent.Visibility = Visibility.Visible;
+
+        UpdateTitleLabel();
     }
 
     private void SettingsBtn_OnClick(object sender, RoutedEventArgs e)
@@ -221,5 +229,13 @@ public partial class MainWindow : Window
         options.Show();
     }
 
-    private void UpdateArchivePathLabel() => ArchivePathLabel.Text = PathHelper.Instance.ArchivesPath ?? string.Empty;
+    private void UpdateTitleLabel()
+    {
+        var directory = PathHelper.Instance.ArchivesPath ?? string.Empty;
+
+        var active = _navContentMap.Values.FirstOrDefault(content => content.Visibility == Visibility.Visible);
+        var fileName = (active as IActiveFileProvider)?.ActiveFileName;
+
+        ArchivePathLabel.Text = string.IsNullOrEmpty(fileName) ? directory : $"{directory}  -  {fileName}";
+    }
 }

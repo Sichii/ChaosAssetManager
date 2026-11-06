@@ -11,8 +11,15 @@ using SkiaSharp;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class NPCImportControl
+public sealed partial class NPCImportControl : IActiveFileProvider
 {
+    /// <inheritdoc />
+    public string? ActiveFileName => PathHelper.ArchivePathIsValid(PathHelper.Instance.ArchivesPath) ? "hades.dat" : null;
+
+    /// <inheritdoc />
+    //fixed archive, never changes for the lifetime of the control
+    public event Action? ActiveFileChanged { add { } remove { } }
+
     public NPCImportControl()
     {
         InitializeComponent();

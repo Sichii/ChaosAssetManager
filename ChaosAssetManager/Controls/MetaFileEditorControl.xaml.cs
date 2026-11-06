@@ -12,9 +12,17 @@ using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace ChaosAssetManager.Controls;
 
-public sealed partial class MetaFileEditorControl
+public sealed partial class MetaFileEditorControl : IActiveFileProvider
 {
+    private string? CurrentFilePath;
+
     public MetaFileViewModel? MetaFileViewModel { get; set; }
+
+    /// <inheritdoc />
+    public string? ActiveFileName => string.IsNullOrEmpty(CurrentFilePath) ? null : Path.GetFileName(CurrentFilePath);
+
+    /// <inheritdoc />
+    public event Action? ActiveFileChanged;
 
     public MetaFileEditorControl() => InitializeComponent();
 
@@ -80,6 +88,9 @@ public sealed partial class MetaFileEditorControl
         MetaFileTreeView.ItemsSource = null;
         MetaFileViewModel = new MetaFileViewModel(metaFile);
         MetaFileTreeView.ItemsSource = MetaFileViewModel.Entries;
+
+        CurrentFilePath = path;
+        ActiveFileChanged?.Invoke();
 
         PathHelper.Instance.MetaFileEditorFromPath = Path.GetDirectoryName(path);
         PathHelper.Instance.Save();
